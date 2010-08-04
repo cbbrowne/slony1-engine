@@ -348,8 +348,8 @@ synchronized</quote> manner across nodes. </para></listitem>
 
 <listitem><para> Security management, such as <command> CREATE USER
 </command>, <command> CREATE ROLE </command>, <command>GRANT
-</command>, and such are largely irrelevant to &slony1; as it runs as
-a <quote>superuser</quote>. </para>
+</command>, and such are largely irrelevant to &slony1; - it runs in
+an orthogonal role to that. </para>
 
 <para> Indeed, we have frequently found it useful to have different
 security arrangements on different nodes.  Access to the
@@ -399,28 +399,35 @@ of problems while the subscription is in progress.
 to be in place in order for &slony1; to function.</para>
 </listitem>
 
-<listitem><para> Lowering Authority </para>
+<listitem id="superuser"><para> Lowering Authority </para>
 
 <para> Traditionally, it has been stated that <quote>&slony1; needs to
-use superuser connections.</quote> It turns out that this is not
-entirely true, and and if there are particular concerns about
+use superuser connections.</quote>  It turns out that this is not
+actually true, and and if there are particular concerns about
 excessive use of superuser accounts, it is possible to reduce this
 considerably. </para>
 
-<para> It is true to say that each &lslon; <emphasis>must</emphasis>
-have a superuser connection in order to manage the node that it is
-assigned to.  It needs to be able to alter the system catalogue in
-order to set up subscriptions and to process alterations
-(<emphasis>e.g</emphasis> - to run <xref linkend="stmtddlscript"> and
-other events that may alter the role of replicated tables on the local
-node).  </para>
+<para> It is <emphasis>simplest</emphasis> to have the replication management
+user be a superuser, as, in that case, one need not think about what
+permissions to configure.</para>
 
-<para> However, the connections that &lslon; processes open to other
-nodes to access events and process subcriptions do not need to have
-nearly so much permission.  Indeed, one could set up a <quote>weak
-user</quote> assigned to all <xref linkend="stmtstorepath"> requests.
-The minimal permissions that this user, let's call it
-<command>weakuser</command>, requires are as follows:</para>
+<para> There is only actually one place where &slony1; requires
+superuser access, and that is during the subscription process, as it
+uses a <quote>hack</quote> to substantially improve performance,
+updating the system catalogue directly to shut off indices during the
+<command>COPY</command>.  This functionality is restricted to two
+functions, as of version 2.1, with
+<function>disable_indexes_on_table()</function> and
+<function>enable_indexes_on_table()</function>, which run as
+<command>SECURITY DEFINER</command>.  These need to be owned by a
+superuser, and that is all the database superuser access that is
+required. </para>
+
+
+<para> One could set up a <quote>weak user</quote> assigned to all
+<xref linkend="stmtstorepath"> requests.  The minimal permissions that
+this user, let's call it <command>weakuser</command>, requires are as
+follows:</para>
 
 <itemizedlist>
 <listitem><para> It must have read access to the &slony1;-specific namespace </para> </listitem>
@@ -429,6 +436,7 @@ The minimal permissions that this user, let's call it
 <listitem><para> At subscribe time, it must have read access to all of the replicated tables. </para> 
 <para> Outside of subscription time, there is no need for access to access to the replicated tables. </para> </listitem>
 <listitem><para> There is some need for read access to tables in pg_catalog; it has not been verified how little access would be suitable. </para> </listitem>
+<listitem><para> As mentioned, the functions for disabling and re-enabling indexes during the subscription process must be owned by a superuser.</para></listitem>
 </itemizedlist>
 
 <para> In version 1.3, the tests in the <xref linkend="testbed">

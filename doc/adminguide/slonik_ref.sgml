@@ -298,10 +298,7 @@ echo 'But @sakaiMovies will display as a string, and is not expanded';
      reach a node's database in the cluster from where it is run
      (likely the DBA's workstation). The conninfo string is the string
      agrument given to the <function>PQconnectdb()</function> libpq
-     function. The user used to connect must be the special
-     replication superuser, as some of the actions performed later may
-     include operations that are strictly reserved for database
-     superusers by &postgres;.
+     function. 
     </para>
 
     <para>
