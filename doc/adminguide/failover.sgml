@@ -1,3 +1,4 @@
+<!--  -->
 <sect1 id="failover">
 <title>Doing switchover and failover with &slony1;</title>
 <indexterm><primary>failover</primary>
@@ -97,7 +98,6 @@ following commands:
 
 <programlisting>
 lock set (id = 1, origin = 1);
-wait for event (origin = 1, confirmed = 2);
 move set (id = 1, old origin = 1, new origin = 2);
 wait for event (origin = 1, confirmed = 2);
 </programlisting></para>
@@ -267,8 +267,8 @@ failover this sort of node configuration is as follows:
 
 <itemizedlist>
 
-<listitem><para> Resubscribe (using <xref linkend="stmtsubscribeset">
-ech node that is to be kept in the reformation of the cluster that is
+<listitem><para> Resubscribe (using <xref linkend="stmtsubscribeset">)
+each node that is to be kept in the reformation of the cluster that is
 not already subscribed to the intended data provider.  </para>
 
 <para> In the example cluster, this means we would likely wish to
