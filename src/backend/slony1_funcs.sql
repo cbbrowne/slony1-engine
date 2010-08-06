@@ -5884,13 +5884,16 @@ begin
 	update pg_catalog.pg_class set relhasindex ='f' where oid = i_oid;
 	return 1;
 end $$
-language plpgsql
-security definer;
+language plpgsql;
 
 comment on function @NAMESPACE@.disable_indexes_on_table(i_oid oid) is
-'security definer function to disable indexes on the specified table.
+'disable indexes on the specified table.
 Used during subscription process to suppress indexes, which allows
-COPY to go much faster.';
+COPY to go much faster.
+
+This may be set as a SECURITY DEFINER in order to eliminate the need
+for superuser access by Slony-I.
+';
 
 -- -------------------------------------------------------------------------
 -- FUNCTION enable_indexes_on_table (oid)
@@ -5905,4 +5908,8 @@ language plpgsql
 security definer;
 
 comment on function @NAMESPACE@.enable_indexes_on_table(i_oid oid) is
-'security definer function to re-enable indexes on the specified table.';
+'re-enable indexes on the specified table.
+
+This may be set as a SECURITY DEFINER in order to eliminate the need
+for superuser access by Slony-I.
+';
