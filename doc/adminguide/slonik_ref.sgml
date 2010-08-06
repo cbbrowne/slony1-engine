@@ -1094,7 +1094,6 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
     <para>It is <emphasis>not</emphasis> supported in &logshiplink;,
     and we do not intend to add support.</para> </caution>
     
-    <para> This uses &funtableaddkey;. </para>
    </refsect1>
    <refsect1><title>Example</title>
     <programlisting>
@@ -1895,8 +1894,6 @@ SET MOVE SEQUENCE (
     events. </para>
     </note>
 
-   <para> This uses
-    &funstoretrigger;. </para>
    </refsect1>
    <refsect1><title>Example</title>
     <programlisting>
@@ -1963,7 +1960,6 @@ STORE TRIGGER (
       </varlistentry>
      </variablelist>
     </para>
-    <para> This uses &fundroptrigger;. </para>
    </refsect1>
    <refsect1><title>Example</title>
     <programlisting>
@@ -2137,7 +2133,6 @@ DROP TRIGGER (
 
       </varlistentry>
      </variablelist>
-    <para> This uses &funsubscribeset;. </para>
    </refsect1>
    <refsect1><title>Example</title>
     <programlisting>
