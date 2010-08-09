@@ -156,6 +156,7 @@ struct PerfMon_s
 	int num_inserts;
 	int num_updates;
 	int num_deletes;
+	int num_truncates;
 };
 
 struct ProviderInfo_s
@@ -5045,6 +5046,12 @@ sync_helper(void *cdata)
 											 log_cmddata);
 							pm.num_deletes++;
 							break;
+						case 'T':
+							slon_appendquery(&(line->data),
+											 "%s;\n",
+											 log_cmddata);
+							pm.num_truncates++;
+							break;
 					}
 					line_ncmds++;
 
@@ -5151,8 +5158,8 @@ sync_helper(void *cdata)
 				 node->no_id, provider->no_id,
 				 TIMEVAL_DIFF(&tv_start, &tv_now));
 
-		slon_log(SLON_DEBUG1, "remoteHelperThread_%d_%d: inserts=%d updates=%d deletes=%d\n",
-				 node->no_id, provider->no_id, pm.num_inserts, pm.num_updates, pm.num_deletes);
+		slon_log(SLON_DEBUG1, "remoteHelperThread_%d_%d: inserts=%d updates=%d deletes=%d truncates=%d\n",
+				 node->no_id, provider->no_id, pm.num_inserts, pm.num_updates, pm.num_deletes, pm.num_truncates);
 
 		slon_log(SLON_DEBUG1, 
 				 "remoteWorkerThread_%d: sync_helper timing: " 
@@ -5891,6 +5898,7 @@ static void init_perfmon(PerfMon *perf_info) {
   perf_info->num_inserts = 0;
   perf_info->num_updates = 0;
   perf_info->num_deletes = 0;
+  perf_info->num_truncates = 0;
 }
 static void start_monitored_event(PerfMon *perf_info) {
   gettimeofday(&(perf_info->prev_t), NULL);

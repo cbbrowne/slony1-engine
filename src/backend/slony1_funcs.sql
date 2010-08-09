@@ -3843,6 +3843,8 @@ begin
 			v_tab_fqname || ' for each row execute procedure ' ||
 			'@NAMESPACE@.denyAccess (' || pg_catalog.quote_literal('_@CLUSTERNAME@') || ');';
 
+	perform @NAMESPACE@.addtruncatetrigger(v_tab_fqname, p_tab_id);
+
 	perform @NAMESPACE@.alterTableConfigureTriggers (p_tab_id);
 	return p_tab_id;
 end;
@@ -5797,3 +5799,41 @@ comment on function @NAMESPACE@.enable_indexes_on_table(i_oid oid) is
 This may be set as a SECURITY DEFINER in order to eliminate the need
 for superuser access by Slony-I.
 ';
+
+create or replace function @NAMESPACE@.log_truncate () returns trigger as
+$$
+	declare
+		c_command text;
+		c_log integer;
+		c_node integer;
+		c_tabid integer;
+	begin
+        c_tabid := tg_argv[0];
+	    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
+		c_command := 'TRUNCATE ONLY ' || pg_catalog.quote_literal(tab_nspname) || '.' ||
+				  pg_catalog.quote_literal(tab_relname) || ' CASCADE;' 
+				  from @NAMESPACE@.sl_table where tab_id = c_tabid;
+		select last_value into c_log from @NAMESPACE@.sl_log_status;
+		if c_log in (0, 2) then
+		   insert into sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+		      values (c_node, pg_catalog.txid_current(), c_tabid, nextval('sl_action_seq'), 'T', c_command);
+		else   -- (1, 3) 
+		   insert into sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+		      values (c_node, pg_catalog.txid_current, c_tabid, nextval('sl_action_seq'), 'T', c_command);
+		end if;
+		return NULL;
+    end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.log_truncate ()
+is 'trigger function run when a replicated table receives a TRUNCATE request';
+
+create or replace function @NAMESPACE@.truncate_deny () returns trigger as
+$$
+	begin
+		raise exception 'truncation of replicated table forbidden on subscriber node';
+    end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.truncate_deny ()
+is 'trigger function run when a replicated table receives a TRUNCATE request';

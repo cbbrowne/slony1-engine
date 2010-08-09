@@ -67,3 +67,12 @@ LANGUAGE plpgsql;
 
 comment on function @NAMESPACE@.TruncateOnlyTable(name) is
 'Calls TRUNCATE with out specifying ONLY, syntax supported in version 8.3';
+
+create or replace function @NAMESPACE@.addTruncateTrigger (i_fqtable text, i_tabid integer) returns integer as $$
+begin
+		return 0;
+end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.addtruncatetrigger (i_fqtable text, i_tabid integer) is 
+'function to add TRUNCATE TRIGGER';
