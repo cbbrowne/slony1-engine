@@ -3979,6 +3979,7 @@ begin
 				' enable trigger "_@CLUSTERNAME@_logtrigger"';
 		execute 'alter table ' || v_tab_fqname ||
 				' disable trigger "_@CLUSTERNAME@_denyaccess"';
+        perform @NAMESPACE@.origin_truncate_trigger(v_tab_fqname);
 	else
 		-- ----
 		-- On a replica the log trigger is disabled and the
@@ -3988,6 +3989,7 @@ begin
 				' disable trigger "_@CLUSTERNAME@_logtrigger"';
 		execute 'alter table ' || v_tab_fqname ||
 				' enable trigger "_@CLUSTERNAME@_denyaccess"';
+        perform @NAMESPACE@.replica_truncate_trigger(v_tab_fqname);
 
 	end if;
 
@@ -5810,16 +5812,16 @@ $$
 	begin
         c_tabid := tg_argv[0];
 	    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
-		c_command := 'TRUNCATE ONLY ' || pg_catalog.quote_literal(tab_nspname) || '.' ||
-				  pg_catalog.quote_literal(tab_relname) || ' CASCADE;' 
+		c_command := 'TRUNCATE ONLY TABLE "' || tab_nspname || '"."' ||
+				  tab_relname || '" CASCADE;' 
 				  from @NAMESPACE@.sl_table where tab_id = c_tabid;
 		select last_value into c_log from @NAMESPACE@.sl_log_status;
 		if c_log in (0, 2) then
-		   insert into sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
-		      values (c_node, pg_catalog.txid_current(), c_tabid, nextval('sl_action_seq'), 'T', c_command);
+		   insert into @NAMESPACE@.sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+		      values (c_node, pg_catalog.txid_current(), c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
 		else   -- (1, 3) 
-		   insert into sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
-		      values (c_node, pg_catalog.txid_current, c_tabid, nextval('sl_action_seq'), 'T', c_command);
+		   insert into @NAMESPACE@.sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+		      values (c_node, pg_catalog.txid_current, c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
 		end if;
 		return NULL;
     end
