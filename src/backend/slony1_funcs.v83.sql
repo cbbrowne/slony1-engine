@@ -76,3 +76,23 @@ $$ language plpgsql;
 
 comment on function @NAMESPACE@.addtruncatetrigger (i_fqtable text, i_tabid integer) is 
 'function to add TRUNCATE TRIGGER';
+
+create or replace function @NAMESPACE@.replica_truncate_trigger(i_fqname text) returns integer as $$
+begin
+		return 0;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.replica_truncate_trigger(i_fqname text) is
+'enable deny access, disable log trigger on origin.  
+
+NOOP on PostgreSQL 8.3 because it does not support triggers ON TRUNCATE';
+
+create or replace function @NAMESPACE@.origin_truncate_trigger(i_fqname text) returns integer as $$
+begin
+		return 0;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.origin_truncate_trigger(i_fqname text) is
+'disable deny access, enable log trigger on origin.  
+
+NOOP on PostgreSQL 8.3 because it does not support triggers ON TRUNCATE';

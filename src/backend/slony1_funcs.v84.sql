@@ -70,9 +70,36 @@ begin
 		execute 'create trigger "_@CLUSTERNAME@_truncatetrigger" ' ||
 				' before truncate on ' || i_fqtable || ' for each statement execute procedure ' ||
 				'@NAMESPACE@.log_truncate(' || i_tabid || ');';
+		execute 'create trigger "_@CLUSTERNAME@_truncatedeny" ' ||
+				' before truncate on ' || i_fqtable || ' for each statement execute procedure ' ||
+				'@NAMESPACE@.truncate_deny();';
 		return 1;
 end
 $$ language plpgsql;
 
 comment on function @NAMESPACE@.addtruncatetrigger (i_fqtable text, i_tabid integer) is 
 'function to add TRUNCATE TRIGGER';
+
+create or replace function @NAMESPACE@.replica_truncate_trigger(i_fqname text) returns integer as $$
+begin
+		execute 'alter table ' || i_fqname || 
+				' disable trigger "_@CLUSTERNAME@_truncatetrigger";';
+		execute 'alter table ' || i_fqname || 
+				' enable trigger "_@CLUSTERNAME@_truncatedeny";';
+		return 1;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.replica_truncate_trigger(i_fqname text) is
+'enable deny access, disable log trigger on origin.';
+
+create or replace function @NAMESPACE@.origin_truncate_trigger(i_fqname text) returns integer as $$
+begin
+		execute 'alter table ' || i_fqname || 
+				' enable trigger "_@CLUSTERNAME@_truncatetrigger";';
+		execute 'alter table ' || i_fqname || 
+				' disable trigger "_@CLUSTERNAME@_truncatedeny";';
+		return 1;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.origin_truncate_trigger(i_fqname text) is
+'disable deny access, enable log trigger on origin.';
