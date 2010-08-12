@@ -1,49 +1,61 @@
-CREATE TABLE table1(
-  id		SERIAL		PRIMARY KEY, 
-  data		TEXT
+create table products (
+   id serial primary key,
+   pname text unique not null,
+   price numeric (12,2) not null
 );
 
-CREATE TABLE table2(
-  id		SERIAL		UNIQUE NOT NULL, 
-  table1_id	INT4		REFERENCES table1(id) 
-					ON UPDATE CASCADE ON DELETE CASCADE, 
-  data		TEXT
+create table customers (
+   id serial primary key,
+   cname text unique not null
 );
 
-create table table3 (
-  id serial NOT NULL,
-  id2 integer
+create table orders (
+   id serial primary key,
+   customer_id integer references customers(id) on delete restrict,
+   order_date timestamptz not null default now(),
+   order_value numeric (12,2)
 );
 
-create unique index no_good_candidate_pk on table3 (id, id2);
-
-create table table4 (
-  id serial primary key,
-  numcol numeric(12,4), -- 1.23
-  realcol real,     -- (1.23)
-  ptcol point,      -- (1,2)
-  pathcol path,     -- ((1,1),(2,2),(3,3),(4,4))
-  polycol polygon,  -- ((1,1),(2,2),(3,3),(4,4))
-  circcol circle,   -- <(1,2>,3>
-  ipcol inet,       -- "192.168.1.1"
-  maccol macaddr,   -- "04:05:06:07:08:09"
-  bitcol bit varying(20)  -- X'123' 
+create table line_items (
+   order_id integer references orders(id) on delete cascade,
+   product_id integer references products(id) on delete restrict,
+   primary key (order_id, product_id),
+   quantity integer
 );
 
-create table table5 (
-  id serial,
-  d1 text,
-  d2 text,
-  id2 serial,
-  d3 text,
-  d4 text,
-  d5 text,
-  d6 text,
-  id3 serial,
-  d7 text,
-  d8 text,
-  d9 text,
-  d10 text,
-  d11 text,
-  primary key(id, id2, id3)
-);
+create or replace function mkproduct (i_pname text, i_price numeric(12,2)) returns integer as $$
+begin
+		insert into products(pname, price) values (i_pname, i_price);
+        return 1;
+end
+$$ language plpgsql;
+
+create or replace function mkcustomer (i_cname text) returns integer as $$
+begin
+		insert into customers(cname) values (i_cname);
+        return 1;
+end
+$$ language plpgsql;
+
+create or replace function mkorder (i_cname text) returns integer as $$
+declare
+   c_oid integer;
+begin
+		insert into orders (customer_id, order_value)
+			   select id, 0 from customers where cname = i_cname
+        returning id into c_oid;
+		return c_oid;
+end
+$$ language plpgsql;
+
+create or replace function order_line (i_order integer, i_product text, i_quantity integer) returns numeric (12,2) as $$
+declare
+		c_product integer;
+		c_price numeric(12,2);
+begin
+		select id, price into c_product, c_price from products where pname = i_product;
+		insert into line_items (order_id, product_id, quantity) values (i_order, c_product, i_quantity);
+		update orders set order_value = order_value + (i_quantity * c_price) where id = i_order;
+        return (select order_value from orders where id = i_order);
+end
+$$ language plpgsql;

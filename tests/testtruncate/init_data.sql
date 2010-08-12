@@ -1,8 +1,29 @@
-INSERT INTO table1(data) VALUES ('placeholder 1');
-INSERT INTO table1(data) VALUES ('placeholder 2');
-INSERT INTO table2(table1_id,data) VALUES (1,'placeholder 1');
-INSERT INTO table2(table1_id,data) VALUES (2,'placeholder 2');
+insert into products (pname, price)
+values 
+('lots', 15),
+('of', 16),
+('base', 22),
+('configuration', 35.55),
+('dumb', 6.95),
+('products', 8.2),
+('this', 17),
+('that', 23.5),
+('other', 18),
+('thing', 34);
 
-INSERT INTO table4(numcol,realcol,ptcol,pathcol,polycol,circcol,ipcol,maccol,bitcol) values ('74.0','7.40','(7,4)','((7,7),(4,4),(0,0),(7,0))','((7,4),(0,7),(4,0),(0,4))','<(7,4),0>','192.168.7.40','08:00:2d:07:04:00',X'740');
+insert into customers (cname)
+values
+('neil'),
+('richard'),
+('bill'),
+('phil'),
+('steve'),
+('faroult'),
+('robson'),
+('tree'),
+('manis'),
+('schaffer'),
+('jorgensen'),
+('goosens'),
+('mittelbach');
 
-INSERT INTO table4(numcol,realcol,ptcol,pathcol,polycol,circcol,ipcol,maccol,bitcol) values ('93.1','9.31','(9,3)','((9,9),(3,3),(1,1),(9,1))','((9,3),(1,9),(3,1),(1,3))','<(9,3),1>','192.168.9.31','08:00:2d:09:03:01',X'931');
