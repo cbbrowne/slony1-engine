@@ -5812,7 +5812,7 @@ $$
 	begin
         c_tabid := tg_argv[0];
 	    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
-		c_command := 'TRUNCATE ONLY TABLE "' || tab_nspname || '"."' ||
+		c_command := 'TRUNCATE TABLE ONLY "' || tab_nspname || '"."' ||
 				  tab_relname || '" CASCADE;' 
 				  from @NAMESPACE@.sl_table where tab_id = c_tabid;
 		select last_value into c_log from @NAMESPACE@.sl_log_status;
