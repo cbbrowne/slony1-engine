@@ -86,7 +86,8 @@ install -m 0755 src/backend/slony1_funcs.so %{buildroot}%{_libdir}/pgsql/slony1_
 install -m 0644 src/backend/*.sql %{buildroot}%{_datadir}/pgsql/
 install -m 0755 tools/*.sh  %{buildroot}%{_bindir}/
 install -m 0644 share/slon.conf-sample %{buildroot}%{_sysconfdir}/slon.conf
-install -m 0755 redhat/slon.init %{buildroot}%{_sysconfdir}/init.d/slon
+install -m 0755 redhat/slony1.init %{buildroot}%{_sysconfdir}/init.d/slon
+mkdir -p %{buildroot}%{_localstatedir}/run/slon
 
 %if %perltools
 cd tools
@@ -114,6 +115,7 @@ rm -rf %{buildroot}
 %{_datadir}/pgsql/*.sql
 %config(noreplace) %{_sysconfdir}/slon.conf
 %{_sysconfdir}/init.d/slon
+%dir %attr(750,postgres,postgres) %{_localstatedir}/run/slon
 %if %perltools
 %{_libdir}/pgsql/slon-tools.pm
 %config(noreplace) %{_sysconfdir}/slon_tools.conf
