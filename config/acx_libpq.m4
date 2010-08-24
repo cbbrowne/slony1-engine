@@ -168,10 +168,12 @@ if test -n "$PG_CONFIG_LOCATION"; then
     fi
 
     case ${host_os} in
-	  *linux*)
+	  *nonereally*)
 	     dnl  ------------------------------------------------
 		 dnl   List of operating systems where we know that
 		 dnl   enable-thread-safety is NOT required
+		 dnl   Presently, none where we know the whole chain
+         dnl   from PostgreSQL to openssh is truly safe.
 	     dnl  ------------------------------------------------
 		 ;;
   	  *)
