@@ -1,0 +1,2 @@
+This test involves validating that WAIT FOR EVENT inside a TRY block
+is rejected.
