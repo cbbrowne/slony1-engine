@@ -3,3 +3,4 @@ set add table (id=2, set id=1, origin=1, fully qualified name = 'public.table2',
 set add table (id=3, set id=1, origin=1, fully qualified name = 'public.table3');
 set add table (id=4, set id=1, origin=1, fully qualified name = 'public.table4');
 set add table (id=5, set id=1, origin=1, fully qualified name = 'public.billing_discount');
+set add table (id=128, set id=1, origin=1, fully qualified name='public.dropping_badly');

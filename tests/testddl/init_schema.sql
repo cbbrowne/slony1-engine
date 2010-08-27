@@ -49,3 +49,10 @@ zone_id integer
 
 ALTER TABLE ONLY billing_discount
     ADD CONSTRAINT billing_discount_pkey PRIMARY KEY (billing_discount_id);
+
+create table dropping_badly (
+	   id serial primary key,
+	   data text not null
+);
+
+comment on table dropping_badly is 'This table will get dropped out badly, before there is a SET DROP TABLE request.';

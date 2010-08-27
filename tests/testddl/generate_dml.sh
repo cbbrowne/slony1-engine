@@ -80,6 +80,15 @@ do_initdata()
   do_ik
   status "completed DDL script"
 
+  echo "drop table public.dropping_badly;" > ${mktmp}/drop_tables.sql
+  query_each_node ${mktmp}/drop_tables.sql
+  status "dropped table dropping_badly from each node"
+
+  init_preamble
+  echo "set drop table (origin=1, id=128);" >> $SCRIPT
+  do_ik
+  status "Asked to drop table dropping_badly from replication, after the underlying table was already dropped"
+
   status "Generate some more data"
   generate_initdata
   eval db=\$DB${originnode}
