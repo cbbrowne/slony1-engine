@@ -2923,7 +2923,7 @@ begin
 	-- Ensure table exists
 	-- ----
 	if not found then
-		raise exception 'Slony-I: setDropTable_int(): table % not found',
+		raise exception 'Slony-I: setDropTable(): table % not found',
 			p_tab_id;
 	end if;
 
@@ -2973,10 +2973,11 @@ begin
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
 
-        -- ----
-	-- Determine the set_id
-        -- ----
-	select tab_set into v_set_id from @NAMESPACE@.sl_table where tab_id = p_tab_id;
+	-- ----
+	-- Determine the set_id and table oid
+	-- ----
+	select tab_set, tab_reloid into v_set_id, v_tab_reloid 
+			from @NAMESPACE@.sl_table where tab_id = p_tab_id;
 
 	-- ----
 	-- Ensure table exists
@@ -3011,7 +3012,12 @@ begin
 	-- ----
 	-- Drop the table from sl_table and drop trigger from it.
 	-- ----
-	perform @NAMESPACE@.alterTableDropTriggers(p_tab_id);
+	if exists (select 1 from pg_catalog.pg_class where oid = v_tab_reloid) then
+		perform @NAMESPACE@.alterTableDropTriggers(p_tab_id);
+	else
+		raise notice 'WARNING: table with id % (oid %) not found',
+				p_tab_id, v_tab_reloid;
+	end if;
 	delete from @NAMESPACE@.sl_table where tab_id = p_tab_id;
 	return p_tab_id;
 end;
