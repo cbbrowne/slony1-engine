@@ -165,6 +165,24 @@ init_preamble() {
 	echo "include <${mktmp}/slonik.preamble>;" > $mktmp/slonik.script
 }
 
+query_each_node()
+{
+	local file=$1
+	node=1
+
+	while : ; do
+	  eval db=\$DB${node}
+	  eval host=\$HOST${node}
+	  eval user=\$USER${node}
+	  eval port=\$PORT${node}
+	  $pgbindir/psql -h $host -p $port $db $user -f $file
+      if [ ${node} -ge ${NUMNODES} ]; then
+          break;
+      else
+          node=$((${node} + 1))
+      fi
+    done
+}
 
 store_node()
 {
