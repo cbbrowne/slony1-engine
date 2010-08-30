@@ -350,7 +350,7 @@ LIBS="$OLD_LIBS -lpq"
 AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([#include "libpq-fe.h"], [if (PQisthreadsafe()) {return 0;} else {return 1;}])], 
 	[echo "PQisthreadsafe() true"], 
-	[AC_MSG_ERROR([PQisthreadsafe test failed - likely need --enable-thread-safety])])
+	[AC_MSG_ERROR([PQisthreadsafe test failed - PostgreSQL needs to be compiled with --enable-thread-safety])])
 LIBS=$OLD_LIBS
 
 AC_MSG_CHECKING(for ScanKeywordLookup)
