@@ -3919,7 +3919,8 @@ begin
 				and PGXC.relname = T.tab_idxname
 				for update;
 	if not found then
-		raise exception 'Slony-I: alterTableDropTriggers(): Table with id % not found', p_tab_id;
+		raise notice 'Slony-I: alterTableDropTriggers(): Table with id % not found', p_tab_id;
+		return 0;
 	end if;
 	v_tab_fqname = v_tab_row.tab_fqname;
 
@@ -3985,7 +3986,8 @@ begin
 				and PGXC.relname = T.tab_idxname
 				for update;
 	if not found then
-		raise exception 'Slony-I: alterTableConfigureTriggers(): Table with id % not found', p_tab_id;
+		raise notice 'Slony-I: alterTableConfigureTriggers(): Table with id % not found', p_tab_id;
+		return 0;
 	end if;
 	v_tab_fqname = v_tab_row.tab_fqname;
 
