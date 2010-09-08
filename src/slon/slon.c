@@ -354,7 +354,7 @@ main(int argc, char *const argv[])
 
 	if (!PQisthreadsafe()) 
 	{
-		slon_log(SLON_FATAL,"slon: libpq was not compiled with --enable-thread-safety. Slony-I requires a thread enabled libpq\n");
+		slon_log(SLON_FATAL,"slon: libpq was not compiled with thread safety enabled (normally: --enable-thread-safety).  slon is a multithreaded application requiring thread-safe libpq\n");
 		slon_exit(-1);
 	}
 
