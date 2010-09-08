@@ -40,6 +40,11 @@ need to be shown if you are running into some problem with &slony1;.</para>
 
 </sect2>
 
+<sect2><title>FATAL Notices</title>
+
+<para> These indicate problems serious enough to take a node
+down. </para></sect2>
+
 <sect2><title>Thread name </title>
 
 <para> Notices are always prefaced by the name of the thread from
@@ -1062,6 +1067,25 @@ foreign key constraint "pa_client-no_id-ref".  DETAIL: Key
 when the node unaware of a would-be new node; probably a sign of
 <command>STORE_NODE</command> and <command>STORE_PATH</command>
 requests not propagating... </para> </listitem>
+
+<listitem><para><command>FATAL: slon_node_health_check() returned false - fatal health problem!</command></para>
+
+<para> This indicates that one or more of the health checks defined in
+the stored function, <functin>slon_node_health_check()</functin>, indicated
+failure.</para>
+
+<para> This might mean, for instance, that table data in
+<envar>sl_table</envar> does not match the actual tables in
+<envar>pg_catalog.pg_class</envar>.</para>
+
+<para> That could result from having duplicated a node using
+<application>pg_dump</application>, but with a failure to run <xref
+linkend="stmtrepairconfig"> to reset name-to-oid table
+mappings.</para>
+
+<para> Warnings are likely to have been captured in the &postgres;
+logs, and will be useful in determining what to fix.</para></listitem>
+
 </itemizedlist>
 </sect3>
 </sect2>
