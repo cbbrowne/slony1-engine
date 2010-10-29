@@ -5814,7 +5814,9 @@ begin
 				all_ok := 'f'::boolean;
 				raise warning 'table [id,nsp,name]=[%,%,%] - sl_table does not match pg_class/pg_namespace', prec.tab_id, prec.tab_relname, prec.tab_nspname;
 		end loop;
-						
+		if not all_ok then
+		   raise warning 'Mismatch found between sl_table and pg_class.  Slonik command REPAIR CONFIG may be useful to rectify this.';
+		end if;
 		return all_ok;
 end
 $$ language plpgsql;
