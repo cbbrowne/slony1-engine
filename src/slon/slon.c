@@ -452,15 +452,16 @@ SlonMain(void)
 	} else {
 		if (PQntuples(res) != 1)
 		{
-		    slon_log(SLON_FATAL,
-					 "query '%s' returned %d rows (expected 1)\n",
-					 query, PQntuples(res));
-			slon_abort();
+				slon_log(SLON_FATAL,
+						 "query '%s' returned %d rows (expected 1)\n",
+						 query, PQntuples(res));
+				slon_abort();
 		} else {
 			if (PQgetvalue(res, 0, 0) == 'f') {
-			    slon_log(SLON_FATAL, 
-						 "slon_node_health_check() returned false - fatal health problem!\nSee PostgreSQL logs for details\n");
-				slon_abort();
+					slon_log(SLON_FATAL, 
+							 "slon_node_health_check() returned false - fatal health problem!\n%s\n",
+							 PQresultErrorMessage(res));
+					slon_abort();
 			}
 		}
 	}
