@@ -459,7 +459,7 @@ SlonMain(void)
 		} else {
 			if (PQgetvalue(res, 0, 0) == 'f') {
 					slon_log(SLON_FATAL, 
-							 "slon_node_health_check() returned false - fatal health problem!\n%s\n",
+							 "slon_node_health_check() returned false - fatal health problem!\n%s\nREPAIR CONFIG may be helpful to rectify this problem",
 							 PQresultErrorMessage(res));
 					slon_abort();
 			}
