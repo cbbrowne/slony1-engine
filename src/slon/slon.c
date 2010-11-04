@@ -457,12 +457,12 @@ SlonMain(void)
 						 query, PQntuples(res));
 				slon_abort();
 		} else {
-			if (PQgetvalue(res, 0, 0) == 'f') {
-					slon_log(SLON_FATAL, 
-							 "slon_node_health_check() returned false - fatal health problem!\n%s\nREPAIR CONFIG may be helpful to rectify this problem",
-							 PQresultErrorMessage(res));
-					slon_abort();
-			}
+				if (*(PQgetvalue(res, 0, 0)) == 'f') {
+						slon_log(SLON_FATAL, 
+								 "slon_node_health_check() returned false - fatal health problem!\n%s\nREPAIR CONFIG may be helpful to rectify this problem\n",
+								 PQresultErrorMessage(res));
+						slon_abort();
+				}
 		}
 	}
 	PQclear(res);
