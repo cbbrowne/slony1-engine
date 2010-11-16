@@ -5397,6 +5397,8 @@ begin
 		raise exception 'Upgrading to Slony-I 2.x requires running slony_upgrade_20';
 	end if;
 
+	perform @NAMESPACE@.add_truncate_triggers();
+
 	return p_old;
 end;
 $$ language plpgsql;

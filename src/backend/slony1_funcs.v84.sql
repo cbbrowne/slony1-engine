@@ -103,3 +103,38 @@ end $$ language plpgsql;
 
 comment on function @NAMESPACE@.origin_truncate_trigger(i_fqname text) is
 'disable deny access, enable log trigger on origin.';
+
+create or replace function @NAMESPACE@.add_truncate_triggers () returns integer as $$
+begin
+
+		--- Add truncate triggers
+		begin		
+		perform @NAMESPACE@.addtruncatetrigger(@NAMESPACE@.slon_quote_brute(tab_nspname) || '.' || @NAMESPACE@.slon_quote_brute(tab_relname), tab_id)
+				from @NAMESPACE@.sl_table
+                where 2 <> (select count(*) from information_schema.triggers where 
+					  event_object_schema = tab_nspname and trigger_name in ('_@CLUSTERNAME@_truncatedeny', '_@CLUSTERNAME@_truncatetrigger') and
+                      event_object_table = tab_relname);
+
+		exception when unique_violation then
+				  raise warning 'add_truncate_triggers() - uniqueness violation';
+				  raise warning 'likely due to truncate triggers existing partially';
+				  raise exception 'add_truncate_triggers() - failure - [%][%]', SQLSTATE, SQLERRM;
+		end;
+
+		-- Activate truncate triggers for replica
+		perform @NAMESPACE@.replica_truncate_trigger(@NAMESPACE@.slon_quote_brute(tab_nspname) || '.' || @NAMESPACE@.slon_quote_brute(tab_relname))
+		        from @NAMESPACE@.sl_table
+                where tab_set not in (select set_id from @NAMESPACE@.sl_set where set_origin = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'));
+
+		-- Activate truncate triggers for origin
+		perform @NAMESPACE@.origin_truncate_trigger(@NAMESPACE@.slon_quote_brute(tab_nspname) || '.' || @NAMESPACE@.slon_quote_brute(tab_relname))
+		        from @NAMESPACE@.sl_table
+                where tab_set in (select set_id from @NAMESPACE@.sl_set where set_origin = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'));
+
+		return 1;
+end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.add_truncate_triggers () is 
+'Add ON TRUNCATE triggers to replicated tables.';
+
