@@ -576,8 +576,8 @@ comment on function @NAMESPACE@.registry_get_text(text, text) is
 
 Get a registry value. If not present, set and return the default.';
 
-create or replace function @NAMESPACE@.registry_set_timestamp(text, timestamp)
-returns timestamp as $$
+create or replace function @NAMESPACE@.registry_set_timestamp(text, timestamptz)
+returns timestamptz as $$
 DECLARE
 	p_key		alias for $1;
 	p_value		alias for $2;
@@ -598,17 +598,17 @@ BEGIN
 	return p_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_set_timestamp(text, timestamp) is
+comment on function @NAMESPACE@.registry_set_timestamp(text, timestamptz) is
 'registry_set_timestamp(key, value)
 
 Set or delete a registry value';
 
-create or replace function @NAMESPACE@.registry_get_timestamp(text, timestamp)
-returns timestamp as $$
+create or replace function @NAMESPACE@.registry_get_timestamp(text, timestamptz)
+returns timestamptz as $$
 DECLARE
 	p_key		alias for $1;
 	p_default	alias for $2;
-	v_value		timestamp;
+	v_value		timestamptz;
 BEGIN
 	select reg_timestamp into v_value from @NAMESPACE@.sl_registry
 			where reg_key = p_key;
@@ -626,7 +626,7 @@ BEGIN
 	return v_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_get_timestamp(text, timestamp) is
+comment on function @NAMESPACE@.registry_get_timestamp(text, timestamptz) is
 'registry_get_timestamp(key, value)
 
 Get a registry value. If not present, set and return the default.';
@@ -4429,7 +4429,7 @@ subscription has become active.';
 -- FUNCTION forwardConfirm (p_con_origin, p_con_received, p_con_seqno, p_con_timestamp)
 --
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamp)
+create or replace function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamptz)
 returns bigint
 as $$
 declare
@@ -4454,7 +4454,7 @@ begin
 	return v_max_seqno;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamp) is
+comment on function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamptz) is
 'forwardConfirm (p_con_origin, p_con_received, p_con_seqno, p_con_timestamp)
 
 Confirms (recorded in sl_confirm) that items from p_con_origin up to
@@ -5092,7 +5092,7 @@ BEGIN
 	if v_current_status = 0 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 3);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamp);
+				'logswitch.laststart', now()::timestamptz);
 		raise notice 'Slony-I: Logswitch to sl_log_2 initiated';
 		return 2;
 	end if;
@@ -5104,7 +5104,7 @@ BEGIN
 	if v_current_status = 1 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 2);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamp);
+				'logswitch.laststart', now()::timestamptz);
 		raise notice 'Slony-I: Logswitch to sl_log_1 initiated';
 		return 1;
 	end if;
@@ -5392,7 +5392,9 @@ returns text as $$
 
 declare
         p_old   	alias for $1;
-		v_tab_row	record;
+	v_tab_row	record;
+	v_query text;
+	v_keepstatus text;
 begin
 	-- If old version is pre-2.0, then we require a special upgrade process
 	if p_old like '1.%' then
@@ -5401,9 +5403,31 @@ begin
 
 	perform @NAMESPACE@.add_truncate_triggers();
 
+	if exists (select 1 from information_schema.columns c
+            where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
+	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')) then
+
+	  -- Preserve sl_status
+	  select pg_get_viewdef('sl_status') into v_keepstatus;
+	  execute 'drop view sl_status';
+	  for v_tab_row in select table_schema, table_name, column_name from information_schema.columns c
+            where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
+	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
+	  loop
+		raise notice 'Changing Slony-I column [%.%] to timestamp WITH time zone', v_tab_row.table_name, v_tab_row.column_name;
+		v_query := 'alter table ' || @NAMESPACE@.slon_quote_brute(v_tab_row.table_schema) ||
+                   '.' || v_tab_row.table_name || ' alter column ' || v_tab_row.column_name ||
+                   ' set data type timestamp with time zone;';
+		execute v_query;
+	  end loop;
+	  -- restore sl_status
+	  execute 'create view sl_status as ' || v_keepstatus;
+        end if;
 	return p_old;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path to @NAMESPACE@
+;
 
 comment on function @NAMESPACE@.upgradeSchema(text) is
     'Called during "update functions" by slonik to perform schema changes';
