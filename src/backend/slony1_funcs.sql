@@ -5905,6 +5905,11 @@ begin
 	if exists (select 1 from @NAMESPACE@.sl_exclude_nodes where xn_excluder = i_excluder and xn_excludee = i_excludee) then
 	   raise exception 'ExcludeNode(%,%) - exclusion entry already exists!', i_excluder, i_excludee;
 	end if;
+	if exists (select 1 from @NAMESPACE@.sl_subscribe 
+       where sub_provider in (i_excluder, i_excludee) and sub_receiver in (i_excluder, i_excludee))
+    then
+	   raise exception 'ExcludeNode(%,%) - subscription active between these nodes!  Cannot exclude', i_excluder, i_excludee;
+	end if;
 	insert into @NAMESPACE@.sl_exclude_nodes (xn_excluder, xn_excludee) values (i_excluder, i_excludee);
 	return 1;
 end;
