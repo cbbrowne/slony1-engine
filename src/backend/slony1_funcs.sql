@@ -4078,6 +4078,16 @@ begin
 		end if;
 	end if;
 
+    -- ---
+    -- Verify that there is no exclusion between provider and subscriber
+    -- Bug #174
+    -- ---
+    if exists (select 1 from @NAMESPACE@.sl_exclude_nodes where xn_excluder in (p_sub_provider, p_sub_receiver) 
+                   and xn_excludee in (p_sub_provider, p_sub_receiver))
+    then
+	    raise exception 'Slony-I: subscribeSet() - exclusion rule for this pair of nodes: (%,%)', p_sub_provider, p_sub_receiver;
+	end if;
+
 	-- ----
 	-- Create the SUBSCRIBE_SET event
 	-- ----
