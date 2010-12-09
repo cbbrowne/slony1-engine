@@ -5892,3 +5892,84 @@ $$ language plpgsql;
 comment on function @NAMESPACE@.truncate_deny ()
 is 'trigger function run when a replicated table receives a TRUNCATE request';
 
+-- ----------------------------------------------------------------------
+-- FUNCTION excludeNode_int (excluder, excludee)
+--
+--	Causes node "excluder" to ignore events on node "excludee"
+-- ----------------------------------------------------------------------
+create or replace function @NAMESPACE@.excludeNode_int (i_excluder int4, i_excludee int4)
+returns int4
+as $$
+begin
+	lock table @NAMESPACE@.sl_config_lock;
+	if exists (select 1 from @NAMESPACE@.sl_exclude_nodes where xn_excluder = i_excluder and xn_excludee = i_excludee) then
+	   raise exception 'ExcludeNode(%,%) - exclusion entry already exists!', i_excluder, i_excludee;
+	end if;
+	insert into @NAMESPACE@.sl_exclude_nodes (xn_excluder, xn_excludee) values (i_excluder, i_excludee);
+	return 1;
+end;
+$$ language plpgsql;
+
+
+comment on function @NAMESPACE@.excludeNode_int (i_excluder int4, i_excludee int4) is 
+'Add node as excluded';
+
+-- ----------------------------------------------------------------------
+-- FUNCTION excludeNode (excluder, excludee)
+--
+--	Causes node "excluder" to ignore events on node "excludee"
+-- ----------------------------------------------------------------------
+create or replace function @NAMESPACE@.excludeNode (i_excluder int4, i_excludee int4)
+returns int4
+as $$
+begin
+	perform @NAMESPACE@.excludeNode_int (i_excluder, i_excludee);
+	return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'EXCLUDE_NODE',
+									i_excluder::text, i_excludee::text);
+end;
+$$ language plpgsql;
+
+
+comment on function @NAMESPACE@.excludeNode (i_excluder int4, i_excludee int4) is 
+'Add node as excluded';
+
+-- ----------------------------------------------------------------------
+-- FUNCTION unexcludeNode_int (excluder, excludee)
+--
+--	Causes node "excluder" to listen for events on node "excludee"
+-- ----------------------------------------------------------------------
+create or replace function @NAMESPACE@.unexcludeNode_int (i_excluder int4, i_excludee int4)
+returns int4
+as $$
+begin
+	lock table @NAMESPACE@.sl_config_lock;
+	if not exists (select 1 from @NAMESPACE@.sl_exclude_nodes where xn_excluder = i_excluder and xn_excludee = i_excludee) then
+	   raise exception 'UnexcludeNode(%,%) - no such exclusion entry!', i_excluder, i_excludee;
+	end if;
+	delete from @NAMESPACE@.sl_exclude_nodes where xn_excluder = i_excluder and  xn_excludee = i_excludee;
+	return 1;
+end;
+$$ language plpgsql;
+
+
+comment on function @NAMESPACE@.unexcludeNode_int (i_excluder int4, i_excludee int4) is 
+'remove node from excluded list';
+
+-- ----------------------------------------------------------------------
+-- FUNCTION unexcludeNode (excluder, excludee)
+--
+--	Causes node "excluder" to listen for events on node "excludee"
+-- ----------------------------------------------------------------------
+create or replace function @NAMESPACE@.unexcludeNode (i_excluder int4, i_excludee int4)
+returns int4
+as $$
+begin
+	perform @NAMESPACE@.unexcludeNode_int (i_excluder, i_excludee);
+	return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'UNEXCLUDE_NODE',
+									i_excluder::text, i_excludee::text);
+end;
+$$ language plpgsql;
+
+
+comment on function @NAMESPACE@.unexcludeNode (i_excluder int4, i_excludee int4) is 
+'remove node from excluded list';
