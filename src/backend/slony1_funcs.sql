@@ -5408,7 +5408,7 @@ begin
 	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')) then
 
 	  -- Preserve sl_status
-	  select pg_get_viewdef('sl_status') into v_keepstatus;
+	  select pg_get_viewdef('@NAMESPACE@.sl_status') into v_keepstatus;
 	  execute 'drop view sl_status';
 	  for v_tab_row in select table_schema, table_name, column_name from information_schema.columns c
             where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
