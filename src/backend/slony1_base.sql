@@ -552,6 +552,22 @@ insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
 	values (0, 'epoch'::timestamp);
 
 -- ----------------------------------------------------------------------
+-- TABLE sl_exclude_nodes
+--
+--	This table is used to generate the archive number for logshipping.
+-- ----------------------------------------------------------------------
+create table @NAMESPACE@.sl_exclude_nodes (
+    xn_excluder      int4 references @NAMESPACE@.sl_node on delete cascade,
+	xn_excludee      int4 references @NAMESPACE@.sl_node on delete cascade,
+	primary key (xn_excludee, xn_excluder)
+) without oids;
+comment on table @NAMESPACE@.sl_exclude_nodes is 'List of nodes that are to be ignored';
+comment on column @NAMESPACE@.sl_exclude_nodes.xn_excluder is 'ID of node that is ignoring the excludee';
+comment on column @NAMESPACE@.sl_exclude_nodes.xn_excludee is 'ID of node that is ignored';
+
+
+
+-- ----------------------------------------------------------------------
 -- Last but not least grant USAGE to the replication schema objects.
 -- ----------------------------------------------------------------------
 grant usage on schema @NAMESPACE@ to public;
