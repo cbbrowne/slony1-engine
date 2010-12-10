@@ -170,6 +170,17 @@ db_connect(SlonikStmt * stmt, SlonikAdmInfo * adminfo)
 	 * ----
 	 */
 	return db_commit_xact(stmt, adminfo);
+
+	dstring_init(&query);
+	slon_mkquery(&query,"SET application_name TO 'slon'; ");
+
+	adminfo->dbconn = dbconn;
+	if (db_exec_command(stmt, adminfo, &query) < 0)
+	{
+		printf("Unable to set application name (yet?)\n");
+	}
+	dstring_free(&query); 
+
 }
 
 
