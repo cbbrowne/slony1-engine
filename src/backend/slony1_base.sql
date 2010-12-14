@@ -552,6 +552,33 @@ insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
 	values (0, 'epoch'::timestamp);
 
 -- ----------------------------------------------------------------------
+-- TABLE sl_components
+--
+--	This table is used to generate the archive number for logshipping.
+-- ----------------------------------------------------------------------
+create table @NAMESPACE@.sl_components (
+	co_actor	 text not null,
+	co_pid	 integer not null,
+	co_node	 integer not null,
+	primary key (co_actor, co_pid, co_node),
+	co_connection_pid integer,
+	co_activity	text not null,
+	co_starttime timestamptz not null default now(),
+	co_event	 bigint,
+	co_eventtype text
+) without oids;
+comment on table @NAMESPACE@.sl_components is 'Table used to monitor what various slon/slonik components are doing';
+comment on column @NAMESPACE@.sl_components.co_actor is 'which component am I';
+comment on column @NAMESPACE@.sl_components.co_pid is 'my process/thread PID';
+comment on column @NAMESPACE@.sl_components.co_node is 'which node am I servicing?';
+comment on column @NAMESPACE@.sl_components.co_connection_pid is 'PID of database connection being used';
+comment on column @NAMESPACE@.sl_components.co_activity is 'activity that I am up to';
+comment on column @NAMESPACE@.sl_components.co_starttime is 'when did my activity begin?';
+comment on column @NAMESPACE@.sl_components.co_eventtype is 'what kind of event am I processing?';
+comment on column @NAMESPACE@.sl_components.co_event is 'which event might I be processing?';
+
+
+-- ----------------------------------------------------------------------
 -- Last but not least grant USAGE to the replication schema objects.
 -- ----------------------------------------------------------------------
 grant usage on schema @NAMESPACE@ to public;
