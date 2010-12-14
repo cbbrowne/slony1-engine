@@ -498,6 +498,12 @@ extern int	sync_interval_timeout;
 extern void *syncThread_main(void *dummy);
 
 /* ----------
+ * Functions in monitor_thread.c
+ * ----------
+ */
+extern void *monitorThread_main(void *dummy);
+
+/* ----------
  * Functions in local_listen.c
  * ----------
  */
