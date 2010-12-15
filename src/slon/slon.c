@@ -492,8 +492,9 @@ SlonMain(void)
 
 	/* Look up all subscriptions and see if I exist on my parents' nodes */
 	dstring_init(&query);
-	slon_mkquery(&query, "select sub_provider, pa_conninfo from %s.sl_subscribe s, %s.sl_path p "
+	slon_mkquery(&query, "select sub_provider, pa_conninfo from %s.sl_subscribe s, %s.sl_path p, %s.sl_node n "
 				 "where sub_receiver=%d and p.pa_server = s.sub_provider and p.pa_client = s.sub_receiver "
+				 "and n.no_id = s.sub_provider and n.no_active "
 				 "group by sub_provider, pa_conninfo;",
 				 rtcfg_namespace, rtcfg_namespace, rtcfg_nodeid);
 	res = PQexec(startup_conn, dstring_data(&query));
@@ -510,26 +511,31 @@ SlonMain(void)
 					{
 							parent_node = (int) strtol(PQgetvalue(res, i, 0), NULL, 10);
 							parent_conn = PQconnectdb(PQgetvalue(res, i, 1));
-							dstring_init(&pquery);
-							slon_mkquery(&pquery, "select * from %s.sl_subscribe where sub_receiver=%d;",
-										 rtcfg_namespace, rtcfg_nodeid);
-					
-							pres = PQexec(parent_conn, dstring_data(&pquery));
-							if (PQresultStatus(pres) != PGRES_TUPLES_OK)
+							if (parent_conn == NULL) 
 							{
-									slon_log(SLON_WARN, "Health Check: Query against parent node %d failed - %\n", 
-											 parent_node, PQresultErrorMessage(pres));
-									slon_abort();
+									slon_log(SLON_WARN, "main: PQconnectdb() to parent node %d failed - cannot check this parent node\n", parent_node);
 							} else {
-									if (PQntuples(pres) < 1) {
-											slon_log(SLON_FATAL, "Health Check: Parent node %d does not believe this node %d has any subscriptions - likely this node is failed!\n",
-													 parent_node, rtcfg_nodeid);
+									dstring_init(&pquery);
+									slon_mkquery(&pquery, "select * from %s.sl_subscribe where sub_receiver=%d;",
+												 rtcfg_namespace, rtcfg_nodeid);
+					
+									pres = PQexec(parent_conn, dstring_data(&pquery));
+									if (PQresultStatus(pres) != PGRES_TUPLES_OK)
+									{
+											slon_log(SLON_WARN, "Health Check: Query against parent node %d failed - %\n", 
+													 parent_node, PQresultErrorMessage(pres));
 											slon_abort();
-									} /* Otherwise, parent believes I exist - all is well! */
-									slon_log(SLON_DEBUG1, "Health Check: Parent node %d agrees that this node %d is a subscriber\n", parent_node, rtcfg_nodeid);
+									} else {
+											if (PQntuples(pres) < 1) {
+													slon_log(SLON_FATAL, "Health Check: Parent node %d does not believe this node %d has any subscriptions - likely this node is failed!\n",
+															 parent_node, rtcfg_nodeid);
+													slon_abort();
+											} /* Otherwise, parent believes I exist - all is well! */
+											slon_log(SLON_DEBUG1, "Health Check: Parent node %d agrees that this node %d is a subscriber\n", parent_node, rtcfg_nodeid);
+									}
+									PQclear(pres);
+									dstring_free(&pquery);
 							}
-							PQclear(pres);
-							dstring_free(&pquery);
 					}
 			}
 	}
