@@ -179,6 +179,7 @@ db_connect(SlonikStmt * stmt, SlonikAdmInfo * adminfo)
 	if (PQntuples(res) == 0)
 	{
 			/* Unable to set application_name on this version of PostgreSQL */
+			PQclear(res);
 	} else {
 			PQclear(res);
 			dstring_init(&query);
