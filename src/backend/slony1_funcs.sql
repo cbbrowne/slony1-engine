@@ -5403,6 +5403,8 @@ begin
 
 	perform @NAMESPACE@.add_truncate_triggers();
 
+
+	-- Change all Slony-I-defined columns that are "timestamp without time zone" to "timestamp *WITH* time zone"
 	if exists (select 1 from information_schema.columns c
             where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
 	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
