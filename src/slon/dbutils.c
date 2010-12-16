@@ -54,6 +54,7 @@ slon_connectdb(char *conninfo, char *symname)
 	SlonConn   *conn;
 	PGresult   *res;
 	SlonDString query;
+	int         connpid;
 
 	/*
 	 * Create the native database connection
@@ -107,6 +108,17 @@ slon_connectdb(char *conninfo, char *symname)
 	}
 	PQclear(res);
 
+	/* Find PID for connection */
+	slon_mkquery(&query, "select pg_catalog.pg_backend_pid();");
+	res = PQexec(dbconn, dstring_data(&query));
+	if (!(PQresultStatus(res) == PGRES_TUPLES_OK))
+	{
+			slon_log(SLON_ERROR, "Unable to check connection PID\n");
+	} else {
+			connpid = strtol(PQgetvalue(res, 0, 0), NULL, 10);
+	}
+	PQclear(res);
+
 	/*
 	 * Embed it into a SlonConn structure used to exchange it with the
 	 * scheduler. On return this new connection object is locked.
@@ -114,6 +126,7 @@ slon_connectdb(char *conninfo, char *symname)
 	conn = slon_make_dummyconn(symname);
 	conn->dbconn = dbconn;
 	conn->pg_version = db_get_version(dbconn);
+	conn->conn_pid = connpid;
 	if (conn->pg_version < 80300)
 	{
 		slon_log(SLON_ERROR,

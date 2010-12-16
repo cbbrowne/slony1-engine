@@ -164,6 +164,7 @@ struct SlonConn_s
     int			condition;		/* what are we waiting for? */
     struct timeval timeout;		/* timeofday for timeout */
     int	pg_version;		/* PostgreSQL version */
+	int conn_pid;       /* PID of connection */
 
     SlonConn   *prev;
     SlonConn   *next;
