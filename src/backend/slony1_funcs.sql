@@ -5092,7 +5092,7 @@ BEGIN
 	if v_current_status = 0 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 3);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamptz);
+				'logswitch.laststart', now());
 		raise notice 'Slony-I: Logswitch to sl_log_2 initiated';
 		return 2;
 	end if;
@@ -5104,7 +5104,7 @@ BEGIN
 	if v_current_status = 1 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 2);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamptz);
+				'logswitch.laststart', now());
 		raise notice 'Slony-I: Logswitch to sl_log_1 initiated';
 		return 1;
 	end if;
@@ -5405,7 +5405,9 @@ begin
 
 	if exists (select 1 from information_schema.columns c
             where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
-	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')) then
+	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
+		and (c.table_name, c.column_name) in (('sl_confirm', 'con_timestamp'), ('sl_event', 'ev_timestamp'), ('sl_registry', 'reg_timestamp'),('sl_archive_counter', 'ac_timestamp')))
+	then
 
 	  -- Preserve sl_status
 	  select pg_get_viewdef('@NAMESPACE@.sl_status') into v_keepstatus;
@@ -5413,6 +5415,7 @@ begin
 	  for v_tab_row in select table_schema, table_name, column_name from information_schema.columns c
             where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
 	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
+		and (table_name, column_name) in (('sl_confirm', 'con_timestamp'), ('sl_event', 'ev_timestamp'), ('sl_registry', 'reg_timestamp'),('sl_archive_counter', 'ac_timestamp'))
 	  loop
 		raise notice 'Changing Slony-I column [%.%] to timestamp WITH time zone', v_tab_row.table_name, v_tab_row.column_name;
 		v_query := 'alter table ' || @NAMESPACE@.slon_quote_brute(v_tab_row.table_schema) ||
