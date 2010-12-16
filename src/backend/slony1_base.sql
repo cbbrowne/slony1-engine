@@ -554,7 +554,8 @@ insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
 -- ----------------------------------------------------------------------
 -- TABLE sl_components
 --
---	This table is used to generate the archive number for logshipping.
+--	This table captures the state of each Slony component to help
+--  with monitoring
 -- ----------------------------------------------------------------------
 create table @NAMESPACE@.sl_components (
 	co_actor	 text not null,
