@@ -4029,9 +4029,6 @@ begin
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
 
-	raise notice 'subscribe set: omit_copy=%', p_omit_copy;
-
-
 
 	--
 	-- Check that the receiver exists
@@ -4124,8 +4121,6 @@ begin
 	-- Grab the central configuration lock
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
-
-	raise notice 'subscribe set: omit_copy=%', p_omit_copy;
 
 	-- ----
 	-- Provider change is only allowed for active sets
@@ -5892,6 +5887,21 @@ $$ language plpgsql;
 comment on function @NAMESPACE@.truncate_deny ()
 is 'trigger function run when a replicated table receives a TRUNCATE request';
 
+create or replace function @NAMESPACE@.store_application_name (i_name text) returns text as $$
+declare
+		p_command text;
+begin
+		if exists (select 1 from pg_catalog.pg_settings where name = 'application_name') then
+		   p_command := 'set application_name to '''|| i_name || ''';';
+		   execute p_command;
+		   return i_name;
+		end if;
+		return NULL::text;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.store_application_name (i_name text) is
+'Set application_name GUC, if possible.  Returns NULL if it fails to work.';
+
 create or replace function @NAMESPACE@.component_state (i_actor text, i_pid integer, i_node integer, i_conn_pid integer, i_activity text, i_starttime timestamptz, i_event bigint, i_eventtype text) returns integer as $$
 begin
 	-- Trim out old state for this component
@@ -5906,4 +5916,3 @@ language plpgsql;
 
 comment on function @NAMESPACE@.component_state (i_actor text, i_pid integer, i_node integer, i_conn_pid integer, i_activity text, i_starttime timestamptz, i_event bigint, i_eventtype text) is
 'Store state of a Slony component.  Useful for monitoring';
-
