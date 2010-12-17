@@ -75,8 +75,38 @@ typedef struct SlonNode_s SlonNode;
 typedef struct SlonListen_s SlonListen;
 typedef struct SlonSet_s SlonSet;
 typedef struct SlonConn_s SlonConn;
+typedef struct SlonState_s SlonState;
+typedef struct SlonStateQueue_s SlonStateQueue;
 
 typedef struct SlonWorkMsg_s SlonWorkMsg;
+
+/* ----------
+ * SlonState
+ * ----------
+ */
+struct SlonState_s
+{
+		char *actor;
+		int pid;
+		int node;
+		int conn_pid;
+		char *activity;
+		time_t start_time;
+		int64 event;
+		char *event_type;
+};
+
+/* ----------
+ * SlonStateQueue
+ * ----------
+ */
+
+struct SlonStateQueue_s
+{
+		SlonState *entry;
+		struct SlonStateQueue_s *next;
+};
+
 
 /* ----------
  * SlonNode
@@ -503,6 +533,15 @@ extern void *syncThread_main(void *dummy);
  * ----------
  */
 extern void *monitorThread_main(void *dummy);
+extern int queue_add (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
+bool queue_dequeue (SlonState *current);
+
+/* ----------
+ * Globals in monitor_thread.c
+ * ----------
+ */
+extern int	monitor_interval;
+
 
 /* ----------
  * Functions in local_listen.c
