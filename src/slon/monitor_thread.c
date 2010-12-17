@@ -191,7 +191,7 @@ int queue_init ()
 		return 1;
 }
 
-int queue_add (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type) 
+int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type) 
 {
 		SlonStateQueue *queue_current;
 

@@ -533,7 +533,7 @@ extern void *syncThread_main(void *dummy);
  * ----------
  */
 extern void *monitorThread_main(void *dummy);
-extern int queue_add (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
+extern int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
 bool queue_dequeue (SlonState *current);
 
 /* ----------
