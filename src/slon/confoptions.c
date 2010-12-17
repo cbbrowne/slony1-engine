@@ -722,6 +722,18 @@ static struct config_int ConfigureNamesInt[] =
 		30,						/* min val */
 		30000					/* max val */
 	},
+	{
+		{
+			(const char *) "monitor_interval",
+			gettext_noop("monitor thread interval for dumping the state queue"),
+			gettext_noop("number of seconds monitor thread waits to queue up status entries"),
+			SLON_C_INT
+		},
+		&monitor_interval,
+		1000,
+		10,
+		120000
+	},
 
 
 	{{0}}
