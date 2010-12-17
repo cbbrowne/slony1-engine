@@ -554,20 +554,21 @@ insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
 -- ----------------------------------------------------------------------
 -- TABLE sl_components
 --
---	This table captures the state of each Slony component to help
+--  This table captures the state of each Slony component to help
 --  with monitoring
 -- ----------------------------------------------------------------------
 create table @NAMESPACE@.sl_components (
 	co_actor	 text not null,
-	co_pid	 integer not null,
-	co_node	 integer not null,
+	co_pid		 integer not null,
+	co_node		 integer not null,
 	primary key (co_actor, co_pid, co_node),
 	co_connection_pid integer,
-	co_activity	text not null,
-	co_starttime timestamptz not null default now(),
-	co_event	 bigint,
-	co_eventtype text
+	co_activity	  text not null,
+	co_starttime	  timestamptz not null default now(),
+	co_event	  bigint,
+	co_eventtype 	  text
 ) without oids;
+
 comment on table @NAMESPACE@.sl_components is 'Table used to monitor what various slon/slonik components are doing';
 comment on column @NAMESPACE@.sl_components.co_actor is 'which component am I';
 comment on column @NAMESPACE@.sl_components.co_pid is 'my process/thread PID';
