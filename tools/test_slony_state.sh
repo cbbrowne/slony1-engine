@@ -23,6 +23,14 @@ function argn () {
     echo $res
 }
 
+function problem () {
+	local node=$1
+	local subject=$2
+	local body=$2
+
+	PROBLEMRECEIVER="cbbrowne@ca.afilias.info"
+	echo "${body}" | mail -s "Slony State Test Warning - Cluster ${CLUSTER} - node ${node} - ${subject}" ${PROBLEMRECEIVER}
+}
 
 # Rummage for DSNs
 NODEQUERY="select no_id from \"_${CLUSTER}\".sl_node;"
@@ -135,4 +143,75 @@ necessary.
 Please check contents of table sl_listen; some STORE LISTEN requests may be
 necessary."
 	done
+
+	WANTAGE="00:30:00"
+	echo "Summary of event info"
+	echo "-------------------------------------------------------------------"
+	EVSUM="
+  select ev_origin as \"Origin\", min(ev_seqno) as \"Min Sync\", max(ev_seqno) as \"Max Sync\",
+         date_trunc('minutes', min(now() - ev_timestamp)) as \"Min Sync Age\",
+         date_trunc('minutes', max(now() - ev_timestamp)) as \"Max Sync Age\",
+         min(now() - ev_timestamp) > '${WANTAGE}' as agehi
+     from \"_${CLUSTER}\".sl_event group by ev_origin;"
+	psql -c "${EVSUM}"
+
+	EVPROBS="
+  select ev_origin, min(now() - ev_timestamp) > '${WANTAGE}'
+     from \"_${CLUSTER}\".sl_event 
+     group by ev_origin
+     having min(now() - ev_timestamp) > '${WANTAGE}';"
+	psql -c "${EVPROBS}"
+
+	EVPROBRES=`RUNQUERY "${EVPROBS}"`
+	for n in `echo ${EVPROBRES}`; do
+		problem ${n} "Events not propagating to node ${n}" "For origin node ${n}, events not propagating quickly.
+
+Are slons running for both nodes?
+
+Might listen paths be missing?"
+	done
+	
+	WANTCONFIRM="00:30:00"
+	CONFQ="
+    select con_origin as \"Origin\", con_received as \"Receiver\", min(con_seqno) as \"Min SYNC\",
+           max(con_seqno) as \"Max SYNC\", date_trunc('minutes', min(now()-con_timestamp)) as \"Age of latest SYNC\",
+           date_trunc('minutes', max(now()-con_timestamp)) as \"Age of eldest SYNC\",
+           min(now() - con_timestamp) > '${WANTCONFIRM}' as \"Too Old?\"
+    from \"_${CLUSTER}\".sl_confirm
+    group by con_origin, con_received
+    order by con_origin, con_received;"
+
+	psql -c "${CONFQ}"
+
+	CONFQ="
+    select con_origin as \"Origin\", con_received as \"Receiver\", min(con_seqno) as \"Min SYNC\"
+    from \"_${CLUSTER}\".sl_confirm
+    group by con_origin, con_received
+    having min(now() - con_timestamp) > '${WANTCONFIRM}'
+    order by con_origin, con_received;"
+
+	CONFQ=`RUNQUERY "${EVPROBS}"`
+	for i in `echo ${CONFQ}`; do
+		origin=`argn "${i}" 1`
+		receiver=`argn "${i}" 2`
+		
+		problem ${origin} "Events from ${origin} not being confirmed by ${receiver}" "For origin node ${origin}, events not being confirmed quickly in sl_confirm.
+
+Are slons running for both nodes?
+
+Might listen paths be missing?"
+		
+	done
+
+	echo "Listing of old open connections for node ${node}"
+	ELDERLYTXN="1:30:00"
+	OLDQ="
+     select datname as \"Database\", procpid as \"Conn PID\", usename as \"User\", date_trunc('minutes', now() - query_start) as \"Query Age\", substr(current_query,0,20) as \"Query\"
+     from pg_stat_activity
+     where  (now() - query_start) > '${ELDERLYTXN}'::interval and
+            current_query <> '<IDLE>'
+     order by query_start;"
+
+	psql -c "${OLDQ}"
+	
 done
