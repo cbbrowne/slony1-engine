@@ -223,6 +223,7 @@ remoteListenThread_main(void *cdata)
 				continue;
 			}
 			dbconn = conn->dbconn;
+			monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "", 0, "");
 
 			/*
 			 * Listen on the connection for events and confirmations and

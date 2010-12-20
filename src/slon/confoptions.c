@@ -607,8 +607,8 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{
 			(const char *) "sync_interval_timeout",
-			gettext_noop("sync interval time out"),
-			gettext_noop("sync interval time out"),
+			gettext_noop("sync interval time out - milliseconds"),
+			gettext_noop("sync interval time out - milliseconds"),
 			SLON_C_INT
 		},
 		&sync_interval_timeout,
@@ -730,9 +730,9 @@ static struct config_int ConfigureNamesInt[] =
 			SLON_C_INT
 		},
 		&monitor_interval,
-		1000,
-		10,
-		120000
+		1,
+		1,
+		12000
 	},
 
 

@@ -33,6 +33,7 @@ int queue_init ();
 SlonStateQueue *queue_tail, *queue_head;
 pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
 int monitor_interval;
+int queue_size;
 
 /* ---------- 
  * slon_localMonitorThread
@@ -44,16 +45,15 @@ void *
 monitorThread_main(void *dummy)
 {
 	SlonConn   *conn;
-	char		last_actseq_buf[64];
 	SlonDString query1;
 	SlonDString query2;
 	PGconn	   *dbconn;
 	PGresult   *res;
-	int			timeout_count;
 	bool        queue_populated;
 	SlonState   state;
 	struct tm  *loctime;
 	char        timebuf[256];
+	int rc;
 
 	slon_log(SLON_INFO,
 			 "monitorThread: thread starts\n");
@@ -67,6 +67,9 @@ monitorThread_main(void *dummy)
 		slon_retry();
 	dbconn = conn->dbconn;
 
+	slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
+	monitor_state("local_monitor", getpid(), 0, conn->conn_pid, 0, 0, 0);
+
 	/*
 	 * Build the query that starts a transaction and retrieves the last value
 	 * from the action sequence.
@@ -76,22 +79,17 @@ monitorThread_main(void *dummy)
 				 "start transaction;"
 				 "set transaction isolation level serializable;");
 
-	/*
-	 * Build the query that calls createEvent() for the SYNC
-	 */
-	dstring_init(&query2);
-	slon_mkquery(&query2,
-				 "select %s.createEvent('_%s', 'SYNC', NULL);",
-				 rtcfg_namespace, rtcfg_cluster_name);
+	slon_log(SLON_DEBUG2, "monitorThread: setup start query\n");
 
-	while (sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK)
+	while (rc = sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK)
 	{
+			slon_log(SLON_CONFIG, "monitorThread: main loop - rc=%d\n", rc);
 			pthread_mutex_lock(&queue_lock);
 			if (queue_head != NULL) {
 					pthread_mutex_unlock(&queue_lock);
 					
 					res = PQexec(dbconn, dstring_data(&query1));
-					if (PQresultStatus(res) != PGRES_TUPLES_OK)
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
 					{
 							slon_log(SLON_FATAL,
 									 "monitorThread: \"%s\" - %s",
@@ -104,10 +102,13 @@ monitorThread_main(void *dummy)
 					/* Now, iterate through queue contents, and dump them all to the database */
 					do {
 							pthread_mutex_lock(&queue_lock);
+
+							slon_log(SLON_DEBUG2, "monitorThread: %d entries to be dequeued\n", queue_size);
 							queue_populated = queue_dequeue(&state);
 							pthread_mutex_unlock(&queue_lock);
 
 							if (queue_populated) {
+									slon_log(SLON_DEBUG2, "monitorThread: dumping queued monitor entry\n");
 									dstring_init(&query2);
 									slon_mkquery(&query2,
 												 "select %s.component_state('%s', %d, %d,", 
@@ -146,6 +147,7 @@ monitorThread_main(void *dummy)
 											slon_retry();
 											break;
 									}
+									slon_log(SLON_DEBUG2, "monitorThread: ... and on to dump more entries...\n");
 									
 							}
 					} while (queue_populated);
@@ -169,6 +171,7 @@ monitorThread_main(void *dummy)
 					pthread_mutex_unlock(&queue_lock);
 			}
 	}
+	slon_log(SLON_CONFIG, "monitorThread: exit main loop - rc=%d\n", rc);
 
 	dstring_free(&query1);
 	dstring_free(&query2);
@@ -181,13 +184,13 @@ monitorThread_main(void *dummy)
 int queue_init ()
 {
 		if (queue_tail != NULL) {
-				slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n");
-				pthread_exit(NULL);
-		} else {
-				slon_log(SLON_DEBUG1, "monitorThread: initializing monitoring queue\n");
-				queue_tail = NULL;
-				queue_head = NULL;
-		}
+				/* slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n"); */
+/* 				pthread_exit(NULL); */
+		} 
+		slon_log(SLON_DEBUG1, "monitorThread: initializing monitoring queue\n");
+		queue_tail = NULL;
+		queue_head = NULL;
+		queue_size = 0;
 		return 1;
 }
 
@@ -197,6 +200,7 @@ int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity,
 
 		pthread_mutex_lock(&queue_lock);
 		queue_current = (SlonStateQueue *) malloc(sizeof(SlonStateQueue));
+		queue_current->entry = (SlonState *) malloc(sizeof(SlonState));
 		queue_current->entry->actor = actor;
 		queue_current->entry->pid = pid;
 		queue_current->entry->node = node;
@@ -208,13 +212,19 @@ int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity,
 
 		if (queue_tail == NULL) {
 				/* Empty queue - becomes a one-entry queue! */
-				slon_log(SLON_DEBUG1, "monitorThread: add entry to empty queue\n");
+				slon_log(SLON_DEBUG1, "monitor: add entry to empty queue\n");
 				queue_head = queue_current;
 				queue_tail = queue_current;
 		} else {
 				queue_tail->next = queue_current;
 				queue_tail = queue_current;
 		}
+		queue_size++;
+
+		slon_log(SLON_DEBUG2, "monitor_state - size=%d (%s,%d,%d,%d,%s,%ld,%s)\n", 
+				 queue_size,
+				 actor, pid, node, conn_pid, activity, event, event_type);
+
 		pthread_mutex_unlock(&queue_lock);
 		return 0;
 }
@@ -222,16 +232,21 @@ int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity,
 bool queue_dequeue (SlonState *current)
 {
 		SlonStateQueue *curr;
+		slon_log(SLON_DEBUG2, "queue_dequeue() - getting lock \n");
 		pthread_mutex_lock(&queue_lock);
+		slon_log(SLON_DEBUG2, "queue_dequeue() - locked queue!\n");
 		if (queue_tail != NULL) {
+				slon_log(SLON_DEBUG2, "queue_dequeue()  - entry to dequeue\n");
 				current = queue_head->entry;
 				curr = queue_head;
 				queue_head = queue_head->next;
 				free(curr);
+				queue_size--;
 				pthread_mutex_unlock(&queue_lock);
 				return TRUE;
 		} else {
 				pthread_mutex_unlock(&queue_lock);
+				slon_log(SLON_DEBUG2, "queue_dequeue()  - NO entry to dequeue\n");
 				return FALSE;
 		}
 }

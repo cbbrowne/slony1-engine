@@ -549,6 +549,7 @@ remoteWorkerThread_main(void *cdata)
 							"set transaction isolation level serializable; ");
 
 		monitor_state(conn_symname, getpid(), node->no_id, 0, event->ev_type, event->ev_seqno, event->ev_type);
+
 		/*
 		 * Event type specific processing
 		 */

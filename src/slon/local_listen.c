@@ -58,6 +58,8 @@ localListenThread_main(/* @unused@ */ void *dummy)
 		slon_retry();
 	dbconn = conn->dbconn;
 
+	monitor_state("local_listen", getpid(), rtcfg_nodeid, conn->conn_pid, "", 0, "");
+
 	/*
 	 * Initialize local data
 	 */
