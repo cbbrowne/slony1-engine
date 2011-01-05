@@ -36,3 +36,5 @@ that there are at least no syntax errors in the stored function.
 of the config file parser gets exercised.
 
 9.  It runs the cleanupEvent() function by hand
+
+10.  Runs the DATE command several times
