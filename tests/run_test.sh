@@ -506,6 +506,10 @@ build_slonconf()
     echo "desired_sync_time=60000" >> ${CONFFILE}
     echo "sql_on_connection=\"SET log_min_duration_statement to '1000';\"" >> ${CONFFILE}
     echo "lag_interval=\"2 seconds\"" >> ${CONFFILE}
+	echo "tcp_keepalive_idle=5" >> ${CONFFILE}
+	echo "tcp_keepalive_interval=5" >> ${CONFFILE}
+	echo "tcp_keepalive_count=5" >> ${CONFFILE}
+	echo "tcp_keepalive=true" >> ${CONFFILE}
     if [ "x${archive}" = "xtrue" ]; then
 	status "slonconf configures archive logging for node ${node}"
 	echo "archive_dir='${mktmp}/archive_logs_${node}'" >> ${CONFFILE}
