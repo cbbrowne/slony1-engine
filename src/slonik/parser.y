@@ -76,6 +76,7 @@ static int	assign_options(statement_option *so, option_list *ol);
 %type <statement>	try_on_error
 %type <statement>	try_on_success
 %type <statement>	stmt_echo
+%type <statement>	stmt_date
 %type <statement>	stmt_exit
 %type <statement>	stmt_restart_node
 %type <statement>	stmt_error
@@ -140,6 +141,8 @@ static int	assign_options(statement_option *so, option_list *ol);
 %token	K_CREATE
 %token	K_DROP
 %token	K_ECHO
+%token	K_DATE
+%token	K_DFORMAT
 %token	K_ERROR
 %token	K_EVENT
 %token	K_EXECUTE
@@ -187,6 +190,8 @@ static int	assign_options(statement_option *so, option_list *ol);
 %token	K_SUCCESS
 %token	K_SWITCH
 %token	K_TABLE
+%token  K_TABLES
+%token  K_SEQUENCES
 %token	K_TIMEOUT
 %token	K_TRUE
 %token	K_TRY
@@ -373,6 +378,8 @@ try_stmts			: try_stmt
 
 normal_stmt			: stmt_echo
 						{ $$ = $1; }
+					| stmt_date
+						{ $$ = $1; }
 					| stmt_exit
 						{ $$ = $1; }
 					| stmt_restart_node
@@ -462,6 +469,32 @@ stmt_echo			: lno K_ECHO literal ';'
 						new->hdr.stmt_lno		= $1;
 
 						new->str = $3;
+
+						$$ = (SlonikStmt *)new;
+					}
+					;
+
+stmt_date			: lno K_DATE option_list
+					{
+						SlonikStmt_date *new;
+						statement_option opt[] = {
+							STMT_OPTION_STR( O_DATE_FORMAT, "%F %T"),
+							STMT_OPTION_END
+						};
+
+						new = (SlonikStmt_date *)
+								malloc(sizeof(SlonikStmt_date));
+						memset(new, 0, sizeof(SlonikStmt_date));
+						new->hdr.stmt_type		= STMT_DATE;
+						new->hdr.stmt_filename	= current_file;
+						new->hdr.stmt_lno		= $1;
+
+						if (assign_options(opt, $3) == 0)
+						{
+							new->fmt = opt[0].str;
+						}
+						else
+							parser_errors++;
 
 						$$ = (SlonikStmt *)new;
 					}
@@ -941,6 +974,8 @@ stmt_set_add_table	: lno K_SET K_ADD K_TABLE option_list
 							STMT_OPTION_STR( O_FQNAME, NULL ),
 							STMT_OPTION_STR( O_USE_KEY, NULL ),
 							STMT_OPTION_STR( O_COMMENT, NULL ),
+							STMT_OPTION_STR( O_TABLES,NULL),
+							STMT_OPTION_YN(O_ADD_SEQUENCES,0),
 							STMT_OPTION_END
 						};
 
@@ -959,6 +994,8 @@ stmt_set_add_table	: lno K_SET K_ADD K_TABLE option_list
 							new->tab_fqname		= opt[3].str;
 							new->use_key		= opt[4].str;
 							new->tab_comment	= opt[5].str;
+							new->tables			= opt[6].str;
+							new->add_sequences  = opt[7].ival;
 						}
 						else
 							parser_errors++;
@@ -976,6 +1013,7 @@ stmt_set_add_sequence : lno K_SET K_ADD K_SEQUENCE option_list
 							STMT_OPTION_INT( O_ID, -1 ),
 							STMT_OPTION_STR( O_FQNAME, NULL ),
 							STMT_OPTION_STR( O_COMMENT, NULL ),
+							STMT_OPTION_STR( O_SEQUENCES, NULL),
 							STMT_OPTION_END
 						};
 
@@ -993,6 +1031,7 @@ stmt_set_add_sequence : lno K_SET K_ADD K_SEQUENCE option_list
 							new->seq_id			= opt[2].ival;
 							new->seq_fqname		= opt[3].str;
 							new->seq_comment	= opt[4].str;
+							new->sequences		= opt[5].str;
 						}
 						else
 							parser_errors++;
@@ -1566,6 +1605,11 @@ option_list_item	: K_ID '=' option_item_id
 						$3->opt_code	= O_CONNINFO;
 						$$ = $3;
 					}
+					| K_DFORMAT '=' option_item_literal
+					{
+						$3->opt_code	= O_DATE_FORMAT;
+						$$ = $3;
+					}
 					| K_SET K_ID '=' option_item_id
 					{
 						$4->opt_code	= O_SET_ID;
@@ -1656,6 +1700,23 @@ option_list_item	: K_ID '=' option_item_id
 					{
 						$3->opt_code	= O_SECONDS;
 						$$ = $3;
+					}
+
+					| K_TABLES '=' option_item_literal
+					{
+						$3->opt_code	= O_TABLES;
+						$$ = $3;
+					}
+					| K_SEQUENCES '=' option_item_literal
+					{
+						$3->opt_code = O_SEQUENCES;
+						$$ = $3;
+					}
+					| K_ADD K_SEQUENCES '=' option_item_yn
+					{
+						$4->opt_code=O_ADD_SEQUENCES;
+						$$=$4;
+
 					}
 					;
 
@@ -1772,11 +1833,13 @@ option_str(option_code opt_code)
 	switch (opt_code)
 	{
 		case O_ADD_ID:			return "add id";
+		case O_ADD_SEQUENCES:	return "add sequences"; 
 		case O_BACKUP_NODE:		return "backup node";
 		case O_CLIENT:			return "client";
 		case O_COMMENT:			return "comment";
 		case O_CONNINFO:		return "conninfo";
 		case O_CONNRETRY:		return "connretry";
+		case O_DATE_FORMAT:		return "format";
 		case O_EVENT_NODE:		return "event node";
 		case O_EXECUTE_ONLY_ON:	return "execute only on";
 		case O_FILENAME:		return "filename";
@@ -1791,10 +1854,12 @@ option_str(option_code opt_code)
 		case O_ORIGIN:			return "origin";
 		case O_PROVIDER:		return "provider";
 		case O_RECEIVER:		return "receiver";
-    	case O_SECONDS:         return "seconds";
+		case O_SECONDS:			return "seconds";
+		case O_SEQUENCES:		return "sequences";
 		case O_SERVER:			return "server";
 		case O_SET_ID:			return "set id";
 		case O_TAB_ID:			return "table id";
+		case O_TABLES:			return "tables";			
 		case O_TIMEOUT:			return "timeout";
 		case O_USE_KEY:			return "key";
 		case O_WAIT_CONFIRMED:	return "confirmed";
