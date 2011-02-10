@@ -5729,7 +5729,7 @@ begin
 	delete from @NAMESPACE@.sl_components where co_actor = i_actor and co_pid = i_pid and co_node = i_node;
 	
 	insert into @NAMESPACE@.sl_components 
-           (co_actor, co_pid, co_node, co_connection_pid, co_activity, co_starttime, co_event, co_event, co_eventtype)
+           (co_actor, co_pid, co_node, co_connection_pid, co_activity, co_starttime, co_event, co_eventtype)
 	values (i_actor, i_pid, i_node, i_conn_pid, i_activity, i_starttime, i_event, i_eventtype);
 	return 1;
 end $$
