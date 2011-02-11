@@ -724,12 +724,12 @@ static struct config_int ConfigureNamesInt[] =
 		{
 			(const char *) "monitor_interval",
 			gettext_noop("monitor thread interval for dumping the state queue"),
-			gettext_noop("number of seconds monitor thread waits to queue up status entries"),
+			gettext_noop("number of milliseconds monitor thread waits to queue up status entries"),
 			SLON_C_INT
 		},
 		&monitor_interval,
-		1,
-		1,
+		500,
+		10,
 		12000
 	},
 

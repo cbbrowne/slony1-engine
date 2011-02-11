@@ -173,6 +173,19 @@
         </para>
       </listitem>
     </varlistentry>
+
+    <varlistentry id="slon-config-monitor-interval" xreflabel="slon_conf_monitor_interval">
+      <term><varname>monitor_interval</varname> (<type>integer</type>)</term>
+      <indexterm>
+        <primary><varname>monitor_interval</varname> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+        <para>Indicates the number of milliseconds the monitoring thread waits to queue up status entries before dumping 
+        such updates into the components table.
+        </para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
 </sect1>
 
