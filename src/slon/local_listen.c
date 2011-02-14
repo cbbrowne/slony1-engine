@@ -239,7 +239,7 @@ localListenThread_main(/* @unused@ */ void *dummy)
 					 rtcfg_nodeid, PQgetvalue(res, tupno, 0),
 					 ev_type);
 
-			monitor_state("local_listen", getpid(), rtcfg_nodeid, 0, ev_type, 0, ev_type);
+			monitor_state("local_listen", getpid(), rtcfg_nodeid, conn->conn_pid, ev_type, 0, ev_type);
 
 
 			if (strcmp(ev_type, "SYNC") == 0)
