@@ -561,7 +561,7 @@ create table @NAMESPACE@.sl_components (
 	co_pid		 integer not null,
 	co_node		 integer not null,
 	primary key (co_actor, co_pid, co_node),
-	co_connection_pid integer,
+	co_connection_pid integer not null,
 	co_activity	  text,
 	co_starttime	  timestamptz not null default now(),
 	co_event	  bigint,
