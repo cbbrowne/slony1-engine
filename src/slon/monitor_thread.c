@@ -73,15 +73,16 @@ monitorThread_main(void *dummy)
   monitor_state("local_monitor", getpid(), 0, conn->conn_pid, 0, 0, 0);
 
   /*
-   * Build the query that starts a transaction and retrieves the last value
-   * from the action sequence.
+   * set up queries that are run in each iteration
    */
   dstring_init(&beginquery);
   slon_mkquery(&beginquery,
 	       "start transaction;");
+
+  dstring_init(&delquery);
   slon_mkquery(&delquery,
-		       "delete from %s.sl_components where co_pid not in (select procpid from pg_catalog.pg_stat_activity);",
-		       rtcfg_namespace);
+	       "delete from %s.sl_components where co_connection_pid not in (select procpid from pg_catalog.pg_stat_activity);",
+	       rtcfg_namespace);
 
   slon_log(SLON_DEBUG2, "monitorThread: setup start query\n");
 
@@ -94,18 +95,17 @@ monitorThread_main(void *dummy)
       if (qlen > 0) {
 	int i = 0;
 
-#ifdef DOBEGIN
-	 res = PQexec(dbconn, dstring_data(&beginquery)); 
-	 if (PQresultStatus(res) != PGRES_COMMAND_OK) 
-	   { 
-	     slon_log(SLON_FATAL, 
+#define BEGINQUERY "start transaction;"
+	res = PQexec(dbconn, BEGINQUERY);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) 
+	  { 
+	    slon_log(SLON_FATAL, 
 	  	     "monitorThread: \"%s\" - %s", 
-	 	     dstring_data(&beginquery), PQresultErrorMessage(res)); 
-	     PQclear(res); 
-	     slon_retry(); 
-	     break; 
-	   } 
-#endif
+	 	     BEGINQUERY, PQresultErrorMessage(res)); 
+	    PQclear(res); 
+	    slon_retry(); 
+	    break; 
+	  } 
 	/* Now, iterate through queue contents, and dump them all to the database */
 	while (queue_dequeue(&state)) {
 	  slon_log(SLON_DEBUG2, "monitorThread: dequeue %d of %d\n", ++i, qlen);
@@ -143,10 +143,10 @@ monitorThread_main(void *dummy)
 	    slon_appendquery(&monquery, "NULL::text);");
 	  }
 	  slon_log(SLON_DEBUG2, "monitorThread: attached event type %s\n", state.event_type);
-	      slon_log(SLON_DEBUG2,
-		       "monitorThread: query: [%s]\n",
-		       dstring_data(&monquery));
-res = PQexec(dbconn, dstring_data(&monquery));
+	  slon_log(SLON_DEBUG2,
+		   "monitorThread: query: [%s]\n",
+		   dstring_data(&monquery));
+	  res = PQexec(dbconn, dstring_data(&monquery));
 	  if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	    {
 	      slon_log(SLON_FATAL,
@@ -161,27 +161,27 @@ res = PQexec(dbconn, dstring_data(&monquery));
 	/*
 	 * Delete obsolete component tuples
 	 */
-	  res = PQexec(dbconn, dstring_data(&delquery));
-	  if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	    {
-	      slon_log(SLON_FATAL,
-		       "monitorThread: \"%s\" - %s",
-		       dstring_data(&delquery), PQresultErrorMessage(res));
-	      PQclear(res);
-	      slon_retry();
-	      break;
-	}
-#ifdef DOBEGIN
-	 res = PQexec(dbconn, "commit transaction;"); 
-	 if (PQresultStatus(res) != PGRES_COMMAND_OK) 
-	   { 
-	     slon_log(SLON_FATAL, 
-	 	     "monitorThread: \"commit transaction;\" - %s\n", 
-	 	     PQresultErrorMessage(res)); 
-	     PQclear(res); 
-	     slon_retry(); 
-	   } 
-#endif
+	res = PQexec(dbconn, dstring_data(&delquery));
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	  {
+	    slon_log(SLON_FATAL,
+		     "monitorThread: \"%s\" - %s",
+		     dstring_data(&delquery), PQresultErrorMessage(res));
+	    PQclear(res);
+	    slon_retry();
+	    break;
+	  }
+#define COMMITQUERY "commit;"
+	res = PQexec(dbconn, COMMITQUERY);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) 
+	  { 
+	    slon_log(SLON_FATAL, 
+		     "monitorThread: %s - %s\n", 
+		     COMMITQUERY,
+		     PQresultErrorMessage(res)); 
+	    PQclear(res); 
+	    slon_retry(); 
+	  } 
 	PQclear(res);
 					
       } else {
@@ -289,7 +289,7 @@ bool queue_dequeue (SlonState *qentry)
   queue_head = queue_head->next;
   slon_log(SLON_DEBUG2, "queue_dequeue()  - head shifted\n");
   free(ce); 
-  free(cq);  
+  free(cq); 
   slon_log(SLON_DEBUG2, "queue_dequeue()  - freed old data\n");
   queue_size--;
   slon_log(SLON_DEBUG2, "queue_dequeue()  - queue shortened to %d\n", queue_size);
