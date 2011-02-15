@@ -90,7 +90,7 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 
 	dbconn = conn->dbconn;
 
-	monitor_state("local_cleanup", getpid(), 0, conn->conn_pid, "", 0, "");
+	monitor_state("local_cleanup", getpid(), 0, conn->conn_pid, NULL, 0, NULL);
 
 	/*
 	 * Build the query string for calling the cleanupEvent() stored procedure

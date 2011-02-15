@@ -59,7 +59,7 @@ syncThread_main(void *dummy)
 	if ((conn = slon_connectdb(rtcfg_conninfo, "local_sync")) == NULL)
 		slon_retry();
 	dbconn = conn->dbconn;
-	monitor_state("local_sync", getpid(), 0, conn->conn_pid, "", 0, "");
+	monitor_state("local_sync", getpid(), 0, conn->conn_pid, NULL, 0, NULL);
 
 	/*
 	 * We don't initialize the last known action sequence to the actual value.
