@@ -87,9 +87,9 @@ typedef struct SlonWorkMsg_s SlonWorkMsg;
 struct SlonState_s
 {
 		char *actor;
-		int pid;
+		pid_t pid;
 		int node;
-		int conn_pid;
+		pid_t conn_pid;
 		char *activity;
 		time_t start_time;
 		int64 event;
@@ -612,7 +612,7 @@ extern int	db_getLocalNodeId(PGconn *conn);
 extern int	db_checkSchemaVersion(PGconn *conn);
 
 extern void	slon_mkquery(SlonDString * ds, char *fmt,...);
-extern int	slon_appendquery(SlonDString * ds, char *fmt,...);
+extern void	slon_appendquery(SlonDString * ds, char *fmt,...);
 extern char *sql_on_connection;
 
 /* ----------

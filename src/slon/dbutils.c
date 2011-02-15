@@ -502,7 +502,7 @@ slon_mkquery(SlonDString *dsp, char *fmt,...)
  * Append query string material to an existing dynamic string.
  * ----------
  */
-int
+void
 slon_appendquery(SlonDString *dsp, char *fmt,...)
 {
 	va_list		ap;
@@ -512,8 +512,6 @@ slon_appendquery(SlonDString *dsp, char *fmt,...)
 	va_end(ap);
 
 	dstring_terminate(dsp);
-
-	return 0;
 }
 
 
