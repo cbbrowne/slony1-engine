@@ -24,8 +24,8 @@
 
 #include "slon.h"
 
-int queue_init ();
-int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
+void queue_init ();
+void monitor_state (char *actor, pid_t pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
 bool queue_dequeue (SlonState *current);
 
 /* ---------- 
@@ -55,7 +55,7 @@ monitorThread_main(void *dummy)
   PGresult   *res;
   SlonState   state;
   char        timebuf[256];
-  int rc;
+  bool rc;
 
   slon_log(SLON_INFO,
 	   "monitorThread: thread starts\n");
@@ -65,135 +65,139 @@ monitorThread_main(void *dummy)
   /*
    * Connect to the local database
    */
-  if ((conn = slon_connectdb(rtcfg_conninfo, "local_monitor")) == NULL)
+  if ((conn = slon_connectdb(rtcfg_conninfo, "local_monitor")) == NULL) {
     slon_retry();
-  dbconn = conn->dbconn;
+  } else {
+  
+    dbconn = conn->dbconn;
 
-  slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
-  monitor_state("local_monitor", getpid(), 0, conn->conn_pid, 0, 0, 0);
+    slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
+    monitor_state("local_monitor", getpid(), 0, conn->conn_pid, NULL, 0, NULL);
 
-  /*
-   * set up queries that are run in each iteration
-   */
-  dstring_init(&beginquery);
-  slon_mkquery(&beginquery,
-	       "start transaction;");
+    /*
+     * set up queries that are run in each iteration
+     */
+    dstring_init(&beginquery);
+    slon_mkquery(&beginquery,
+		 "start transaction;");
 
-  dstring_init(&delquery);
-  slon_mkquery(&delquery,
-	       "delete from %s.sl_components where co_connection_pid not in (select procpid from pg_catalog.pg_stat_activity);",
-	       rtcfg_namespace);
+    dstring_init(&delquery);
+    slon_mkquery(&delquery,
+		 "delete from %s.sl_components where co_connection_pid not in (select procpid from pg_catalog.pg_stat_activity);",
+		 rtcfg_namespace);
 
-  slon_log(SLON_DEBUG2, "monitorThread: setup start query\n");
+    slon_log(SLON_DEBUG2, "monitorThread: setup start query\n");
 
-  while ((rc = sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
-    {
-      pthread_mutex_lock(&queue_lock);
-      int qlen = queue_size;
-      pthread_mutex_unlock(&queue_lock);
+    while ((rc = sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
+      {
+	pthread_mutex_lock(&queue_lock);
+	int qlen = queue_size;
+	pthread_mutex_unlock(&queue_lock);
       
-      if (qlen > 0) {
-	int i = 0;
+	if (qlen > 0) {
+	  int i = 0;
 
 #define BEGINQUERY "start transaction;"
-	res = PQexec(dbconn, BEGINQUERY);
-	if (PQresultStatus(res) != PGRES_COMMAND_OK) 
-	  { 
-	    slon_log(SLON_FATAL, 
-	  	     "monitorThread: \"%s\" - %s", 
-	 	     BEGINQUERY, PQresultErrorMessage(res)); 
-	    PQclear(res); 
-	    slon_retry(); 
-	    break; 
-	  } 
-	/* Now, iterate through queue contents, and dump them all to the database */
-	while (queue_dequeue(&state)) {
-	  slon_log(SLON_DEBUG2, "monitorThread: dequeue %d of %d\n", ++i, qlen);
-	  slon_log(SLON_DEBUG2, "queue populated - top = (%s,%d,%d,%d,%s,%ld,%s)\n", 
-		   state.actor, state.pid, state.node, state.conn_pid, state.activity, state.event, state.event_type);
-	  dstring_init(&monquery);
-	  slon_mkquery(&monquery,
-		       "select %s.component_state('%s', %d, %d,", 
-		       rtcfg_namespace, state.actor, state.pid, state.node);
-	  slon_log(SLON_DEBUG2, "monitorThread: attached actor [%s] - pid [%d], node [%d]\n", state.actor, state.pid, state.node);
-	  if (state.conn_pid > 0) {
-	    slon_appendquery(&monquery, "%d, ", state.conn_pid);
-	  } else {
-	    slon_appendquery(&monquery, "NULL::integer, ");
+	  res = PQexec(dbconn, BEGINQUERY);
+	  if (PQresultStatus(res) != PGRES_COMMAND_OK) 
+	    { 
+	      slon_log(SLON_FATAL, 
+		       "monitorThread: \"%s\" - %s", 
+		       BEGINQUERY, PQresultErrorMessage(res)); 
+	      PQclear(res); 
+	      slon_retry(); 
+	      break; 
+	    } 
+	  /* Now, iterate through queue contents, and dump them all to the database */
+	  while (queue_dequeue(&state)) {
+	    slon_log(SLON_DEBUG2, "monitorThread: dequeue %d of %d\n", ++i, qlen);
+	    slon_log(SLON_DEBUG2, "queue populated - top = (%s,%d,%d,%d,%s,%ld,%s)\n", 
+		     state.actor, state.pid, state.node, state.conn_pid, state.activity, state.event, state.event_type);
+	    dstring_init(&monquery);
+	    slon_mkquery(&monquery,
+			 "select %s.component_state('%s', %d, %d,", 
+			 rtcfg_namespace, state.actor, state.pid, state.node);
+	    slon_log(SLON_DEBUG2, "monitorThread: attached actor [%s] - pid [%d], node [%d]\n", state.actor, state.pid, state.node);
+	    if (state.conn_pid > 0) {
+	      slon_appendquery(&monquery, "%d, ", state.conn_pid);
+	    } else {
+	      slon_appendquery(&monquery, "NULL::integer, ");
+	    }
+	    slon_log(SLON_DEBUG2, "monitorThread: attached conn_pid [%d]\n", state.conn_pid);
+	    if ((state.activity != 0) && strlen(state.activity) > 0) {
+	      slon_appendquery(&monquery, "'%s', ", state.activity);
+	    } else {
+	      slon_appendquery(&monquery, "NULL::text, ");
+	    }
+	    slon_log(SLON_DEBUG2, "monitorThread: attached activity [%s]\n", state.activity);
+	    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S%z", localtime(&(state.start_time)));
+	    slon_appendquery(&monquery, "'%s', ", timebuf);
+	    slon_log(SLON_DEBUG2, "monitorThread: attached time\n");
+	    if (state.event > 0) {
+	      slon_appendquery(&monquery, "%L, ", state.event);
+	    } else {
+	      slon_appendquery(&monquery, "NULL::bigint, ");
+	    }
+	    slon_log(SLON_DEBUG2, "monitorThread: attached event- %lld\n", state.event);
+	    if ((state.event_type != 0) && strlen(state.event_type) > 0) {
+	      slon_appendquery(&monquery, "'%s');", state.event_type);
+	    } else {
+	      slon_appendquery(&monquery, "NULL::text);");
+	    }
+	    slon_log(SLON_DEBUG2, "monitorThread: attached event type %s\n", state.event_type);
+	    slon_log(SLON_DEBUG2,
+		     "monitorThread: query: [%s]\n",
+		     dstring_data(&monquery));
+	    free(state.actor);
+	    free(state.activity);
+	    free(state.event_type); 
+	    res = PQexec(dbconn, dstring_data(&monquery));
+	    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	      {
+		slon_log(SLON_FATAL,
+			 "monitorThread: \"%s\" - %s",
+			 dstring_data(&monquery), PQresultErrorMessage(res));
+		PQclear(res);
+		slon_retry();
+		break;
+	      }
 	  }
-	  slon_log(SLON_DEBUG2, "monitorThread: attached conn_pid [%d]\n", state.conn_pid);
-	  if ((state.activity != 0) && strlen(state.activity) > 0) {
-	    slon_appendquery(&monquery, "'%s', ", state.activity);
-	  } else {
-	    slon_appendquery(&monquery, "NULL::text, ");
-	  }
-	  slon_log(SLON_DEBUG2, "monitorThread: attached activity [%s]\n", state.activity);
-	  strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S%z", localtime(&(state.start_time)));
-	  slon_appendquery(&monquery, "'%s', ", timebuf);
-	  slon_log(SLON_DEBUG2, "monitorThread: attached time\n");
-	  if (state.event > 0) {
-	    slon_appendquery(&monquery, "%L, ", state.event);
-	  } else {
-	    slon_appendquery(&monquery, "NULL::bigint, ");
-	  }
-	  slon_log(SLON_DEBUG2, "monitorThread: attached event- %lld\n", state.event);
-	  if ((state.event_type != 0) && strlen(state.event_type) > 0) {
-	    slon_appendquery(&monquery, "'%s');", state.event_type);
-	  } else {
-	    slon_appendquery(&monquery, "NULL::text);");
-	  }
-	  slon_log(SLON_DEBUG2, "monitorThread: attached event type %s\n", state.event_type);
-	  slon_log(SLON_DEBUG2,
-		   "monitorThread: query: [%s]\n",
-		   dstring_data(&monquery));
-	  free(state.actor);
-	  free(state.activity);
-	  free(state.event_type); 
-	  res = PQexec(dbconn, dstring_data(&monquery));
-	  if (PQresultStatus(res) != PGRES_TUPLES_OK)
+
+	  /*
+	   * Delete obsolete component tuples
+	   */
+	  res = PQexec(dbconn, dstring_data(&delquery));
+	  if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	    {
 	      slon_log(SLON_FATAL,
 		       "monitorThread: \"%s\" - %s",
-		       dstring_data(&monquery), PQresultErrorMessage(res));
+		       dstring_data(&delquery), PQresultErrorMessage(res));
 	      PQclear(res);
 	      slon_retry();
 	      break;
 	    }
-	}
-
-	/*
-	 * Delete obsolete component tuples
-	 */
-	res = PQexec(dbconn, dstring_data(&delquery));
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	  {
-	    slon_log(SLON_FATAL,
-		     "monitorThread: \"%s\" - %s",
-		     dstring_data(&delquery), PQresultErrorMessage(res));
-	    PQclear(res);
-	    slon_retry();
-	    break;
-	  }
 #define COMMITQUERY "commit;"
-	res = PQexec(dbconn, COMMITQUERY);
-	if (PQresultStatus(res) != PGRES_COMMAND_OK) 
-	  { 
-	    slon_log(SLON_FATAL, 
-		     "monitorThread: %s - %s\n", 
-		     COMMITQUERY,
-		     PQresultErrorMessage(res)); 
-	    PQclear(res); 
-	    slon_retry(); 
-	  } 
-	PQclear(res);
+	  res = PQexec(dbconn, COMMITQUERY);
+	  if (PQresultStatus(res) != PGRES_COMMAND_OK) 
+	    { 
+	      slon_log(SLON_FATAL, 
+		       "monitorThread: %s - %s\n", 
+		       COMMITQUERY,
+		       PQresultErrorMessage(res)); 
+	      PQclear(res); 
+	      slon_retry(); 
+	    } 
+	  PQclear(res);
 					
-      } else {
-	slon_log(SLON_DEBUG2, "monitorThread: awoke - nothing in queue to process\n");
+	} else {
+	  slon_log(SLON_DEBUG2, "monitorThread: awoke - nothing in queue to process\n");
+	}
+	if ((rc = sched_msleep(0, monitor_interval)) != SCHED_STATUS_OK) {
+	  break;
+	}
       }
-      if ((rc = sched_msleep(0, monitor_interval)) != SCHED_STATUS_OK) {
-	break;
-      }
-    }
+
+  }
   slon_log(SLON_CONFIG, "monitorThread: exit main loop - rc=%d\n", rc);
 
   dstring_free(&beginquery);
@@ -205,7 +209,7 @@ monitorThread_main(void *dummy)
   pthread_exit(NULL);
 }
 
-int queue_init ()
+void queue_init ()
 {
   if (queue_tail != NULL) {
     /* slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n"); */
@@ -215,16 +219,9 @@ int queue_init ()
   queue_tail = NULL;
   queue_head = NULL;
   queue_size = 0;
-  return 1;
 }
 
-/* add entry:
-   - malloc state
-   - malloc queue entry
-   - assign state values
-*/
-
-int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type) 
+void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *activity, int64 event, char *event_type) 
 {
   SlonStateQueue *queue_current;
   SlonState *curr;
@@ -275,8 +272,6 @@ int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity,
   slon_log(SLON_DEBUG2, "monitor_state - size=%d (%s,%d,%d,%d,%s,%ld,%s)\n", 
 	   queue_size,
 	   curr->actor, curr->pid, curr->node, curr->conn_pid, curr->activity, curr->event, curr->event_type);
-
-  return 0;
 }
 
 bool queue_dequeue (SlonState *qentry)

@@ -533,7 +533,7 @@ extern void *syncThread_main(void *dummy);
  * ----------
  */
 extern void *monitorThread_main(void *dummy);
-extern int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
+extern void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *activity, int64 event, char *event_type);
 bool queue_dequeue (SlonState *current);
 
 /* ----------
@@ -612,7 +612,7 @@ extern void slon_free_dummyconn(SlonConn * conn);
 extern int	db_getLocalNodeId(PGconn *conn);
 extern int	db_checkSchemaVersion(PGconn *conn);
 
-extern int	slon_mkquery(SlonDString * ds, char *fmt,...);
+extern void	slon_mkquery(SlonDString * ds, char *fmt,...);
 extern int	slon_appendquery(SlonDString * ds, char *fmt,...);
 extern char *sql_on_connection;
 

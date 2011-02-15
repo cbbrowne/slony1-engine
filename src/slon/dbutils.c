@@ -481,7 +481,7 @@ db_checkSchemaVersion(PGconn *conn)
  *	   %d	Integer argument
  * ----------
  */
-int
+void
 slon_mkquery(SlonDString *dsp, char *fmt,...)
 {
 	va_list		ap;
@@ -493,8 +493,6 @@ slon_mkquery(SlonDString *dsp, char *fmt,...)
 	va_end(ap);
 
 	dstring_terminate(dsp);
-
-	return 0;
 }
 
 
