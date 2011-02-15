@@ -25,7 +25,6 @@
 #include "slon.h"
 
 static void queue_init ();
-void monitor_state (char *actor, pid_t pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
 static bool queue_dequeue (SlonState *current);
 
 /* ---------- 
@@ -276,7 +275,7 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *acti
 
 /* Note that it is the caller's responsibility to free() the contents
    of strings qentry->actor, qentry->activity, qentry->event_type */
-bool queue_dequeue (SlonState *qentry)
+static bool queue_dequeue (SlonState *qentry)
 {
   SlonStateQueue *cq = NULL, *cn;
   SlonState *ce = NULL;

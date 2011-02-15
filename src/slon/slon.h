@@ -534,7 +534,6 @@ extern void *syncThread_main(void *dummy);
  */
 extern void *monitorThread_main(void *dummy);
 extern void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *activity, int64 event, char *event_type);
-bool queue_dequeue (SlonState *current);
 
 /* ----------
  * Globals in monitor_thread.c
