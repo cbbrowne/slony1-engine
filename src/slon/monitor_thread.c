@@ -146,6 +146,9 @@ monitorThread_main(void *dummy)
 	  slon_log(SLON_DEBUG2,
 		   "monitorThread: query: [%s]\n",
 		   dstring_data(&monquery));
+	  free(state.actor);
+	  free(state.activity);
+	  free(state.event_type); 
 	  res = PQexec(dbconn, dstring_data(&monquery));
 	  if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	    {
@@ -225,16 +228,33 @@ int monitor_state (char *actor, int pid, int node, int conn_pid, char *activity,
 {
   SlonStateQueue *queue_current;
   SlonState *curr;
+  int len;
   curr = (SlonState *) malloc(sizeof(SlonState));
-  curr->actor = actor;
+  len = strlen(actor);
+  curr->actor =  (char *) malloc(sizeof(char) * len);
+  strncpy(curr->actor, actor, len);
+  curr->actor[len]=0;
   curr->pid = pid;
   curr->node = node;
   curr->conn_pid = conn_pid;
-  curr->activity = activity;
+  if (activity != NULL) {
+    len = strlen(activity);
+    curr->activity = malloc(sizeof(char) * len);
+    strncpy(curr->activity, activity, len);
+    curr->activity[len] = 0;
+  } else {
+    curr->activity = activity;
+  }
   curr->start_time = time(NULL);
   curr->event = event;
-  curr->event_type = event_type;
-
+  if (event_type != NULL) {
+    len = strlen(event_type);
+    curr->event_type = malloc(sizeof(char) * len);
+    strncpy(curr->event_type, event_type, len);
+    curr->event_type[len] = 0;
+  } else {
+    curr->event_type = event_type;
+  }
   queue_current = (SlonStateQueue *) malloc(sizeof(SlonStateQueue));
   queue_current->entry = curr;
   queue_current->next = NULL;
