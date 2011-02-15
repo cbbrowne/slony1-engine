@@ -24,7 +24,7 @@
 
 #include "slon.h"
 
-static void queue_init ();
+static void queue_init (void);
 static bool queue_dequeue (SlonState *current);
 
 /* ---------- 
@@ -71,7 +71,7 @@ monitorThread_main(void *dummy)
     dbconn = conn->dbconn;
 
     slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
-    monitor_state("local_monitor", getpid(), 0, conn->conn_pid, NULL, 0, NULL);
+    monitor_state("local_monitor", getpid(), 0, (pid_t) conn->conn_pid, (char *)NULL, 0L, (char *)NULL);
 
     /*
      * set up queries that are run in each iteration
@@ -129,7 +129,7 @@ monitorThread_main(void *dummy)
 	      slon_appendquery(&monquery, "NULL::text, ");
 	    }
 	    slon_log(SLON_DEBUG2, "monitorThread: attached activity [%s]\n", state.activity);
-	    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S%z", localtime(&(state.start_time)));
+	    (void) strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S%z", localtime(&(state.start_time)));
 	    slon_appendquery(&monquery, "'%s', ", timebuf);
 	    slon_log(SLON_DEBUG2, "monitorThread: attached time\n");
 	    if (state.event > 0) {
@@ -147,9 +147,12 @@ monitorThread_main(void *dummy)
 	    slon_log(SLON_DEBUG2,
 		     "monitorThread: query: [%s]\n",
 		     dstring_data(&monquery));
-	    free(state.actor);
-	    free(state.activity);
-	    free(state.event_type); 
+	    if (state.actor != NULL)
+	      free(state.actor);
+	    if (state.activity != NULL)
+	      free(state.activity);
+	    if (state.event_type != NULL)
+	      free(state.event_type); 
 	    res = PQexec(dbconn, dstring_data(&monquery));
 	    if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	      {
@@ -160,7 +163,6 @@ monitorThread_main(void *dummy)
 		slon_retry();
 		break;
 	      }
-	    PQclear(res);
 	  }
 	  /*
 	   * Delete obsolete component tuples
@@ -186,12 +188,11 @@ monitorThread_main(void *dummy)
 	      PQclear(res); 
 	      slon_retry(); 
 	    } 
-	  PQclear(res);
 					
 	} else {
 	  slon_log(SLON_DEBUG2, "monitorThread: awoke - nothing in queue to process\n");
 	}
-	if ((rc = sched_msleep(0, monitor_interval)) != SCHED_STATUS_OK) {
+	if ((rc = sched_msleep(NULL, monitor_interval)) != SCHED_STATUS_OK) {
 	  break;
 	}
       }
@@ -208,7 +209,7 @@ monitorThread_main(void *dummy)
   pthread_exit(NULL);
 }
 
-static void queue_init ()
+static void queue_init (void)
 {
   if (queue_tail != NULL) {
     /* slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n"); */
@@ -220,16 +221,16 @@ static void queue_init ()
   queue_size = 0;
 }
 
-void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *activity, int64 event, char *event_type) 
+void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /* @null@ */ char *activity, int64 event,  /* @null@ */ char *event_type) 
 {
   SlonStateQueue *queue_current;
   SlonState *curr;
-  int len;
+  size_t len;
   curr = (SlonState *) malloc(sizeof(SlonState));
   len = strlen(actor);
   curr->actor =  (char *) malloc(sizeof(char) * len);
   strncpy(curr->actor, actor, len);
-  curr->actor[len]=0;
+  curr->actor[len]=(char) 0;
   curr->pid = pid;
   curr->node = node;
   curr->conn_pid = conn_pid;
@@ -237,7 +238,7 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *acti
     len = strlen(activity);
     curr->activity = malloc(sizeof(char) * len);
     strncpy(curr->activity, activity, len);
-    curr->activity[len] = 0;
+    curr->activity[len] = (char) 0;
   } else {
     curr->activity = activity;
   }
@@ -301,8 +302,10 @@ static bool queue_dequeue (SlonState *qentry)
     cq = queue_head;
     cn = queue_head->next;
     queue_head = cn;
-    free(ce); 
-    free(cq); 
+    if (ce != NULL)
+      free(ce); 
+    if (cq != NULL)
+      free(cq); 
     queue_size--;
     pthread_mutex_unlock(&queue_lock);
     return (bool) TRUE;
