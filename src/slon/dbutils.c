@@ -61,7 +61,7 @@ slon_connectdb(char *conninfo, char *symname)
 	SlonConn   *conn;
 	PGresult   *res;
 	SlonDString query;
-	int         connpid;
+	int         connpid = -1;
 
 	/*
 	 * Create the native database connection
