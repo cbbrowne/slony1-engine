@@ -24,18 +24,18 @@
 
 #include "slon.h"
 
-void queue_init ();
+static void queue_init ();
 void monitor_state (char *actor, pid_t pid, int node, int conn_pid, char *activity, int64 event, char *event_type);
-bool queue_dequeue (SlonState *current);
+static bool queue_dequeue (SlonState *current);
 
 /* ---------- 
  * Global variables 
  * ----------
  */
-SlonStateQueue *queue_tail, *queue_head;
-pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
+static SlonStateQueue *queue_tail, *queue_head;
+static pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
+static int queue_size;
 int monitor_interval;
-int queue_size;
 
 /* ---------- 
  * slon_localMonitorThread
@@ -90,8 +90,8 @@ monitorThread_main(void *dummy)
 
     while ((rc = sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
       {
-	pthread_mutex_lock(&queue_lock);
 	int qlen = queue_size;
+	pthread_mutex_lock(&queue_lock);
 	pthread_mutex_unlock(&queue_lock);
       
 	if (qlen > 0) {
@@ -161,8 +161,8 @@ monitorThread_main(void *dummy)
 		slon_retry();
 		break;
 	      }
+	    PQclear(res);
 	  }
-
 	  /*
 	   * Delete obsolete component tuples
 	   */
@@ -198,7 +198,7 @@ monitorThread_main(void *dummy)
       }
 
   }
-  slon_log(SLON_CONFIG, "monitorThread: exit main loop - rc=%d\n", rc);
+  slon_log(SLON_CONFIG, "monitorThread: exit main loop\n");
 
   dstring_free(&beginquery);
   dstring_free(&delquery);
@@ -209,7 +209,7 @@ monitorThread_main(void *dummy)
   pthread_exit(NULL);
 }
 
-void queue_init ()
+static void queue_init ()
 {
   if (queue_tail != NULL) {
     /* slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n"); */
@@ -274,10 +274,12 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *acti
 	   curr->actor, curr->pid, curr->node, curr->conn_pid, curr->activity, curr->event, curr->event_type);
 }
 
+/* Note that it is the caller's responsibility to free() the contents
+   of strings qentry->actor, qentry->activity, qentry->event_type */
 bool queue_dequeue (SlonState *qentry)
 {
-  SlonStateQueue *cq;
-  SlonState *ce;
+  SlonStateQueue *cq = NULL, *cn;
+  SlonState *ce = NULL;
   pthread_mutex_lock(&queue_lock);
   if (queue_head == NULL) {
     slon_log(SLON_DEBUG2, "queue_dequeue()  - NO entry to dequeue\n");
@@ -285,31 +287,27 @@ bool queue_dequeue (SlonState *qentry)
     return FALSE;
   } else {
     ce = queue_head->entry;
+    qentry->actor = ce->actor;
+    qentry->pid = ce->pid;
+    qentry->node = ce->node;
+    qentry->conn_pid = ce->conn_pid;
+    qentry->activity = ce->activity;
+    qentry->event = ce->event;
+    qentry->event_type = ce->event_type;
+    qentry->start_time = ce->start_time;
+    slon_log(SLON_DEBUG2, "queue_dequeue()  - assigned all components to qentry for return\n");
+    slon_log(SLON_DEBUG2, "dequeue (%s,%d,%d,%d,%s,%ld,%s)\n", 
+	     qentry->actor, qentry->pid, qentry->node, qentry->conn_pid, qentry->activity, qentry->event, qentry->event_type);
+
+    cq = queue_head;
+    cn = queue_head->next;
+    queue_head = cn;
+    free(ce); 
+    free(cq); 
+    queue_size--;
+    pthread_mutex_unlock(&queue_lock);
+    return (bool) TRUE;
   }
-
-  qentry->actor = ce->actor;
-  qentry->pid = ce->pid;
-  qentry->node = ce->node;
-  qentry->conn_pid = ce->conn_pid;
-  qentry->activity = ce->activity;
-  qentry->event = ce->event;
-  qentry->event_type = ce->event_type;
-  qentry->start_time = ce->start_time;
-  slon_log(SLON_DEBUG2, "queue_dequeue()  - assigned all components to qentry for return\n");
-  slon_log(SLON_DEBUG2, "dequeue (%s,%d,%d,%d,%s,%ld,%s)\n", 
-	   qentry->actor, qentry->pid, qentry->node, qentry->conn_pid, qentry->activity, qentry->event, qentry->event_type);
-
-  cq = queue_head;
-  slon_log(SLON_DEBUG2, "queue_dequeue()  - curr = head = %d, head->next=%d\n", cq, queue_head->next);
-  queue_head = queue_head->next;
-  slon_log(SLON_DEBUG2, "queue_dequeue()  - head shifted\n");
-  free(ce); 
-  free(cq); 
-  slon_log(SLON_DEBUG2, "queue_dequeue()  - freed old data\n");
-  queue_size--;
-  slon_log(SLON_DEBUG2, "queue_dequeue()  - queue shortened to %d\n", queue_size);
-  pthread_mutex_unlock(&queue_lock);
-  return TRUE;
 }
 
 /*
