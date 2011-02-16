@@ -228,7 +228,7 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /* @null@ 
   size_t len;
   curr = (SlonState *) malloc(sizeof(SlonState));
   len = strlen(actor);
-  curr->actor =  (char *) malloc(sizeof(char) * len);
+  curr->actor =  (char *) malloc(sizeof(char) * len + 1);
   strncpy(curr->actor, actor, len);
   curr->actor[len]=(char) 0;
   curr->pid = pid;
@@ -236,7 +236,7 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /* @null@ 
   curr->conn_pid = conn_pid;
   if (activity != NULL) {
     len = strlen(activity);
-    curr->activity = malloc(sizeof(char) * len);
+    curr->activity = malloc(sizeof(char) * len + 1);
     strncpy(curr->activity, activity, len);
     curr->activity[len] = (char) 0;
   } else {
@@ -246,7 +246,7 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /* @null@ 
   curr->event = event;
   if (event_type != NULL) {
     len = strlen(event_type);
-    curr->event_type = malloc(sizeof(char) * len);
+    curr->event_type = malloc(sizeof(char) * len) + 1;
     strncpy(curr->event_type, event_type, len);
     curr->event_type[len] = 0;
   } else {
