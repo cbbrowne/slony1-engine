@@ -76,7 +76,6 @@ typedef struct SlonListen_s SlonListen;
 typedef struct SlonSet_s SlonSet;
 typedef struct SlonConn_s SlonConn;
 typedef struct SlonState_s SlonState;
-typedef struct SlonStateQueue_s SlonStateQueue;
 
 typedef struct SlonWorkMsg_s SlonWorkMsg;
 
@@ -95,18 +94,6 @@ struct SlonState_s
 		int64 event;
 		char *event_type;
 };
-
-/* ----------
- * SlonStateQueue
- * ----------
- */
-
-struct SlonStateQueue_s
-{
-		SlonState *entry;
-		struct SlonStateQueue_s *next;
-};
-
 
 /* ----------
  * SlonNode
