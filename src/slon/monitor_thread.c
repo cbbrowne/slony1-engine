@@ -24,22 +24,23 @@
 
 #include "slon.h"
 
-static void queue_init (void);
-static bool queue_dequeue (SlonState *current);
+static void stack_init (void);
+static bool stack_pop (SlonState *current);
 
 /* ---------- 
  * Global variables 
  * ----------
  */
-static SlonStateQueue *queue_tail, *queue_head;
-static pthread_mutex_t queue_lock = PTHREAD_MUTEX_INITIALIZER;
-static int queue_size;
+static SlonState *mstack = NULL;
+static int stack_size = -1;
+static int stack_maxlength = 1;
+static pthread_mutex_t stack_lock = PTHREAD_MUTEX_INITIALIZER;
 int monitor_interval;
 
 /* ---------- 
  * slon_localMonitorThread
  *
- * Monitoring thread that periodically flushes queued-up monitoring requests to database
+ * Monitoring thread that periodically flushes stackd-up monitoring requests to database
  * ----------
  */
 void *
@@ -55,11 +56,12 @@ monitorThread_main(void *dummy)
   SlonState   state;
   char        timebuf[256];
   bool rc;
+  int i;
 
   slon_log(SLON_INFO,
 	   "monitorThread: thread starts\n");
 
-  queue_init();
+  stack_init();
 
   /*
    * Connect to the local database
@@ -67,12 +69,11 @@ monitorThread_main(void *dummy)
   if ((conn = slon_connectdb(rtcfg_conninfo, "local_monitor")) == NULL) {
     slon_retry();
   } else {
-  
     dbconn = conn->dbconn;
-
     slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
-    monitor_state("local_monitor", getpid(), 0, (pid_t) conn->conn_pid, (char *)NULL, 0L, (char *)NULL);
-
+    for (i=0; i< 11; i++) {
+      monitor_state("local_monitor", getpid(), 0, (pid_t) conn->conn_pid, (char *)NULL, 0L, (char *)NULL);
+    }
     /*
      * set up queries that are run in each iteration
      */
@@ -85,17 +86,12 @@ monitorThread_main(void *dummy)
 		 "delete from %s.sl_components where co_connection_pid not in (select procpid from pg_catalog.pg_stat_activity);",
 		 rtcfg_namespace);
 
-    slon_log(SLON_DEBUG2, "monitorThread: setup start query\n");
-
     while ((rc = sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
       {
-	int qlen = queue_size;
-	pthread_mutex_lock(&queue_lock);
-	pthread_mutex_unlock(&queue_lock);
-      
+	pthread_mutex_lock(&stack_lock);   /* lock access to stack size */
+	int qlen = stack_size;
+	pthread_mutex_unlock(&stack_lock);
 	if (qlen > 0) {
-	  int i = 0;
-
 #define BEGINQUERY "start transaction;"
 	  res = PQexec(dbconn, BEGINQUERY);
 	  if (PQresultStatus(res) != PGRES_COMMAND_OK) 
@@ -107,46 +103,38 @@ monitorThread_main(void *dummy)
 	      slon_retry(); 
 	      break; 
 	    } 
-	  /* Now, iterate through queue contents, and dump them all to the database */
-	  while (queue_dequeue(&state)) {
-	    slon_log(SLON_DEBUG2, "monitorThread: dequeue %d of %d\n", ++i, qlen);
-	    slon_log(SLON_DEBUG2, "queue populated - top = (%s,%d,%d,%d,%s,%ld,%s)\n", 
-		     state.actor, state.pid, state.node, state.conn_pid, state.activity, state.event, state.event_type);
+
+	  /* Now, iterate through stack contents, and dump them all to the database */
+	  while (stack_pop(&state)) {  /* This implicitly locks stack - unlocks immediately */
+	    /* slon_log(SLON_DEBUG2, "stack populated - top = (%s,%d,%d,%d,%s,%ld,%s)\n",
+	       state.actor, state.pid, state.node, state.conn_pid, state.activity, state.event, state.event_type); */
 	    dstring_init(&monquery);
 	    slon_mkquery(&monquery,
 			 "select %s.component_state('%s', %d, %d,", 
 			 rtcfg_namespace, state.actor, state.pid, state.node);
-	    slon_log(SLON_DEBUG2, "monitorThread: attached actor [%s] - pid [%d], node [%d]\n", state.actor, state.pid, state.node);
 	    if (state.conn_pid > 0) {
 	      slon_appendquery(&monquery, "%d, ", state.conn_pid);
 	    } else {
 	      slon_appendquery(&monquery, "NULL::integer, ");
 	    }
-	    slon_log(SLON_DEBUG2, "monitorThread: attached conn_pid [%d]\n", state.conn_pid);
 	    if ((state.activity != 0) && strlen(state.activity) > 0) {
 	      slon_appendquery(&monquery, "'%s', ", state.activity);
 	    } else {
 	      slon_appendquery(&monquery, "NULL::text, ");
 	    }
-	    slon_log(SLON_DEBUG2, "monitorThread: attached activity [%s]\n", state.activity);
 	    (void) strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S%z", localtime(&(state.start_time)));
 	    slon_appendquery(&monquery, "'%s', ", timebuf);
-	    slon_log(SLON_DEBUG2, "monitorThread: attached time\n");
 	    if (state.event > 0) {
 	      slon_appendquery(&monquery, "%L, ", state.event);
 	    } else {
 	      slon_appendquery(&monquery, "NULL::bigint, ");
 	    }
-	    slon_log(SLON_DEBUG2, "monitorThread: attached event- %lld\n", state.event);
 	    if ((state.event_type != 0) && strlen(state.event_type) > 0) {
 	      slon_appendquery(&monquery, "'%s');", state.event_type);
 	    } else {
 	      slon_appendquery(&monquery, "NULL::text);");
 	    }
-	    slon_log(SLON_DEBUG2, "monitorThread: attached event type %s\n", state.event_type);
-	    slon_log(SLON_DEBUG2,
-		     "monitorThread: query: [%s]\n",
-		     dstring_data(&monquery));
+	    /* slon_log(SLON_DEBUG2, "monitorThread: query: [%s]\n", dstring_data(&monquery)); */
 	    if (state.actor != NULL)
 	      free(state.actor);
 	    if (state.activity != NULL)
@@ -189,8 +177,6 @@ monitorThread_main(void *dummy)
 	      slon_retry(); 
 	    } 
 					
-	} else {
-	  slon_log(SLON_DEBUG2, "monitorThread: awoke - nothing in queue to process\n");
 	}
 	if ((rc = sched_msleep(NULL, monitor_interval)) != SCHED_STATUS_OK) {
 	  break;
@@ -209,84 +195,128 @@ monitorThread_main(void *dummy)
   pthread_exit(NULL);
 }
 
-static void queue_init (void)
+static void stack_init (void)
 {
-  if (queue_tail != NULL) {
-    /* slon_log(SLON_FATAL, "monitorThread: trying to initialize queue when non-empty!\n"); */
-    /* pthread_exit(NULL); */
-  } 
-  slon_log(SLON_DEBUG1, "monitorThread: initializing monitoring queue\n");
-  queue_tail = NULL;
-  queue_head = NULL;
-  queue_size = 0;
+  stack_maxlength = 12;
+  mstack = malloc(sizeof(SlonState) * stack_maxlength);
+  if (mstack == 0) {
+      slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
+      slon_retry();
+  } else {
+    slon_log(SLON_DEBUG2, "stack_init() - initialize stack to size %d\n", stack_maxlength);
+  }
+  stack_size = 0;
 }
 
 void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /* @null@ */ char *activity, int64 event,  /* @null@ */ char *event_type) 
 {
-  SlonStateQueue *queue_current;
-  SlonState *curr;
-  size_t len;
-  curr = (SlonState *) malloc(sizeof(SlonState));
+  size_t i, len;
+  SlonState *tstack;
+  SlonState *tos;
+
+  slon_log(SLON_DEBUG2, "monitor_state (%s,%d,%d,%d,%s,%ld,%s)\n", 
+	   actor, pid, node, conn_pid, activity, event, event_type);
+
+  pthread_mutex_lock(&stack_lock);
+
+  if (mstack == NULL) {
+    stack_init();
+  }
+  if (stack_size+1 > stack_maxlength) {
+    /* Need to reallocate stack */
+    stack_maxlength *= 2;
+    slon_log(SLON_DEBUG2, "monitor_state() - resizing stack to %d\n", stack_maxlength);
+    tstack = malloc(sizeof(SlonState) * stack_maxlength);
+    if (tstack == 0) {
+      slon_log(SLON_ERROR, "monitorThread: malloc() failure in monitor_state() - could not allocate %d stack slots\n", stack_maxlength);
+      slon_retry();
+    }
+    /* Copy mstack into tstack */
+    for (i = 0; i < stack_size; i++) {
+      tstack[i] = mstack[i];
+      tstack[i].actor = mstack[i].actor; 
+      tstack[i].activity = mstack[i].activity; 
+      tstack[i].event_type = mstack[i].event_type; 
+    }
+    free(mstack);
+    mstack = tstack;   /* and switch */
+  }
+
+  /* if actor matches, then we can do an in-place update */
   len = strlen(actor);
-  curr->actor =  (char *) malloc(sizeof(char) * len + 1);
-  strncpy(curr->actor, actor, len);
-  curr->actor[len]=(char) 0;
-  curr->pid = pid;
-  curr->node = node;
-  curr->conn_pid = conn_pid;
+  if (stack_size > 0) {
+    tos = mstack+stack_size;
+    if (strncmp(actor, tos->actor, len) == 0) {
+      if (tos->activity != NULL) {
+	free(tos->activity);
+      }
+      if (tos->event_type != NULL) {
+	free(tos->event_type);
+      }
+    } else {
+      stack_size++;
+    } 
+  } else {
+    stack_size++;
+  }
+  tos=mstack+stack_size;
+  tos->pid = pid;
+  tos->node = node;
+  tos->conn_pid = conn_pid;
+  tos->event = event;
+  tos->start_time = time(NULL);
+  len = strlen(actor);
+  tos->actor = malloc(sizeof(char)*len+1);
+  if (tos->actor) {
+    strncpy(tos->actor, actor, len);
+    tos->actor[len] = (char) 0;
+  } else {
+    slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for actor (len %d)\n", len);
+    slon_retry();
+  }
   if (activity != NULL) {
     len = strlen(activity);
-    curr->activity = malloc(sizeof(char) * len + 1);
-    strncpy(curr->activity, activity, len);
-    curr->activity[len] = (char) 0;
+    tos->activity = malloc(sizeof(char)*len+1);
+    if (tos->activity) {
+      strncpy(tos->activity, activity, len);
+      tos->activity[len] = (char) 0;
+    } else {
+      slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for activity (len %d)\n", len);
+      slon_retry();
+    }
   } else {
-    curr->activity = activity;
+    tos->activity = NULL;
   }
-  curr->start_time = time(NULL);
-  curr->event = event;
   if (event_type != NULL) {
     len = strlen(event_type);
-    curr->event_type = malloc(sizeof(char) * len) + 1;
-    strncpy(curr->event_type, event_type, len);
-    curr->event_type[len] = 0;
+    tos->event_type = malloc(sizeof(char)*len+1);
+    if (tos->event_type) {
+      strncpy(tos->event_type, event_type, len);
+      tos->event_type[len] = (char) 0;
+    } else {
+      slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for event_type (len %d)\n", len);
+      slon_retry();
+    }
   } else {
-    curr->event_type = event_type;
+    tos->event_type = NULL;
   }
-  queue_current = (SlonStateQueue *) malloc(sizeof(SlonStateQueue));
-  queue_current->entry = curr;
-  queue_current->next = NULL;
-
-  pthread_mutex_lock(&queue_lock);
-  if (queue_head == NULL) {
-    queue_head = queue_current;
-  }
-  if (queue_tail == NULL) {
-    queue_tail = queue_current;
-  } else {
-    queue_tail->next = queue_current;
-    queue_tail = queue_current;
-  }
-  queue_size++;
-  pthread_mutex_unlock(&queue_lock);
-
   slon_log(SLON_DEBUG2, "monitor_state - size=%d (%s,%d,%d,%d,%s,%ld,%s)\n", 
-	   queue_size,
-	   curr->actor, curr->pid, curr->node, curr->conn_pid, curr->activity, curr->event, curr->event_type);
+	   stack_size,
+	   tos->actor, tos->pid, tos->node, tos->conn_pid, tos->activity, tos->event, tos->event_type);
+  pthread_mutex_unlock(&stack_lock);
 }
 
 /* Note that it is the caller's responsibility to free() the contents
-   of strings qentry->actor, qentry->activity, qentry->event_type */
-static bool queue_dequeue (SlonState *qentry)
+   of strings ->actor, ->activity, ->event_type */
+static bool stack_pop (SlonState *qentry)
 {
-  SlonStateQueue *cq = NULL, *cn;
   SlonState *ce = NULL;
-  pthread_mutex_lock(&queue_lock);
-  if (queue_head == NULL) {
-    slon_log(SLON_DEBUG2, "queue_dequeue()  - NO entry to dequeue\n");
-    pthread_mutex_unlock(&queue_lock);
+  pthread_mutex_lock(&stack_lock);
+  if (stack_size == 0) {
+    pthread_mutex_unlock(&stack_lock);
     return FALSE;
   } else {
-    ce = queue_head->entry;
+    ce = mstack+stack_size;
     qentry->actor = ce->actor;
     qentry->pid = ce->pid;
     qentry->node = ce->node;
@@ -295,19 +325,11 @@ static bool queue_dequeue (SlonState *qentry)
     qentry->event = ce->event;
     qentry->event_type = ce->event_type;
     qentry->start_time = ce->start_time;
-    slon_log(SLON_DEBUG2, "queue_dequeue()  - assigned all components to qentry for return\n");
-    slon_log(SLON_DEBUG2, "dequeue (%s,%d,%d,%d,%s,%ld,%s)\n", 
+    slon_log(SLON_DEBUG2, "pop (%s,%d,%d,%d,%s,%ld,%s)\n", 
 	     qentry->actor, qentry->pid, qentry->node, qentry->conn_pid, qentry->activity, qentry->event, qentry->event_type);
 
-    cq = queue_head;
-    cn = queue_head->next;
-    queue_head = cn;
-    if (ce != NULL)
-      free(ce); 
-    if (cq != NULL)
-      free(cq); 
-    queue_size--;
-    pthread_mutex_unlock(&queue_lock);
+    stack_size--;
+    pthread_mutex_unlock(&stack_lock);
     return (bool) TRUE;
   }
 }
