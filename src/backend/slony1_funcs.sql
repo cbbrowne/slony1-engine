@@ -5726,7 +5726,7 @@ comment on function @NAMESPACE@.store_application_name (i_name text) is
 create or replace function @NAMESPACE@.component_state (i_actor text, i_pid integer, i_node integer, i_conn_pid integer, i_activity text, i_starttime timestamptz, i_event bigint, i_eventtype text) returns integer as $$
 begin
 	-- Trim out old state for this component
-	if not exists (select 1 from @NAMESPACE@.sl_components where co_actor = i_actor and co_pid = i_pid and co_node = i_node) then
+	if not exists (select 1 from @NAMESPACE@.sl_components where co_actor = i_actor) then
 	   insert into @NAMESPACE@.sl_components 
              (co_actor, co_pid, co_node, co_connection_pid, co_activity, co_starttime, co_event, co_eventtype)
 	   values 
@@ -5736,7 +5736,8 @@ begin
               set
                  co_connection_pid = i_conn_pid, co_activity = i_activity, co_starttime = i_starttime, co_event = i_event,
                  co_eventtype = i_eventtype
-              where co_actor = i_actor and co_pid = i_pid and co_node = i_node;
+              where co_actor = i_actor 
+	      	    and co_starttime < i_starttime;
 	end if;
 	return 1;
 end $$
