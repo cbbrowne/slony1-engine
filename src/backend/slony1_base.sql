@@ -557,10 +557,9 @@ insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
 --  with monitoring
 -- ----------------------------------------------------------------------
 create table @NAMESPACE@.sl_components (
-	co_actor	 text not null,
+	co_actor	 text not null primary key,
 	co_pid		 integer not null,
 	co_node		 integer not null,
-	primary key (co_actor, co_pid, co_node),
 	co_connection_pid integer not null,
 	co_activity	  text,
 	co_starttime	  timestamptz not null default now(),
