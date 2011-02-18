@@ -301,7 +301,6 @@ void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, /*@null@*/
     tos->event_type = NULL;
   }
   pthread_mutex_unlock(&stack_lock);
-  slon_log(SLON_DEBUG2, "monitor_state: done\n");
 }
 
 /* Note that it is the caller's responsibility to free() the contents
