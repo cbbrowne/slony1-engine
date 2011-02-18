@@ -1556,6 +1556,7 @@ remoteWorkerThread_main(void *cdata)
 				(void) slon_mkquery(&query1, "rollback transaction;");
 				archive_terminate(node);
 			}
+			monitor_state(conn_symname, getpid(), node->no_id, local_conn->conn_pid, "just running", 0, "n/a");
 			if (query_execute(node, local_dbconn, &query1) < 0)
 				slon_retry();
 

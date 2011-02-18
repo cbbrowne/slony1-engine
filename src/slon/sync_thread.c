@@ -59,7 +59,7 @@ syncThread_main(void *dummy)
 	if ((conn = slon_connectdb(rtcfg_conninfo, "local_sync")) == NULL)
 		slon_retry();
 	dbconn = conn->dbconn;
-	monitor_state("local_sync", getpid(), 0, conn->conn_pid, NULL, 0, NULL);
+	monitor_state("local_sync", getpid(), 0, conn->conn_pid, "none", 0, "n/a");
 
 	/*
 	 * We don't initialize the last known action sequence to the actual value.
@@ -120,6 +120,7 @@ syncThread_main(void *dummy)
 			 * Action sequence has changed, generate a SYNC event and read the
 			 * resulting currval of the event sequence.
 			 */
+			monitor_state("local_sync", getpid(), 0, conn->conn_pid, "GenSync", 0, "n/a");
 			strcpy(last_actseq_buf, PQgetvalue(res, 0, 0));
 
 			PQclear(res);
@@ -175,6 +176,7 @@ syncThread_main(void *dummy)
 			}
 			PQclear(res);
 		}
+		monitor_state("local_sync", getpid(), 0, conn->conn_pid, "none", 0, "n/a");
 	}
 
 	dstring_free(&query1);
