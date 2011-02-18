@@ -44,6 +44,7 @@
 <!ENTITY sllog2 "<xref linkend=table.sl-log-2>">
 <!ENTITY slseqlog "<xref linkend=table.sl-seqlog>">
 <!ENTITY slconfirm "<xref linkend=table.sl-confirm>">
+<!ENTITY slcomponents "<xref linkend=table.sl-components>">
 
 <!ENTITY slevent "<xref linkend=table.sl-event>">
 <!ENTITY slnode "<xref linkend=table.sl-node>">
