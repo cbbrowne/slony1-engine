@@ -568,14 +568,14 @@ create table @NAMESPACE@.sl_components (
 ) without oids;
 
 comment on table @NAMESPACE@.sl_components is 'Table used to monitor what various slon/slonik components are doing';
-comment on column @NAMESPACE@.sl_components.co_actor is 'which component am I';
-comment on column @NAMESPACE@.sl_components.co_pid is 'my process/thread PID';
+comment on column @NAMESPACE@.sl_components.co_actor is 'which component am I?';
+comment on column @NAMESPACE@.sl_components.co_pid is 'my process/thread PID on node where slon runs';
 comment on column @NAMESPACE@.sl_components.co_node is 'which node am I servicing?';
-comment on column @NAMESPACE@.sl_components.co_connection_pid is 'PID of database connection being used';
+comment on column @NAMESPACE@.sl_components.co_connection_pid is 'PID of database connection being used on database server';
 comment on column @NAMESPACE@.sl_components.co_activity is 'activity that I am up to';
-comment on column @NAMESPACE@.sl_components.co_starttime is 'when did my activity begin?';
-comment on column @NAMESPACE@.sl_components.co_eventtype is 'what kind of event am I processing?';
-comment on column @NAMESPACE@.sl_components.co_event is 'which event might I be processing?';
+comment on column @NAMESPACE@.sl_components.co_starttime is 'when did my activity begin?  (timestamp reported as per slon process on server running slon)';
+comment on column @NAMESPACE@.sl_components.co_eventtype is 'what kind of event am I processing?  (commonly n/a for event loop main threads)';
+comment on column @NAMESPACE@.sl_components.co_event is 'which event have I started processing?';
 
 
 -- ----------------------------------------------------------------------
