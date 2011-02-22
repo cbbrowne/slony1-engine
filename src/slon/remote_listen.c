@@ -224,7 +224,7 @@ remoteListenThread_main(void *cdata)
 				continue;
 			}
 			dbconn = conn->dbconn;
-			monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "none", 0, "n/a");
+			monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 
 			/*
 			 * Listen on the connection for events and confirmations and
@@ -519,7 +519,7 @@ remoteListen_forward_confirm(SlonNode * node, SlonConn * conn)
 	int			tupno;
 
 	dstring_init(&query);
-	monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "forwarding confirmations", 0, "n/a");
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "forwarding confirmations", 0, "n/a");
 
 	/*
 	 * Select the max(con_seqno) grouped by con_origin and con_received from
@@ -562,7 +562,7 @@ remoteListen_forward_confirm(SlonNode * node, SlonConn * conn)
 
 	PQclear(res);
 	dstring_free(&query);
-	monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "none", 0, "n/a");
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 
 	return 0;
 }
@@ -602,7 +602,7 @@ remoteListen_receive_events(SlonNode * node, SlonConn * conn,
 	 * <remote_node> and ev_seqno > <last_seqno>) per remote node we're listen
 	 * for here.
 	 */
-	monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "receiving events", 0, "n/a");
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "receiving events", 0, "n/a");
 	(void) slon_mkquery(&query,
 				 "select ev_origin, ev_seqno, ev_timestamp, "
 				 "       ev_snapshot, "
@@ -761,6 +761,6 @@ remoteListen_receive_events(SlonNode * node, SlonConn * conn,
 			}
 	}
 	PQclear(res);
-	monitor_state("remote listener", getpid(), node->no_id, conn->conn_pid, "none", 0, "n/a");
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 	return 0;
 }

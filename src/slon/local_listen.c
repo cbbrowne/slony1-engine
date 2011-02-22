@@ -58,7 +58,7 @@ localListenThread_main(/* @unused@ */ void *dummy)
 		slon_retry();
 	dbconn = conn->dbconn;
 
-	monitor_state("local_listen", getpid(), rtcfg_nodeid, conn->conn_pid, "just running", 0, "n/a");
+	monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, "thread main loop", 0, "n/a");
 
 	/*
 	 * Initialize local data
@@ -239,7 +239,7 @@ localListenThread_main(/* @unused@ */ void *dummy)
 					 rtcfg_nodeid, PQgetvalue(res, tupno, 0),
 					 ev_type);
 
-			monitor_state("local_listen", getpid(), rtcfg_nodeid, conn->conn_pid, ev_type, 0, ev_type);
+			monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, ev_type, 0, ev_type);
 
 
 			if (strcmp(ev_type, "SYNC") == 0)
@@ -729,7 +729,7 @@ localListenThread_main(/* @unused@ */ void *dummy)
 		/*
 		 * Wait for notify or for timeout
 		 */
-		monitor_state("local_listen", getpid(), rtcfg_nodeid, conn->conn_pid, "just running", 0, "n/a");
+		monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, "thread main loop", 0, "n/a");
 		if (sched_wait_time(conn, SCHED_WAIT_SOCK_READ, poll_sleep) != SCHED_STATUS_OK)
 			break;
 	}

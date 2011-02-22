@@ -520,7 +520,7 @@ extern void *syncThread_main(void *dummy);
  * ----------
  */
 extern void *monitorThread_main(void *dummy);
-extern void monitor_state (char *actor, pid_t pid, int node, pid_t conn_pid, char *activity, int64 event, char *event_type);
+extern void monitor_state (char *actor, int node, pid_t conn_pid, char *activity, int64 event, char *event_type);
 
 /* ----------
  * Globals in monitor_thread.c
