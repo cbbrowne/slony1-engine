@@ -452,8 +452,8 @@ are up to:</para>
 indicates what the various database connections are up to.</para> 
 
 <para> On recent versions of &postgres;, this view includes an
-attribute, <envar/application_name/, which &slony1; components
-populate as follows:</para>
+attribute, <envar>application_name</envar>, which &slony1; components
+populate based on the names of their respective threads.</para>
 
 </sect2>
 <sect2 id="slcomponents"> <title> Looking at &slcomponents; view </title>
