@@ -27,6 +27,7 @@
 static void stack_init (void);
 static bool stack_pop (SlonState *current);
 static void stack_dump ();
+static void entry_dump(int i, SlonState *tos);
 
 /* ---------- 
  * Global variables 
@@ -198,7 +199,7 @@ monitorThread_main(void *dummy)
 
 static void stack_init (void)
 {
-  stack_maxlength = 20;
+  stack_maxlength = 5;
   mstack = malloc(sizeof(SlonState) * (stack_maxlength + 1));
   if (mstack == NULL) {
       slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
@@ -218,36 +219,28 @@ void monitor_state (char *actor, int node, pid_t conn_pid, /*@null@*/char *activ
   pid_t mypid;
 
   mypid = getpid();
-
-  /* slon_log(SLON_DEBUG2, "monitor_state (%s,%d,%d,%d,%s,%ld,%s)\n",  */
-  /* 	   actor, pid, node, conn_pid, activity, event, event_type); */
-
   pthread_mutex_lock(&stack_lock);
-
   if (mstack == NULL) {
     stack_init();
   }
   if (stack_size >= stack_maxlength) {
     /* Need to reallocate stack */
-    slon_log(SLON_DEBUG2, "monitorThread: resize stack - size %d\n", stack_size);
-    stack_dump();
+    slon_log(SLON_DEBUG2, "monitorThread: stack reallocation - old address %d, old max size=%d, old size=%d\n", mstack, stack_maxlength, stack_size);
     stack_maxlength *= 2;
-    slon_log(SLON_DEBUG2, "monitorThread: resize stack - new length %d\n", stack_maxlength);
-    nstack=realloc(mstack, (size_t) stack_maxlength + 1);
+
+    nstack=realloc(mstack, (size_t) ((stack_maxlength + 1)*sizeof(SlonState)));
     if (nstack == NULL) {
-      slon_log(SLON_ERROR, "stack_init() - realloc() failure could not allocate %d stack slots\n", stack_maxlength);
+      slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
+      pthread_mutex_unlock(&stack_lock);
       slon_retry();
-    } else {
-      mstack = nstack;
-    }
-    slon_log(SLON_DEBUG2, "monitorThread: stack reallocation done\n", stack_maxlength);
-    stack_dump();
+    } 
+    mstack = nstack;
   }
 
   /* if actor matches, then we can do an in-place update */
-  len = strlen(actor);
   if (stack_size != EMPTY_STACK) {
     tos = mstack+stack_size;
+    len = strlen(actor);
     if (strncmp(actor, tos->actor, len) == 0) {
       if (tos->actor != NULL) {
 	free(tos->actor);
@@ -279,6 +272,7 @@ void monitor_state (char *actor, int node, pid_t conn_pid, /*@null@*/char *activ
       tos->actor = ns;
     } else {
       slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for actor (len %d)\n", len);
+      pthread_mutex_unlock(&stack_lock);
       slon_retry();
     }
   } else {
@@ -293,6 +287,7 @@ void monitor_state (char *actor, int node, pid_t conn_pid, /*@null@*/char *activ
       tos->activity = ns;
     } else {
       slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for activity (len %d)\n", len);
+      pthread_mutex_unlock(&stack_lock);
       slon_retry();
     }
   } else {
@@ -307,6 +302,7 @@ void monitor_state (char *actor, int node, pid_t conn_pid, /*@null@*/char *activ
       tos->event_type = ns;
     } else {
       slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for event_type (len %d)\n", len);
+      pthread_mutex_unlock(&stack_lock);
       slon_retry();
     }
   } else {
@@ -334,9 +330,7 @@ static bool stack_pop (/*@out@*/ SlonState *qentry)
     qentry->event = ce->event;
     qentry->event_type = ce->event_type;
     qentry->start_time = ce->start_time;
-    /* slon_log(SLON_DEBUG2, "pop (%s,%d,%d,%d,%s,%ld,%s)\n",  */
-    /* 	     qentry->actor, qentry->pid, qentry->node, qentry->conn_pid, qentry->activity, qentry->event, qentry->event_type); */
-
+    /* entry_dump(stack_size, qentry); */
     stack_size--;
     pthread_mutex_unlock(&stack_lock);
     return (bool) TRUE;
@@ -357,12 +351,16 @@ static void stack_dump () {
   slon_log(SLON_DEBUG2, "monitorThread: stack_dump()\n");
   for (i = 0; i < stack_size; i++) {
     tos = mstack + i;
+    entry_dump(i, tos);
+  }
+  slon_log(SLON_DEBUG2, "monitorThread: stack_dump done\n");
+}
+
+static void entry_dump(int i, SlonState *tos) {
     slon_log(SLON_DEBUG2, "stack[%d]=%d\n", 
 	     i, tos);
     slon_log(SLON_DEBUG2, "pid:%d node:%d connpid:%d event:%lld\n", 
 	     tos->pid, tos->node, tos->conn_pid, tos->event);
     slon_log(SLON_DEBUG2, "actor[%s] activity[%s] event_type[%s]\n",
 	     tos->actor, tos->activity, tos->event_type); 
-  }
-  slon_log(SLON_DEBUG2, "monitorThread: stack_dump done\n");
 }
