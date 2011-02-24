@@ -197,9 +197,10 @@ monitorThread_main(void *dummy)
   return (void *) 0;
 }
 
+#define INITIAL_STACK_SIZE 6
 static void stack_init (void)
 {
-  stack_maxlength = 5;
+  stack_maxlength = INITIAL_STACK_SIZE;
   mstack = malloc(sizeof(SlonState) * (stack_maxlength + 1));
   if (mstack == NULL) {
       slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
