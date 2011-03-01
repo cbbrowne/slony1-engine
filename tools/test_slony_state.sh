@@ -212,6 +212,39 @@ Might listen paths be missing?"
             current_query <> '<IDLE>'
      order by query_start;"
 
-	psql -c "${OLDQ}"
+	psql -c "${CONFQ}"
 	
+	OLDQ="select procpid from pg_stat_activity where  (now() - query_start) > '${ELDERLYTXN}'::interval and current_query <> '<IDLE>';"
+
+	OLDR=`RUNQUERY "${OLDQ}"`
+	for pid in `echo ${OLDR}`; do
+	    problem ${node} "Old connection (age >${ELDERLYTXN}) found - PID=${pid}" "Elderly DB connection found, which may cause degradation of database and replication performance"
+	done
+
+	ELDERLY_COMPONENT="00:05:00"
+	old_comp_query="
+     select co_actor as actor, co_pid as slon_pid, co_node as node , co_connection_pid as conn_pid, co_activity as activity, co_starttime as start_time, (now() - co_starttime) as age, co_event as event_id, co_eventtype as event_type
+     from \"_${CLUSTER}\".sl_components 
+     where  (now() - co_starttime) > '${ELDERLY_COMPONENT}'::interval
+     order by co_starttime;"
+	
+	psql -c "${old_comp_query}"
+
+	old_comp_query="
+     select co_actor as actor, co_pid as slon_pid, co_node as node, co_connection_pid as conn_pid
+     from \"_${CLUSTER}\".sl_components 
+     where  (now() - co_starttime) > '${ELDERLY_COMPONENT}'::interval
+     order by co_starttime;"
+	OCR=`RUNQUERY "${old_comp_query}"`
+
+	for i in `echo ${OCR}`; do 
+	    actor=`argn "${i}" 1`
+	    pid=`argn "${i}" 2`
+	    nodeid=`argn "${i}" 3`
+	    copid=`argn "${i}" 4`
+	    problem ${node} "Component ${actor} has not reported back in > ${ELDERLY_COMPONENT}" "sl_component entry growing old for ${actor}, UNIX pid ${pid}, 
+relating to node ${nodeid}, with DB connection PID ${copid}.
+
+This may indicate that a slon thread has gotten stuck"
+	done
 done
