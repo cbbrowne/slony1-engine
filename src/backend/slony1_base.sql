@@ -235,7 +235,7 @@ comment on column @NAMESPACE@.sl_subscribe.sub_active is 'Has this subscription 
 create table @NAMESPACE@.sl_event (
 	ev_origin			int4,
 	ev_seqno			int8,
-	ev_timestamp		timestamp,
+	ev_timestamp		timestamptz,
 	ev_snapshot			"pg_catalog".txid_snapshot,
 	ev_type				text,
 	ev_data1			text,
@@ -303,7 +303,7 @@ create table @NAMESPACE@.sl_confirm (
 	con_origin			int4,
 	con_received		int4,
 	con_seqno			int8,
-	con_timestamp		timestamp DEFAULT timeofday()::timestamp
+	con_timestamp		timestamptz DEFAULT timeofday()::timestamptz
 ) WITHOUT OIDS;
 comment on table @NAMESPACE@.sl_confirm is 'Holds confirmation of replication events.  After a period of time, Slony removes old confirmed events from both this table and the sl_event table.';
 
@@ -341,22 +341,21 @@ create index sl_seqlog_idx on @NAMESPACE@.sl_seqlog
 --
 --	Support function used in sl_seqlastvalue view
 -- ----------------------------------------------------------------------
-create function @NAMESPACE@.sequenceLastValue(text) returns int8
-as '
+create function @NAMESPACE@.sequenceLastValue(p_seqname text) returns int8
+as $$
 declare
-	p_seqname	alias for $1;
 	v_seq_row	record;
 begin
-	for v_seq_row in execute ''select last_value from '' || @NAMESPACE@.slon_quote_input(p_seqname)
+	for v_seq_row in execute 'select last_value from ' || @NAMESPACE@.slon_quote_input(p_seqname)
 	loop
 		return v_seq_row.last_value;
 	end loop;
 
 	-- not reached
 end;
-' language plpgsql;
+$$ language plpgsql;
 
-comment on function @NAMESPACE@.sequenceLastValue(text) is
+comment on function @NAMESPACE@.sequenceLastValue(p_seqname text) is
 'sequenceLastValue(p_seqname)
 
 Utility function used in sl_seqlastvalue view to compactly get the
@@ -419,7 +418,7 @@ create table @NAMESPACE@.sl_registry (
 	reg_key				text primary key,
 	reg_int4			int4,
 	reg_text			text,
-	reg_timestamp		timestamp
+	reg_timestamp		timestamptz
 ) WITHOUT OIDS;
 comment on table @NAMESPACE@.sl_registry is 'Stores miscellaneous runtime data';
 comment on column @NAMESPACE@.sl_registry.reg_key is 'Unique key of the runtime option';
@@ -541,7 +540,7 @@ comment on column @NAMESPACE@.sl_config_lock.dummy is 'No data ever goes in this
 -- ----------------------------------------------------------------------
 create table @NAMESPACE@.sl_archive_counter (
 	ac_num			bigint,
-	ac_timestamp	timestamp
+	ac_timestamp	timestamptz
 ) without oids;
 comment on table @NAMESPACE@.sl_archive_counter is 'Table used to generate the log shipping archive number.
 ';
@@ -549,7 +548,7 @@ comment on column @NAMESPACE@.sl_archive_counter.ac_num is 'Counter of SYNC ID u
 comment on column @NAMESPACE@.sl_archive_counter.ac_timestamp is 'Time at which the archive log was generated on the subscriber';
 
 insert into @NAMESPACE@.sl_archive_counter (ac_num, ac_timestamp)
-	values (0, 'epoch'::timestamp);
+	values (0, 'epoch'::timestamptz);
 
 -- ----------------------------------------------------------------------
 -- Last but not least grant USAGE to the replication schema objects.

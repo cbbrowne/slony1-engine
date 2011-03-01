@@ -16,6 +16,7 @@ typedef struct SlonikAdmInfo_s SlonikAdmInfo;
 typedef struct SlonikStmt_s SlonikStmt;
 typedef struct SlonikStmt_try_s SlonikStmt_try;
 typedef struct SlonikStmt_echo_s SlonikStmt_echo;
+typedef struct SlonikStmt_date_s SlonikStmt_date;
 typedef struct SlonikStmt_exit_s SlonikStmt_exit;
 typedef struct SlonikStmt_repair_config_s SlonikStmt_repair_config;
 typedef struct SlonikStmt_restart_node_s SlonikStmt_restart_node;
@@ -63,6 +64,7 @@ typedef enum
 	STMT_DROP_PATH,
 	STMT_DROP_SET,
 	STMT_ECHO,
+	STMT_DATE,
 	STMT_ERROR,
 	STMT_EXIT,
 	STMT_FAILED_NODE,
@@ -142,6 +144,12 @@ struct SlonikStmt_echo_s
 {
 	SlonikStmt	hdr;
 	char	   *str;
+};
+
+struct SlonikStmt_date_s
+{
+	SlonikStmt	hdr;
+	char	   *fmt;
 };
 
 
@@ -296,6 +304,8 @@ struct SlonikStmt_set_add_table_s
 	char	   *use_key;
 	char	   *tab_fqname;
 	char	   *tab_comment;
+	char	   *tables;
+	int			add_sequences;
 };
 
 
@@ -306,6 +316,7 @@ struct SlonikStmt_set_add_sequence_s
 	int			set_origin;
 	int			seq_id;
 	char	   *seq_fqname;
+	char	   *sequences;
 	char	   *seq_comment;
 };
 
@@ -621,11 +632,13 @@ extern int	yylex(void);
  */
 typedef enum {
 	O_ADD_ID,
+	O_ADD_SEQUENCES,
 	O_BACKUP_NODE,
 	O_CLIENT,
 	O_COMMENT,
 	O_CONNINFO,
 	O_CONNRETRY,
+	O_DATE_FORMAT,
 	O_EVENT_NODE,
 	O_EXECUTE_ONLY_ON,
 	O_FILENAME,
@@ -641,9 +654,11 @@ typedef enum {
 	O_PROVIDER,
 	O_RECEIVER,
 	O_SECONDS,
+	O_SEQUENCES,
 	O_SERVER,
 	O_SET_ID,
 	O_TAB_ID,
+	O_TABLES,
 	O_TIMEOUT,
 	O_USE_KEY,
 	O_WAIT_CONFIRMED,

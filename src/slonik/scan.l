@@ -88,6 +88,7 @@ confirmed		{ return K_CONFIRMED;		}
 conninfo		{ return K_CONNINFO;		}
 connretry		{ return K_CONNRETRY;		}
 create			{ return K_CREATE;			}
+date			{ return K_DATE;			}
 drop			{ return K_DROP;			}
 echo			{ return K_ECHO;			}
 error			{ return K_ERROR;			}
@@ -98,6 +99,7 @@ failover		{ return K_FAILOVER;		}
 false			{ return K_FALSE;			}
 filename		{ return K_FILENAME;		}
 finish			{ return K_FINISH;			}
+format			{ return K_DFORMAT;			}
 for				{ return K_FOR;				}
 forward			{ return K_FORWARD;			}
 full			{ return K_FULL;			}
@@ -131,6 +133,7 @@ restart			{ return K_RESTART;			}
 script			{ return K_SCRIPT;			}
 seconds         { return K_SECONDS;         }
 sequence		{ return K_SEQUENCE;		}
+sequences		{ return K_SEQUENCES;		}
 server			{ return K_SERVER;			}
 set				{ return K_SET;				}
 sleep			{ return K_SLEEP;			}
@@ -140,6 +143,7 @@ success			{ return K_SUCCESS;			}
 switch			{ return K_SWITCH;			}
 sync			{ return K_SYNC;			}
 table			{ return K_TABLE;			}
+tables			{ return K_TABLES;			}
 timeout			{ return K_TIMEOUT;			}
 true			{ return K_TRUE;			}
 try				{ return K_TRY;				}

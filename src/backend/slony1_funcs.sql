@@ -19,101 +19,101 @@
 --
 --	Create an sl_event entry
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.createEvent (name, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text) 
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text, ev_data7 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text, ev_data7 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
 
-create or replace function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text, text, text)
+create or replace function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text, ev_data7 text, ev_data8 text)
 	returns bigint
 	as '$libdir/slony1_funcs', '_Slony_I_createEvent'
 	language C
 	called on null input;
 
-comment on function @NAMESPACE@.createEvent (name, text, text, text, text, text, text, text, text, text) is
+comment on function @NAMESPACE@.createEvent (p_cluster_name name, p_event_type text, ev_data1 text, ev_data2 text, ev_data3 text, ev_data4 text, ev_data5 text, ev_data6 text, ev_data7 text, ev_data8 text) is
 'FUNCTION createEvent (cluster_name, ev_type [, ev_data [...]])
 
 Create an sl_event entry';
@@ -155,13 +155,13 @@ comment on function @NAMESPACE@.lockedSet () is
 --
 --	
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.getLocalNodeId (name) returns int4
+create or replace function @NAMESPACE@.getLocalNodeId (p_cluster name) returns int4
     as '$libdir/slony1_funcs', '_Slony_I_getLocalNodeId'
 	language C
 	security definer;
-grant execute on function @NAMESPACE@.getLocalNodeId (name) to public;
+grant execute on function @NAMESPACE@.getLocalNodeId (p_cluster name) to public;
 
-comment on function @NAMESPACE@.getLocalNodeId (name) is 
+comment on function @NAMESPACE@.getLocalNodeId (p_cluster name) is 
   'Returns the node ID of the node being serviced on the local database';
 
 -- ----------------------------------------------------------------------
@@ -245,10 +245,9 @@ grant execute on function @NAMESPACE@.logTrigger () to public;
 --
 --	
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.terminateNodeConnections (int4) returns int4
+create or replace function @NAMESPACE@.terminateNodeConnections (p_failed_node int4) returns int4
 as $$
 declare
-	p_failed_node	alias for $1;
 	v_row			record;
 begin
 	for v_row in select nl_nodeid, nl_conncnt,
@@ -265,7 +264,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.terminateNodeConnections (int4) is 
+comment on function @NAMESPACE@.terminateNodeConnections (p_failed_node int4) is 
   'terminates all backends that have registered to be from the given node';
 
 -- ----------------------------------------------------------------------
@@ -273,11 +272,11 @@ comment on function @NAMESPACE@.terminateNodeConnections (int4) is
 --
 --	
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.killBackend (int4, text) returns int4
+create or replace function @NAMESPACE@.killBackend (p_pid int4, p_signame text) returns int4
     as '$libdir/slony1_funcs', '_Slony_I_killBackend'
 	language C;
 
-comment on function @NAMESPACE@.killBackend(int4, text) is
+comment on function @NAMESPACE@.killBackend(p_pid int4, p_signame text) is
   'Send a signal to a postgres process. Requires superuser rights';
 
 -- ----------------------------------------------------------------------
@@ -285,11 +284,11 @@ comment on function @NAMESPACE@.killBackend(int4, text) is
 --
 --	
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.seqtrack (int4, int8) returns int8
+create or replace function @NAMESPACE@.seqtrack (p_seqid int4, p_seqval int8) returns int8
     as '$libdir/slony1_funcs', '_Slony_I_seqtrack'
 	strict language C;
 
-comment on function @NAMESPACE@.seqtrack(int4, int8) is
+comment on function @NAMESPACE@.seqtrack(p_seqid int4, p_seqval int8) is
   'Returns NULL if seqval has not changed since the last call for seqid';
 
 -- ----------------------------------------------------------------------
@@ -301,18 +300,17 @@ comment on function @NAMESPACE@.seqtrack(int4, int8) is
 --	This function will be used to quote output of internal functions.
 -- ----------------------------------------------------------------------
 
-create or replace function @NAMESPACE@.slon_quote_brute(text) returns text
+create or replace function @NAMESPACE@.slon_quote_brute(p_tab_fqname text) returns text
 as $$
 declare	
-    p_tab_fqname alias for $1;
     v_fqname text default '';
 begin
     v_fqname := '"' || replace(p_tab_fqname,'"','""') || '"';
     return v_fqname;
 end;
-$$ language plpgsql;
+$$ language plpgsql immutable;
 
-comment on function @NAMESPACE@.slon_quote_brute(text) is
+comment on function @NAMESPACE@.slon_quote_brute(p_tab_fqname text) is
   'Brutally quote the given text';
 
 -- ----------------------------------------------------------------------
@@ -324,9 +322,8 @@ comment on function @NAMESPACE@.slon_quote_brute(text) is
 --
 --	This function will be used to quote user input.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.slon_quote_input(text) returns text as $$
+create or replace function @NAMESPACE@.slon_quote_input(p_tab_fqname text) returns text as $$
   declare
-     p_tab_fqname alias for $1;
      v_nsp_name text;
      v_tab_name text;
 	 v_i integer;
@@ -388,9 +385,9 @@ begin
 		end if;
 	end if;
 
-end;$$ language plpgsql;
+end;$$ language plpgsql immutable;
 
-comment on function @NAMESPACE@.slon_quote_input(text) is
+comment on function @NAMESPACE@.slon_quote_input(p_text text) is
   'quote all words that aren''t quoted yet';
 
 -- **********************************************************************
@@ -466,11 +463,8 @@ comment on function @NAMESPACE@.slonyVersion() is
 --
 --	Functions for accessing sl_registry
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.registry_set_int4(text, int4)
+create or replace function @NAMESPACE@.registry_set_int4(p_key text, p_value int4)
 returns int4 as $$
-DECLARE
-	p_key		alias for $1;
-	p_value		alias for $2;
 BEGIN
 	if p_value is null then
 		delete from @NAMESPACE@.sl_registry
@@ -488,16 +482,14 @@ BEGIN
 	return p_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_set_int4(text, int4) is
+comment on function @NAMESPACE@.registry_set_int4(p_key text, p_value int4) is
 'registry_set_int4(key, value)
 
 Set or delete a registry value';
 
-create or replace function @NAMESPACE@.registry_get_int4(text, int4)
+create or replace function @NAMESPACE@.registry_get_int4(p_key text, p_default int4)
 returns int4 as $$
 DECLARE
-	p_key		alias for $1;
-	p_default	alias for $2;
 	v_value		int4;
 BEGIN
 	select reg_int4 into v_value from @NAMESPACE@.sl_registry
@@ -516,16 +508,13 @@ BEGIN
 	return v_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_get_int4(text, int4) is
+comment on function @NAMESPACE@.registry_get_int4(p_key text, p_default int4) is
 'registry_get_int4(key, value)
 
 Get a registry value. If not present, set and return the default.';
 
-create or replace function @NAMESPACE@.registry_set_text(text, text)
+create or replace function @NAMESPACE@.registry_set_text(p_key text, p_value text)
 returns text as $$
-DECLARE
-	p_key		alias for $1;
-	p_value		alias for $2;
 BEGIN
 	if p_value is null then
 		delete from @NAMESPACE@.sl_registry
@@ -548,11 +537,9 @@ comment on function @NAMESPACE@.registry_set_text(text, text) is
 
 Set or delete a registry value';
 
-create or replace function @NAMESPACE@.registry_get_text(text, text)
+create or replace function @NAMESPACE@.registry_get_text(p_key text, p_default text)
 returns text as $$
 DECLARE
-	p_key		alias for $1;
-	p_default	alias for $2;
 	v_value		text;
 BEGIN
 	select reg_text into v_value from @NAMESPACE@.sl_registry
@@ -571,16 +558,13 @@ BEGIN
 	return v_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_get_text(text, text) is
+comment on function @NAMESPACE@.registry_get_text(p_key text, p_default text) is
 'registry_get_text(key, value)
 
 Get a registry value. If not present, set and return the default.';
 
-create or replace function @NAMESPACE@.registry_set_timestamp(text, timestamp)
+create or replace function @NAMESPACE@.registry_set_timestamp(p_key text, p_value timestamptz)
 returns timestamp as $$
-DECLARE
-	p_key		alias for $1;
-	p_value		alias for $2;
 BEGIN
 	if p_value is null then
 		delete from @NAMESPACE@.sl_registry
@@ -598,16 +582,15 @@ BEGIN
 	return p_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_set_timestamp(text, timestamp) is
+
+comment on function @NAMESPACE@.registry_set_timestamp(p_key text, p_value timestamptz) is
 'registry_set_timestamp(key, value)
 
 Set or delete a registry value';
 
-create or replace function @NAMESPACE@.registry_get_timestamp(text, timestamp)
+create or replace function @NAMESPACE@.registry_get_timestamp(p_key text, p_default timestamptz)
 returns timestamp as $$
 DECLARE
-	p_key		alias for $1;
-	p_default	alias for $2;
 	v_value		timestamp;
 BEGIN
 	select reg_timestamp into v_value from @NAMESPACE@.sl_registry
@@ -626,7 +609,8 @@ BEGIN
 	return v_value;
 END;
 $$ language plpgsql;
-comment on function @NAMESPACE@.registry_get_timestamp(text, timestamp) is
+
+comment on function @NAMESPACE@.registry_get_timestamp(p_key text, p_default timestamptz) is
 'registry_get_timestamp(key, value)
 
 Get a registry value. If not present, set and return the default.';
@@ -669,11 +653,9 @@ comment on function @NAMESPACE@.cleanupNodelock() is
 -- register a node connection for a slon so that only that slon services
 -- the node
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.registerNodeConnection (int4)
+create or replace function @NAMESPACE@.registerNodeConnection (p_nodeid int4)
 returns int4
 as $$
-declare
-	p_nodeid	alias for $1;
 begin
 	insert into @NAMESPACE@.sl_nodelock
 		(nl_nodeid, nl_backendpid)
@@ -684,7 +666,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.registerNodeConnection (int4) is
+comment on function @NAMESPACE@.registerNodeConnection (p_nodeid int4) is
 'Register (uniquely) the node connection so that only one slon can service the node';
 
 
@@ -693,12 +675,10 @@ comment on function @NAMESPACE@.registerNodeConnection (int4) is
 --
 --	Initializes a new node.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.initializeLocalNode (int4, text)
+create or replace function @NAMESPACE@.initializeLocalNode (p_local_node_id int4, p_comment text)
 returns int4
 as $$
 declare
-	p_local_node_id		alias for $1;
-	p_comment			alias for $2;
 	v_old_node_id		int4;
 	v_first_log_no		int4;
 	v_event_seq			int8;
@@ -733,7 +713,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.initializeLocalNode (int4, text) is 
+comment on function @NAMESPACE@.initializeLocalNode (p_local_node_id int4, p_comment text) is 
   'no_id - Node ID #
 no_comment - Human-oriented comment
 
@@ -744,12 +724,9 @@ Initializes the new node, no_id';
 --
 --	Generate the STORE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeNode (int4, text)
+create or replace function @NAMESPACE@.storeNode (p_no_id int4, p_no_comment text)
 returns bigint
 as $$
-declare
-	p_no_id			alias for $1;
-	p_no_comment	alias for $2;
 begin
 	perform @NAMESPACE@.storeNode_int (p_no_id, p_no_comment);
 	return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'STORE_NODE',
@@ -758,7 +735,7 @@ end;
 $$ language plpgsql
 	called on null input;
 
-comment on function @NAMESPACE@.storeNode(int4, text) is
+comment on function @NAMESPACE@.storeNode(p_no_id int4, p_no_comment text) is
 'no_id - Node ID #
 no_comment - Human-oriented comment
 
@@ -769,12 +746,10 @@ Generate the STORE_NODE event for node no_id';
 --
 --	Process the STORE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeNode_int (int4, text)
+create or replace function @NAMESPACE@.storeNode_int (p_no_id int4, p_no_comment text)
 returns int4
 as $$
 declare
-	p_no_id			alias for $1;
-	p_no_comment	alias for $2;
 	v_old_row		record;
 begin
 	-- ----
@@ -809,7 +784,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.storeNode_int(int4, text) is
+comment on function @NAMESPACE@.storeNode_int(p_no_id int4, p_no_comment text) is
 'no_id - Node ID #
 no_comment - Human-oriented comment
 
@@ -821,11 +796,10 @@ Internal function to process the STORE_NODE event for node no_id';
 --
 --	Generate the ENABLE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.enableNode (int4)
+create or replace function @NAMESPACE@.enableNode (p_no_id int4)
 returns bigint
 as $$
 declare
-	p_no_id			alias for $1;
 	v_local_node_id	int4;
 	v_node_row		record;
 begin
@@ -859,7 +833,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.enableNode(int4) is
+comment on function @NAMESPACE@.enableNode(p_no_id int4) is
 'no_id - Node ID #
 
 Generate the ENABLE_NODE event for node no_id';
@@ -869,11 +843,10 @@ Generate the ENABLE_NODE event for node no_id';
 --
 --	Process the ENABLE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.enableNode_int (int4)
+create or replace function @NAMESPACE@.enableNode_int (p_no_id int4)
 returns int4
 as $$
 declare
-	p_no_id			alias for $1;
 	v_local_node_id	int4;
 	v_node_row		record;
 	v_sub_row		record;
@@ -935,7 +908,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.enableNode_int(int4) is
+comment on function @NAMESPACE@.enableNode_int(p_no_id int4) is
 'no_id - Node ID #
 
 Internal function to process the ENABLE_NODE event for node no_id';
@@ -945,17 +918,15 @@ Internal function to process the ENABLE_NODE event for node no_id';
 --
 --	Generate the DISABLE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.disableNode (int4)
+create or replace function @NAMESPACE@.disableNode (p_no_id int4)
 returns bigint
 as $$
-declare
-	p_no_id			alias for $1;
 begin
 	-- **** TODO ****
 	raise exception 'Slony-I: disableNode() not implemented';
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.disableNode(int4) is
+comment on function @NAMESPACE@.disableNode(p_no_id int4) is
 'generate DISABLE_NODE event for node no_id';
 
 -- ----------------------------------------------------------------------
@@ -963,18 +934,16 @@ comment on function @NAMESPACE@.disableNode(int4) is
 --
 --	Process the DISABLE_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.disableNode_int (int4)
+create or replace function @NAMESPACE@.disableNode_int (p_no_id int4)
 returns int4
 as $$
-declare
-	p_no_id			alias for $1;
 begin
 	-- **** TODO ****
 	raise exception 'Slony-I: disableNode_int() not implemented';
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.disableNode(int4) is
+comment on function @NAMESPACE@.disableNode(p_no_id int4) is
 'process DISABLE_NODE event for node no_id
 
 NOTE: This is not yet implemented!';
@@ -984,11 +953,10 @@ NOTE: This is not yet implemented!';
 --
 --	Generate the DROP_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropNode (int4)
+create or replace function @NAMESPACE@.dropNode (p_no_id int4)
 returns bigint
 as $$
 declare
-	p_no_id			alias for $1;
 	v_node_row		record;
 begin
 	-- ----
@@ -1038,7 +1006,7 @@ begin
 									p_no_id::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.dropNode(int4) is
+comment on function @NAMESPACE@.dropNode(p_no_id int4) is
 'generate DROP_NODE event to drop node node_id from replication';
 
 -- ----------------------------------------------------------------------
@@ -1046,11 +1014,10 @@ comment on function @NAMESPACE@.dropNode(int4) is
 --
 --	Process the DROP_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropNode_int (int4)
+create or replace function @NAMESPACE@.dropNode_int (p_no_id int4)
 returns int4
 as $$
 declare
-	p_no_id			alias for $1;
 	v_tab_row		record;
 begin
 	-- ----
@@ -1097,7 +1064,7 @@ begin
 	return p_no_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.dropNode_int(int4) is
+comment on function @NAMESPACE@.dropNode_int(p_no_id int4) is
 'internal function to process DROP_NODE event to drop node node_id from replication';
 
 
@@ -1107,12 +1074,10 @@ comment on function @NAMESPACE@.dropNode_int(int4) is
 --	Initiate a failover. This function must be called on all nodes
 --	and then waited for the restart of all node daemons.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.failedNode(int4, int4)
+create or replace function @NAMESPACE@.failedNode(p_failed_node int4, p_backup_node int4)
 returns int4
 as $$
 declare
-	p_failed_node		alias for $1;
-	p_backup_node		alias for $2;
 	v_row				record;
 	v_row2				record;
 	v_n					int4;
@@ -1285,7 +1250,7 @@ begin
 	return p_failed_node;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.failedNode(int4,int4) is
+comment on function @NAMESPACE@.failedNode(p_failed_node int4, p_backup_node int4) is
 'Initiate failover from failed_node to backup_node.  This function must be called on all nodes, 
 and then waited for the restart of all node daemons.';
 
@@ -1295,15 +1260,10 @@ and then waited for the restart of all node daemons.';
 --	On the node that has the highest sequence number of the failed node,
 --	fake the FAILED_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.failedNode2 (int4, int4, int4, int8, int8)
+create or replace function @NAMESPACE@.failedNode2 (p_failed_node int4, p_backup_node int4, p_set_id int4, p_ev_seqno int8, p_ev_seqfake int8)
 returns bigint
 as $$
 declare
-	p_failed_node		alias for $1;
-	p_backup_node		alias for $2;
-	p_set_id			alias for $3;
-	p_ev_seqno			alias for $4;
-	p_ev_seqfake		alias for $5;
 	v_row				record;
 begin
 	-- ----
@@ -1343,7 +1303,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.failedNode2 (int4, int4, int4, int8, int8) is
+comment on function @NAMESPACE@.failedNode2 (p_failed_node int4, p_backup_node int4, p_set_id int4, p_ev_seqno int8, p_ev_seqfake int8) is
 'FUNCTION failedNode2 (failed_node, backup_node, set_id, ev_seqno, ev_seqfake)
 
 On the node that has the highest sequence number of the failed node,
@@ -1354,14 +1314,10 @@ fake the FAILOVER_SET event.';
 --
 --	Finish failover for one set.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.failoverSet_int (int4, int4, int4, int8)
+create or replace function @NAMESPACE@.failoverSet_int (p_failed_node int4, p_backup_node int4, p_set_id int4, p_wait_seqno int8)
 returns int4
 as $$
 declare
-	p_failed_node		alias for $1;
-	p_backup_node		alias for $2;
-	p_set_id			alias for $3;
-	p_wait_seqno		alias for $4;
 	v_row				record;
 	v_last_sync			int8;
 begin
@@ -1455,7 +1411,7 @@ begin
 	return p_failed_node;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.failoverSet_int (int4, int4, int4, int8) is
+comment on function @NAMESPACE@.failoverSet_int (p_failed_node int4, p_backup_node int4, p_set_id int4, p_wait_seqno int8) is
 'FUNCTION failoverSet_int (failed_node, backup_node, set_id, wait_seqno)
 
 Finish failover for one set.';
@@ -1492,13 +1448,9 @@ replication system.';
 --	Duplicate a nodes configuration under a different no_id in
 --	preparation for the node to be copied with standard DB tools.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.cloneNodePrepare (int4, int4, text)
+create or replace function @NAMESPACE@.cloneNodePrepare (p_no_id int4, p_no_provider int4, p_no_comment text)		
 returns bigint
 as $$
-declare
-	p_no_id			alias for $1;
-	p_no_provider	alias for $2;
-	p_no_comment	alias for $3;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -1512,7 +1464,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.cloneNodePrepare(int4, int4, text) is
+comment on function @NAMESPACE@.cloneNodePrepare(p_no_id int4, p_no_provider int4, p_no_comment text) is
 'Prepare for cloning a node.';
 
 -- ----------------------------------------------------------------------
@@ -1520,13 +1472,9 @@ comment on function @NAMESPACE@.cloneNodePrepare(int4, int4, text) is
 --
 --	Internal part of cloneNodePrepare()
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.cloneNodePrepare_int (int4, int4, text)
+create or replace function @NAMESPACE@.cloneNodePrepare_int (p_no_id int4, p_no_provider int4, p_no_comment text)
 returns int4
 as $$
-declare
-	p_no_id			alias for $1;
-	p_no_provider	alias for $2;
-	p_no_comment	alias for $3;
 begin
 	insert into @NAMESPACE@.sl_node
 		(no_id, no_active, no_comment)
@@ -1563,7 +1511,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.cloneNodePrepare_int(int4, int4, text) is
+comment on function @NAMESPACE@.cloneNodePrepare_int(p_no_id int4, p_no_provider int4, p_no_comment text) is
 'Internal part of cloneNodePrepare().';
 
 -- ----------------------------------------------------------------------
@@ -1571,12 +1519,10 @@ comment on function @NAMESPACE@.cloneNodePrepare_int(int4, int4, text) is
 --
 --	Finish the cloning process on the new node.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.cloneNodeFinish (int4, int4)
+create or replace function @NAMESPACE@.cloneNodeFinish (p_no_id int4, p_no_provider int4)
 returns int4
 as $$
 declare
-	p_no_id			alias for $1;
-	p_no_provider	alias for $2;
 	v_row			record;
 begin
 	perform "pg_catalog".setval('@NAMESPACE@.sl_local_node_id', p_no_id);
@@ -1606,7 +1552,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.cloneNodeFinish(int4, int4) is
+comment on function @NAMESPACE@.cloneNodeFinish(p_no_id int4, p_no_provider int4) is
 'Internal part of cloneNodePrepare().';
 
 -- ----------------------------------------------------------------------
@@ -1614,14 +1560,9 @@ comment on function @NAMESPACE@.cloneNodeFinish(int4, int4) is
 --
 --	Generate the STORE_PATH event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storePath (int4, int4, text, int4)
+create or replace function @NAMESPACE@.storePath (p_pa_server int4, p_pa_client int4, p_pa_conninfo text, p_pa_connretry int4)
 returns bigint
 as $$
-declare
-	p_pa_server		alias for $1;
-	p_pa_client		alias for $2;
-	p_pa_conninfo	alias for $3;
-	p_pa_connretry	alias for $4;
 begin
 	perform @NAMESPACE@.storePath_int(p_pa_server, p_pa_client,
 			p_pa_conninfo, p_pa_connretry);
@@ -1631,7 +1572,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.storePath (int4, int4, text, int4) is
+comment on function @NAMESPACE@.storePath (p_pa_server int4, p_pa_client int4, p_pa_conninfo text, p_pa_connretry int4) is
 'FUNCTION storePath (pa_server, pa_client, pa_conninfo, pa_connretry)
 
 Generate the STORE_PATH event indicating that node pa_client can
@@ -1643,14 +1584,10 @@ access node pa_server using DSN pa_conninfo';
 --
 --	Process the STORE_PATH event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storePath_int (int4, int4, text, int4)
+create or replace function @NAMESPACE@.storePath_int (p_pa_server int4, p_pa_client int4, p_pa_conninfo text, p_pa_connretry int4)
 returns int4
 as $$
 declare
-	p_pa_server		alias for $1;
-	p_pa_client		alias for $2;
-	p_pa_conninfo	alias for $3;
-	p_pa_connretry	alias for $4;
 	v_dummy			int4;
 begin
 	-- ----
@@ -1702,7 +1639,7 @@ begin
 	return 0;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.storePath_int (int4, int4, text, int4) is
+comment on function @NAMESPACE@.storePath_int (p_pa_server int4, p_pa_client int4, p_pa_conninfo text, p_pa_connretry int4) is
 'FUNCTION storePath (pa_server, pa_client, pa_conninfo, pa_connretry)
 
 Process the STORE_PATH event indicating that node pa_client can
@@ -1713,12 +1650,10 @@ access node pa_server using DSN pa_conninfo';
 --
 --	Generate the DROP_PATH event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropPath (int4, int4)
+create or replace function @NAMESPACE@.dropPath (p_pa_server int4, p_pa_client int4)
 returns bigint
 as $$
 declare
-	p_pa_server		alias for $1;
-	p_pa_client		alias for $2;
 	v_row			record;
 begin
 	-- ----
@@ -1765,7 +1700,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.dropPath (int4, int4) is
+comment on function @NAMESPACE@.dropPath (p_pa_server int4, p_pa_client int4) is
   'Generate DROP_PATH event to drop path from pa_server to pa_client';
 
 -- ----------------------------------------------------------------------
@@ -1773,12 +1708,9 @@ comment on function @NAMESPACE@.dropPath (int4, int4) is
 --
 --	Process the DROP_NODE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropPath_int (int4, int4)
+create or replace function @NAMESPACE@.dropPath_int (p_pa_server int4, p_pa_client int4)
 returns int4
 as $$
-declare
-	p_pa_server		alias for $1;
-	p_pa_client		alias for $2;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -1812,7 +1744,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.dropPath_int (int4, int4) is
+comment on function @NAMESPACE@.dropPath_int (p_pa_server int4, p_pa_client int4) is
 'Process DROP_PATH event to drop path from pa_server to pa_client';
 
 -- ----------------------------------------------------------------------
@@ -1820,13 +1752,9 @@ comment on function @NAMESPACE@.dropPath_int (int4, int4) is
 --
 --	Generate the STORE_LISTEN event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeListen (int4, int4, int4)
+create or replace function @NAMESPACE@.storeListen (p_origin int4, p_provider int4, p_receiver int4)
 returns bigint
 as $$
-declare
-	p_origin		alias for $1;
-	p_provider	alias for $2;
-	p_receiver	alias for $3;
 begin
 	perform @NAMESPACE@.storeListen_int (p_origin, p_provider, p_receiver);
 	return  @NAMESPACE@.createEvent ('_@CLUSTERNAME@', 'STORE_LISTEN',
@@ -1835,7 +1763,7 @@ end;
 $$ language plpgsql
 	called on null input;
 
-comment on function @NAMESPACE@.storeListen(int4,int4,int4) is
+comment on function @NAMESPACE@.storeListen(p_origin int4, p_provider int4, p_receiver int4) is
 'FUNCTION storeListen (li_origin, li_provider, li_receiver)
 
 generate STORE_LISTEN event, indicating that receiver node li_receiver
@@ -1847,13 +1775,10 @@ li_origin.';
 --
 --	Process the STORE_LISTEN event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeListen_int (int4, int4, int4)
+create or replace function @NAMESPACE@.storeListen_int (p_li_origin int4, p_li_provider int4, p_li_receiver int4)
 returns int4
 as $$
 declare
-	p_li_origin		alias for $1;
-	p_li_provider	alias for $2;
-	p_li_receiver	alias for $3;
 	v_exists		int4;
 begin
 	-- ----
@@ -1894,7 +1819,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.storeListen_int(int4,int4,int4) is
+comment on function @NAMESPACE@.storeListen_int(p_li_origin int4, p_li_provider int4, p_li_receiver int4) is
 'FUNCTION storeListen_int (li_origin, li_provider, li_receiver)
 
 Process STORE_LISTEN event, indicating that receiver node li_receiver
@@ -1907,13 +1832,9 @@ li_origin.';
 --
 --	Generate the DROP_LISTEN event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropListen (int4, int4, int4)
+create or replace function @NAMESPACE@.dropListen (p_li_origin int4, p_li_provider int4, p_li_receiver int4)
 returns bigint
 as $$
-declare
-	p_li_origin		alias for $1;
-	p_li_provider	alias for $2;
-	p_li_receiver	alias for $3;
 begin
 	perform @NAMESPACE@.dropListen_int(p_li_origin, 
 			p_li_provider, p_li_receiver);
@@ -1923,7 +1844,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.dropListen(int4, int4, int4) is
+comment on function @NAMESPACE@.dropListen(p_li_origin int4, p_li_provider int4, p_li_receiver int4) is
 'dropListen (li_origin, li_provider, li_receiver)
 
 Generate the DROP_LISTEN event.';
@@ -1933,13 +1854,9 @@ Generate the DROP_LISTEN event.';
 --
 --	Process the DROP_LISTEN event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropListen_int (int4, int4, int4)
+create or replace function @NAMESPACE@.dropListen_int (p_li_origin int4, p_li_provider int4, p_li_receiver int4)
 returns int4
 as $$
-declare
-	p_li_origin		alias for $1;
-	p_li_provider	alias for $2;
-	p_li_receiver	alias for $3;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -1957,7 +1874,7 @@ begin
 	end if;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.dropListen_int(int4, int4, int4) is
+comment on function @NAMESPACE@.dropListen_int(p_li_origin int4, p_li_provider int4, p_li_receiver int4) is
 'dropListen (li_origin, li_provider, li_receiver)
 
 Process the DROP_LISTEN event, deleting the sl_listen entry for
@@ -1969,12 +1886,10 @@ the indicated (origin,provider,receiver) combination.';
 --
 --	Generate the STORE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeSet (int4, text)
+create or replace function @NAMESPACE@.storeSet (p_set_id int4, p_set_comment text)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_set_comment		alias for $2;
 	v_local_node_id		int4;
 begin
 	-- ----
@@ -1992,7 +1907,7 @@ begin
 			p_set_id::text, v_local_node_id::text, p_set_comment::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.storeSet(int4, text) is
+comment on function @NAMESPACE@.storeSet(p_set_id int4, p_set_comment text) is
 'Generate STORE_SET event for set set_id with human readable comment set_comment';
 
 -- ----------------------------------------------------------------------
@@ -2000,13 +1915,10 @@ comment on function @NAMESPACE@.storeSet(int4, text) is
 --
 --	Process the STORE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.storeSet_int (int4, int4, text)
+create or replace function @NAMESPACE@.storeSet_int (p_set_id int4, p_set_origin int4, p_set_comment text)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
-	p_set_origin		alias for $2;
-	p_set_comment		alias for $3;
 	v_dummy				int4;
 begin
 	-- ----
@@ -2038,7 +1950,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.storeSet_int(int4, int4, text) is
+comment on function @NAMESPACE@.storeSet_int(p_set_id int4, p_set_origin int4, p_set_comment text) is
 'storeSet_int (set_id, set_origin, set_comment)
 
 Process the STORE_SET event, indicating the new set with given ID,
@@ -2051,11 +1963,10 @@ origin node, and human readable comment.';
 --	Add a special trigger to all tables of a set that disables
 --	access to it.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.lockSet (int4)
+create or replace function @NAMESPACE@.lockSet (p_set_id int4)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
 	v_local_node_id		int4;
 	v_set_row			record;
 	v_tab_row			record;
@@ -2113,7 +2024,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.lockSet(int4) is 
+comment on function @NAMESPACE@.lockSet(p_set_id int4) is 
 'lockSet(set_id)
 
 Add a special trigger to all tables of a set that disables access to
@@ -2126,11 +2037,10 @@ it.';
 --	Remove the special trigger from all tables of a set that disables
 --	access to it.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.unlockSet (int4)
+create or replace function @NAMESPACE@.unlockSet (p_set_id int4)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
 	v_local_node_id		int4;
 	v_set_row			record;
 	v_tab_row			record;
@@ -2186,7 +2096,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.unlockSet(int4) is
+comment on function @NAMESPACE@.unlockSet(p_set_id int4) is
 'Remove the special trigger from all tables of a set that disables access to it.';
 
 -- ----------------------------------------------------------------------
@@ -2194,12 +2104,10 @@ comment on function @NAMESPACE@.unlockSet(int4) is
 --
 --	Generate the MOVE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.moveSet (int4, int4)
+create or replace function @NAMESPACE@.moveSet (p_set_id int4, p_new_origin int4)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_new_origin		alias for $2;
 	v_local_node_id		int4;
 	v_set_row			record;
 	v_sub_row			record;
@@ -2281,7 +2189,7 @@ begin
 			p_set_id::text, v_local_node_id::text, p_new_origin::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.moveSet(int4, int4) is 
+comment on function @NAMESPACE@.moveSet(p_set_id int4, p_new_origin int4) is 
 'moveSet(set_id, new_origin)
 
 Generate MOVE_SET event to request that the origin for set set_id be moved to node new_origin';
@@ -2291,14 +2199,10 @@ Generate MOVE_SET event to request that the origin for set set_id be moved to no
 --
 --	Process the MOVE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.moveSet_int (int4, int4, int4, int8)
+create or replace function @NAMESPACE@.moveSet_int (p_set_id int4, p_old_origin int4, p_new_origin int4, p_wait_seqno int8)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
-	p_old_origin		alias for $2;
-	p_new_origin		alias for $3;
-	p_wait_seqno		alias for $4;
 	v_local_node_id		int4;
 	v_tab_row			record;
 	v_sub_row			record;
@@ -2468,7 +2372,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.moveSet_int(int4, int4, int4, int8) is 
+comment on function @NAMESPACE@.moveSet_int(p_set_id int4, p_old_origin int4, p_new_origin int4, p_wait_seqno int8) is 
 'moveSet(set_id, old_origin, new_origin, wait_seqno)
 
 Process MOVE_SET event to request that the origin for set set_id be
@@ -2479,11 +2383,10 @@ moved from old_origin to node new_origin';
 --
 --	Generate the DROP_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropSet (int4)
+create or replace function @NAMESPACE@.dropSet (p_set_id int4)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
 	v_origin			int4;
 begin
 	-- ----
@@ -2512,7 +2415,7 @@ begin
 			p_set_id::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.dropSet(int4) is 
+comment on function @NAMESPACE@.dropSet(p_set_id int4) is 
 'Generate DROP_SET event to drop replication of set set_id';
 
 -- ----------------------------------------------------------------------
@@ -2520,11 +2423,10 @@ comment on function @NAMESPACE@.dropSet(int4) is
 --
 --	Process the DROP_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.dropSet_int (int4)
+create or replace function @NAMESPACE@.dropSet_int (p_set_id int4)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
 	v_tab_row			record;
 begin
 	-- ----
@@ -2566,7 +2468,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.dropSet(int4) is 
+comment on function @NAMESPACE@.dropSet(p_set_id int4) is 
 'Process DROP_SET event to drop replication of set set_id.  This involves:
 - Removing log and deny access triggers
 - Removing all traces of the set configuration, including sequences, tables, subscribers, syncs, and the set itself';
@@ -2576,12 +2478,10 @@ comment on function @NAMESPACE@.dropSet(int4) is
 --
 --	Generate the MERGE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.mergeSet (int4, int4)
+create or replace function @NAMESPACE@.mergeSet (p_set_id int4, p_add_id int4)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_add_id			alias for $2;
 	v_origin			int4;
 begin
 	-- ----
@@ -2661,7 +2561,7 @@ begin
 			p_set_id::text, p_add_id::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.mergeSet(int4, int4) is 
+comment on function @NAMESPACE@.mergeSet(p_set_id int4, p_add_id int4) is 
 'Generate MERGE_SET event to request that sets be merged together.
 
 Both sets must exist, and originate on the same node.  They must be
@@ -2672,12 +2572,9 @@ subscribed by the same set of nodes.';
 --
 --	Process the MERGE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.mergeSet_int (int4, int4)
+create or replace function @NAMESPACE@.mergeSet_int (p_set_id int4, p_add_id int4)
 returns int4
 as $$
-declare
-	p_set_id			alias for $1;
-	p_add_id			alias for $2;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -2700,7 +2597,7 @@ begin
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.mergeSet_int(int4,int4) is
+comment on function @NAMESPACE@.mergeSet_int(p_set_id int4, p_add_id int4) is
 'mergeSet_int(set_id, add_id) - Perform MERGE_SET event, merging all objects from 
 set add_id into set set_id.';
 
@@ -2708,15 +2605,10 @@ set add_id into set set_id.';
 -- FUNCTION setAddTable (set_id, tab_id, tab_fqname, tab_idxname,
 --					tab_comment)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setAddTable(int4, int4, text, name, text)
+create or replace function @NAMESPACE@.setAddTable(p_set_id int4, p_tab_id int4, p_fqname text, p_tab_idxname name, p_tab_comment text)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_tab_id			alias for $2;
-	p_fqname			alias for $3;
-	p_tab_idxname		alias for $4;
-	p_tab_comment		alias for $5;
 	v_set_origin		int4;
 begin
 	-- ----
@@ -2754,7 +2646,7 @@ begin
 			p_tab_idxname::text, p_tab_comment::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setAddTable(int4, int4, text, name, text) is
+comment on function @NAMESPACE@.setAddTable(p_set_id int4, p_tab_id int4, p_fqname text, p_tab_idxname name, p_tab_comment text) is
 'setAddTable (set_id, tab_id, tab_fqname, tab_idxname, tab_comment)
 
 Add table tab_fqname to replication set on origin node, and generate
@@ -2766,16 +2658,10 @@ Note that the table id, tab_id, must be unique ACROSS ALL SETS.';
 -- FUNCTION setAddTable_int (set_id, tab_id, tab_fqname, tab_idxname,
 --						tab_comment)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setAddTable_int(int4, int4, text, name, text)
+create or replace function @NAMESPACE@.setAddTable_int(p_set_id int4, p_tab_id int4, p_fqname text, p_tab_idxname name, p_tab_comment text) 
 returns int4
 as $$
 declare
-
-	p_set_id		alias for $1;
-	p_tab_id		alias for $2;
-	p_fqname		alias for $3;
-	p_tab_idxname		alias for $4;
-	p_tab_comment		alias for $5;
 	v_tab_relname		name;
 	v_tab_nspname		name;
 	v_local_node_id		int4;
@@ -2882,7 +2768,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setAddTable_int(int4, int4, text, name, text) is
+comment on function @NAMESPACE@.setAddTable_int(p_set_id int4, p_tab_id int4, p_fqname text, p_tab_idxname name, p_tab_comment text) is
 'setAddTable_int (set_id, tab_id, tab_fqname, tab_idxname, tab_comment)
 
 This function processes the SET_ADD_TABLE event on remote nodes,
@@ -2892,11 +2778,10 @@ replication set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setDropTable (tab_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setDropTable(int4)
+create or replace function @NAMESPACE@.setDropTable(p_tab_id int4)
 returns bigint
 as $$
 declare
-	p_tab_id		alias for $1;
 	v_set_id		int4;
 	v_set_origin		int4;
 begin
@@ -2939,7 +2824,7 @@ begin
 				p_tab_id::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setDropTable(int4) is
+comment on function @NAMESPACE@.setDropTable(p_tab_id int4) is
 'setDropTable (tab_id)
 
 Drop table tab_id from set on origin node, and generate SET_DROP_TABLE
@@ -2948,11 +2833,10 @@ event to allow this to propagate to other nodes.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setDropTable_int (tab_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setDropTable_int(int4)
+create or replace function @NAMESPACE@.setDropTable_int(p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id		alias for $1;
 	v_set_id		int4;
 	v_local_node_id		int4;
 	v_set_origin		int4;
@@ -3007,7 +2891,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setDropTable_int(int4) is
+comment on function @NAMESPACE@.setDropTable_int(p_tab_id int4) is
 'setDropTable_int (tab_id)
 
 This function processes the SET_DROP_TABLE event on remote nodes,
@@ -3017,14 +2901,10 @@ its replication set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setAddSequence (set_id, seq_id, seq_fqname, seq_comment)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setAddSequence (int4, int4, text, text)
+create or replace function @NAMESPACE@.setAddSequence (p_set_id int4, p_seq_id int4, p_fqname text, p_seq_comment text)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_seq_id			alias for $2;
-	p_fqname			alias for $3;
-	p_seq_comment		alias for $4;
 	v_set_origin		int4;
 begin
 	-- ----
@@ -3062,7 +2942,7 @@ begin
 						p_fqname::text, p_seq_comment::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setAddSequence (int4, int4, text, text) is
+comment on function @NAMESPACE@.setAddSequence (p_set_id int4, p_seq_id int4, p_fqname text, p_seq_comment text) is
 'setAddSequence (set_id, seq_id, seq_fqname, seq_comment)
 
 On the origin node for set set_id, add sequence seq_fqname to the
@@ -3072,14 +2952,10 @@ to subscriber nodes.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setAddSequence_int (set_id, seq_id, seq_fqname, seq_comment
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setAddSequence_int(int4, int4, text, text)
+create or replace function @NAMESPACE@.setAddSequence_int(p_set_id int4, p_seq_id int4, p_fqname text, p_seq_comment text)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
-	p_seq_id			alias for $2;
-	p_fqname			alias for $3;
-	p_seq_comment		alias for $4;
 	v_local_node_id		int4;
 	v_set_origin		int4;
 	v_sub_provider		int4;
@@ -3170,7 +3046,7 @@ begin
 	return p_seq_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setAddSequence_int(int4, int4, text, text) is
+comment on function @NAMESPACE@.setAddSequence_int(p_set_id int4, p_seq_id int4, p_fqname text, p_seq_comment text) is
 'setAddSequence_int (set_id, seq_id, seq_fqname, seq_comment)
 
 This processes the SET_ADD_SEQUENCE event.  On remote nodes that
@@ -3179,11 +3055,10 @@ subscribe to set_id, add the sequence to the replication set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setDropSequence (seq_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setDropSequence (int4)
+create or replace function @NAMESPACE@.setDropSequence (p_seq_id int4)
 returns bigint
 as $$
 declare
-	p_seq_id		alias for $1;
 	v_set_id		int4;
 	v_set_origin		int4;
 begin
@@ -3226,7 +3101,7 @@ begin
 					p_seq_id::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setDropSequence (int4) is
+comment on function @NAMESPACE@.setDropSequence (p_seq_id int4) is
 'setDropSequence (seq_id)
 
 On the origin node for the set, drop sequence seq_id from replication
@@ -3236,11 +3111,10 @@ subscriber nodes.';
 -- ----------------------------------------------------------------------
 -- FUNCTION setDropSequence_int (seq_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setDropSequence_int(int4)
+create or replace function @NAMESPACE@.setDropSequence_int(p_seq_id int4)
 returns int4
 as $$
 declare
-	p_seq_id		alias for $1;
 	v_set_id		int4;
 	v_local_node_id		int4;
 	v_set_origin		int4;
@@ -3297,7 +3171,7 @@ begin
 	return p_seq_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setDropSequence_int(int4) is
+comment on function @NAMESPACE@.setDropSequence_int(p_seq_id int4) is
 'setDropSequence_int (seq_id)
 
 This processes the SET_DROP_SEQUENCE event.  On remote nodes that
@@ -3310,12 +3184,10 @@ from the replication set.';
 --
 --	Generate the SET_MOVE_TABLE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setMoveTable (int4, int4)
+create or replace function @NAMESPACE@.setMoveTable (p_tab_id int4, p_new_set_id int4)
 returns bigint
 as $$
 declare
-	p_tab_id			alias for $1;
-	p_new_set_id		alias for $2;
 	v_old_set_id		int4;
 	v_origin			int4;
 begin
@@ -3392,7 +3264,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.setMoveTable(int4,int4) is
+comment on function @NAMESPACE@.setMoveTable(p_tab_id int4, p_new_set_id int4) is
 'This generates the SET_MOVE_TABLE event.  If the set that the table is
 in is identically subscribed to the set that the table is to be moved 
 into, then the SET_MOVE_TABLE event is raised.';
@@ -3403,12 +3275,9 @@ into, then the SET_MOVE_TABLE event is raised.';
 --
 --	Process the SET_MOVE_TABLE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setMoveTable_int (int4, int4)
+create or replace function @NAMESPACE@.setMoveTable_int (p_tab_id int4, p_new_set_id int4)
 returns int4
 as $$
-declare
-	p_tab_id			alias for $1;
-	p_new_set_id		alias for $2;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -3425,7 +3294,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.setMoveTable(int4,int4) is
+comment on function @NAMESPACE@.setMoveTable(p_tab_id int4, p_new_set_id int4) is
 'This processes the SET_MOVE_TABLE event.  The table is moved 
 to the destination set.';
 
@@ -3434,12 +3303,10 @@ to the destination set.';
 --
 --	Generate the SET_MOVE_SEQUENCE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setMoveSequence (int4, int4)
+create or replace function @NAMESPACE@.setMoveSequence (p_seq_id int4, p_new_set_id int4)
 returns bigint
 as $$
 declare
-	p_seq_id			alias for $1;
-	p_new_set_id		alias for $2;
 	v_old_set_id		int4;
 	v_origin			int4;
 begin
@@ -3515,7 +3382,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.setMoveSequence (int4, int4) is
+comment on function @NAMESPACE@.setMoveSequence (p_seq_id int4, p_new_set_id int4) is
 'setMoveSequence(p_seq_id, p_new_set_id) - This generates the
 SET_MOVE_SEQUENCE event, after validation, notably that both sets
 exist, are distinct, and have exactly the same subscription lists';
@@ -3526,12 +3393,9 @@ exist, are distinct, and have exactly the same subscription lists';
 --
 --	Process the SET_MOVE_SEQUENCE event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.setMoveSequence_int (int4, int4)
+create or replace function @NAMESPACE@.setMoveSequence_int (p_seq_id int4, p_new_set_id int4)
 returns int4
 as $$
-declare
-	p_seq_id			alias for $1;
-	p_new_set_id		alias for $2;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -3549,7 +3413,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.setMoveSequence_int (int4, int4) is
+comment on function @NAMESPACE@.setMoveSequence_int (p_seq_id int4, p_new_set_id int4) is
 'setMoveSequence_int(p_seq_id, p_new_set_id) - processes the
 SET_MOVE_SEQUENCE event, moving a sequence to another replication
 set.';
@@ -3557,13 +3421,9 @@ set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION sequenceSetValue (seq_id, seq_origin, ev_seqno, last_value)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.sequenceSetValue(int4, int4, int8, int8) returns int4
+create or replace function @NAMESPACE@.sequenceSetValue(p_seq_id int4, p_seq_origin int4, p_ev_seqno int8, p_last_value int8) returns int4
 as $$
 declare
-	p_seq_id			alias for $1;
-	p_seq_origin		alias for $2;
-	p_ev_seqno			alias for $3;
-	p_last_value		alias for $4;
 	v_fqname			text;
 begin
 	-- ----
@@ -3593,7 +3453,7 @@ begin
 	return p_seq_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.sequenceSetValue(int4, int4, int8, int8) is
+comment on function @NAMESPACE@.sequenceSetValue(p_seq_id int4, p_seq_origin int4, p_ev_seqno int8, p_last_value int8) is
 'sequenceSetValue (seq_id, seq_origin, ev_seqno, last_value)
 Set sequence seq_id to have new value last_value.
 ';
@@ -3603,12 +3463,10 @@ Set sequence seq_id to have new value last_value.
 --
 --	Generate the DDL_SCRIPT event
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_prepare (int4, int4)
+create or replace function @NAMESPACE@.ddlScript_prepare (p_set_id int4, p_only_on_node int4)
 returns integer
 as $$
 declare
-	p_set_id			alias for $1;
-	p_only_on_node		alias for $2;
 	v_set_origin		int4;
 begin
 	-- ----
@@ -3652,7 +3510,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_prepare (int4, int4) is 
+comment on function @NAMESPACE@.ddlScript_prepare (p_set_id int4, p_only_on_node int4) is 
 'Prepare for DDL script execution on origin';
 
 -- 	perform @NAMESPACE@.ddlScript_int(p_set_id, p_script, p_only_on_node);
@@ -3664,13 +3522,10 @@ comment on function @NAMESPACE@.ddlScript_prepare (int4, int4) is
 -- ----------------------------------------------------------------------
 drop function if exists @NAMESPACE@.ddlScript_complete (int4, text, int4);  -- Needed because function signature has changed!
 
-create or replace function @NAMESPACE@.ddlScript_complete (int4, text, int4)
+create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_script text, p_only_on_node int4)
 returns bigint
 as $$
 declare
-	p_set_id			alias for $1;
-	p_script			alias for $2;
-	p_only_on_node		alias for $3;
 	v_set_origin		int4;
 	v_query				text;
 	v_row				record;
@@ -3691,7 +3546,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_complete(int4, text, int4) is
+comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_script text, p_only_on_node int4) is
 'ddlScript_complete(set_id, script, only_on_node)
 
 After script has run on origin, this fixes up relnames, restores
@@ -3703,12 +3558,10 @@ replicated slaves.';
 --
 --	Prepare for the DDL_SCRIPT event
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_prepare_int (int4, int4)
+create or replace function @NAMESPACE@.ddlScript_prepare_int (p_set_id int4, p_only_on_node int4)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
-	p_only_on_node		alias for $2;
 	v_set_origin		int4;
 	v_no_id				int4;
 	v_row				record;
@@ -3717,7 +3570,7 @@ begin
 	-- Grab the central configuration lock
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
-	perform @NAMESPACE@.updateRelname(p_set_id, p_only_on_node);
+
 	-- ----
 	-- Check that we either are the set origin or a current
 	-- subscriber of the set.
@@ -3750,7 +3603,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_prepare_int (int4, int4) is
+comment on function @NAMESPACE@.ddlScript_prepare_int (p_set_id int4, p_only_on_node int4) is
 'ddlScript_prepare_int (set_id, only_on_node)
 
 Do preparatory work for a DDL script, restoring 
@@ -3762,18 +3615,17 @@ triggers/rules to original state.';
 --
 --	Complete the DDL_SCRIPT event
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_complete_int (int4, int4)
+create or replace function @NAMESPACE@.ddlScript_complete_int (p_set_id int4, p_only_on_node int4)
 returns int4
 as $$
 declare
-	p_set_id			alias for $1;
-	p_only_on_node		alias for $2;
 	v_row				record;
 begin
+	perform @NAMESPACE@.updateRelname(p_set_id, p_only_on_node);
 	return p_set_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.ddlScript_complete_int(int4, int4) is
+comment on function @NAMESPACE@.ddlScript_complete_int(p_set_id int4, p_only_on_node int4) is
 'ddlScript_complete_int(set_id, script, only_on_node)
 
 Complete processing the DDL_SCRIPT event.  This puts tables back into
@@ -3782,11 +3634,10 @@ replicated mode.';
 -- ----------------------------------------------------------------------
 -- FUNCTION alterTableAddTriggers (tab_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.alterTableAddTriggers (int4)
+create or replace function @NAMESPACE@.alterTableAddTriggers (p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id			alias for $1;
 	v_no_id				int4;
 	v_tab_row			record;
 	v_tab_fqname		text;
@@ -3855,7 +3706,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.alterTableAddTriggers(int4) is
+comment on function @NAMESPACE@.alterTableAddTriggers(p_tab_id int4) is
 'alterTableAddTriggers(tab_id)
 
 Adds the log and deny access triggers to a replicated table.';
@@ -3863,11 +3714,10 @@ Adds the log and deny access triggers to a replicated table.';
 -- ----------------------------------------------------------------------
 -- FUNCTION alterTableDropTriggers (tab_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.alterTableDropTriggers (int4)
+create or replace function @NAMESPACE@.alterTableDropTriggers (p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id			alias for $1;
 	v_no_id				int4;
 	v_tab_row			record;
 	v_tab_fqname		text;
@@ -3921,7 +3771,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.alterTableDropTriggers (int4) is
+comment on function @NAMESPACE@.alterTableDropTriggers (p_tab_id int4) is
 'alterTableDropTriggers (tab_id)
 
 Remove the log and deny access triggers from a table.';
@@ -3929,11 +3779,10 @@ Remove the log and deny access triggers from a table.';
 -- ----------------------------------------------------------------------
 -- FUNCTION alterTableConfigureTriggers (tab_id)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.alterTableConfigureTriggers (int4)
+create or replace function @NAMESPACE@.alterTableConfigureTriggers (p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id			alias for $1;
 	v_no_id				int4;
 	v_tab_row			record;
 	v_tab_fqname		text;
@@ -4002,7 +3851,7 @@ begin
 	return p_tab_id;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.alterTableConfigureTriggers (int4) is
+comment on function @NAMESPACE@.alterTableConfigureTriggers (p_tab_id int4) is
 'alterTableConfigureTriggers (tab_id)
 
 Set the enable/disable configuration for the replication triggers
@@ -4011,15 +3860,10 @@ according to the origin of the set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION subscribeSet (sub_set, sub_provider, sub_receiver, sub_forward, omit_copy)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.subscribeSet (int4, int4, int4, bool, bool)
+create or replace function @NAMESPACE@.subscribeSet (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4, p_sub_forward bool, p_omit_copy bool)
 returns bigint
 as $$
 declare
-	p_sub_set			alias for $1;
-	p_sub_provider		alias for $2;
-	p_sub_receiver		alias for $3;
-	p_sub_forward		alias for $4;
-	p_omit_copy		alias for $5;
 	v_set_origin		int4;
 	v_ev_seqno			int8;
 	v_rec			record;
@@ -4028,9 +3872,6 @@ begin
 	-- Grab the central configuration lock
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
-
-	raise notice 'subscribe set: omit_copy=%', p_omit_copy;
-
 
 
 	--
@@ -4096,7 +3937,8 @@ begin
 	return v_ev_seqno;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.subscribeSet (int4, int4, int4, bool, bool) is
+comment on function @NAMESPACE@.subscribeSet (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4, p_sub_forward bool, p_omit_copy bool) is
+
 'subscribeSet (sub_set, sub_provider, sub_receiver, sub_forward, omit_copy)
 
 Makes sure that the receiver is not the provider, then stores the
@@ -4108,15 +3950,10 @@ If omit_copy is true, then no data copy will be done.
 -- -------------------------------------------------------------------------------------------
 -- FUNCTION subscribeSet_int (sub_set, sub_provider, sub_receiver, sub_forward, omit_copy)
 -- -------------------------------------------------------------------------------------------
-create or replace function @NAMESPACE@.subscribeSet_int (int4, int4, int4, bool, bool)
+create or replace function @NAMESPACE@.subscribeSet_int (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4, p_sub_forward bool, p_omit_copy bool)
 returns int4
 as $$
 declare
-	p_sub_set			alias for $1;
-	p_sub_provider		alias for $2;
-	p_sub_receiver		alias for $3;
-	p_sub_forward		alias for $4;
-	p_omit_copy		alias for $5;
 	v_set_origin		int4;
 	v_sub_row			record;
 begin
@@ -4124,8 +3961,6 @@ begin
 	-- Grab the central configuration lock
 	-- ----
 	lock table @NAMESPACE@.sl_config_lock;
-
-	raise notice 'subscribe set: omit_copy=%', p_omit_copy;
 
 	-- ----
 	-- Provider change is only allowed for active sets
@@ -4206,7 +4041,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.subscribeSet_int (int4, int4, int4, bool, bool) is
+comment on function @NAMESPACE@.subscribeSet_int (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4, p_sub_forward bool, p_omit_copy bool) is
 'subscribeSet_int (sub_set, sub_provider, sub_receiver, sub_forward, omit_copy)
 
 Internal actions for subscribing receiver sub_receiver to subscription
@@ -4215,12 +4050,10 @@ set sub_set.';
 -- ----------------------------------------------------------------------
 -- FUNCTION unsubscribeSet (sub_set, sub_receiver)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.unsubscribeSet (int4, int4)
+create or replace function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4)
 returns bigint
 as $$
 declare
-	p_sub_set			alias for $1;
-	p_sub_receiver		alias for $2;
 	v_tab_row			record;
 begin
 	-- ----
@@ -4289,7 +4122,7 @@ begin
 			p_sub_set::text, p_sub_receiver::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.unsubscribeSet (int4, int4) is
+comment on function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4) is
 'unsubscribeSet (sub_set, sub_receiver) 
 
 Unsubscribe node sub_receiver from subscription set sub_set.  This is
@@ -4302,12 +4135,9 @@ node to publish that the node is being dropped.';
 -- ----------------------------------------------------------------------
 -- FUNCTION unsubscribeSet_int (sub_set, sub_receiver)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.unsubscribeSet_int (int4, int4)
+create or replace function @NAMESPACE@.unsubscribeSet_int (p_sub_set int4, p_sub_receiver int4)
 returns int4
 as $$
-declare
-	p_sub_set			alias for $1;
-	p_sub_receiver		alias for $2;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -4328,7 +4158,7 @@ begin
 	return p_sub_set;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.unsubscribeSet_int (int4, int4) is
+comment on function @NAMESPACE@.unsubscribeSet_int (p_sub_set int4, p_sub_receiver int4) is
 'unsubscribeSet_int (sub_set, sub_receiver)
 
 All the REAL work of removing the subscriber is done before the event
@@ -4338,20 +4168,16 @@ subscription in sl_subscribe.';
 -- ----------------------------------------------------------------------
 -- FUNCTION enableSubscription (sub_set, sub_provider, sub_receiver, omit_copy)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.enableSubscription (int4, int4, int4)
+create or replace function @NAMESPACE@.enableSubscription (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4)
 returns int4
 as $$
-declare
-	p_sub_set			alias for $1;
-	p_sub_provider		alias for $2;
-	p_sub_receiver		alias for $3;
 begin
 	return  @NAMESPACE@.enableSubscription_int (p_sub_set, 
 			p_sub_provider, p_sub_receiver);
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.enableSubscription (int4, int4, int4) is 
+comment on function @NAMESPACE@.enableSubscription (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4) is 
 'enableSubscription (sub_set, sub_provider, sub_receiver)
 
 Indicates that sub_receiver intends subscribing to set sub_set from
@@ -4361,13 +4187,10 @@ enableSubscription_int (sub_set, sub_provider, sub_receiver).';
 -- -----------------------------------------------------------------------------------
 -- FUNCTION enableSubscription_int (sub_set, sub_provider, sub_receiver)
 -- -----------------------------------------------------------------------------------
-create or replace function @NAMESPACE@.enableSubscription_int (int4, int4, int4)
+create or replace function @NAMESPACE@.enableSubscription_int (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4)
 returns int4
 as $$
 declare
-	p_sub_set			alias for $1;
-	p_sub_provider		alias for $2;
-	p_sub_receiver		alias for $3;
 	v_n					int4;
 begin
 	-- ----
@@ -4415,7 +4238,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.enableSubscription_int (int4, int4, int4) is
+comment on function @NAMESPACE@.enableSubscription_int (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4) is
 'enableSubscription_int (sub_set, sub_provider, sub_receiver)
 
 Internal function to enable subscription of node sub_receiver to set
@@ -4429,14 +4252,10 @@ subscription has become active.';
 -- FUNCTION forwardConfirm (p_con_origin, p_con_received, p_con_seqno, p_con_timestamp)
 --
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamp)
+create or replace function @NAMESPACE@.forwardConfirm (p_con_origin int4, p_con_received int4, p_con_seqno int8, p_con_timestamp timestamp)
 returns bigint
 as $$
 declare
-	p_con_origin	alias for $1;
-	p_con_received	alias for $2;
-	p_con_seqno		alias for $3;
-	p_con_timestamp	alias for $4;
 	v_max_seqno		bigint;
 begin
 	select into v_max_seqno coalesce(max(con_seqno), 0)
@@ -4454,7 +4273,8 @@ begin
 	return v_max_seqno;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.forwardConfirm (int4, int4, int8, timestamp) is
+
+comment on function @NAMESPACE@.forwardConfirm (p_con_origin int4, p_con_received int4, p_con_seqno int8, p_con_timestamp timestamp) is
 'forwardConfirm (p_con_origin, p_con_received, p_con_seqno, p_con_timestamp)
 
 Confirms (recorded in sl_confirm) that items from p_con_origin up to
@@ -4581,12 +4401,10 @@ SYNC.';
 --	Given a tablename, check that a unique index exists or return
 --	the tables primary key index name.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.determineIdxnameUnique(text, name) returns name
+create or replace function @NAMESPACE@.determineIdxnameUnique(p_tab_fqname text, p_idx_name name) returns name
 as $$
 declare
-	p_tab_fqname	alias for $1;
 	v_tab_fqname_quoted	text default '';
-	p_idx_name		alias for $2;
 	v_idxrow		record;
 begin
 	v_tab_fqname_quoted := @NAMESPACE@.slon_quote_input(p_tab_fqname);
@@ -4648,7 +4466,7 @@ begin
 	return v_idxrow.relname;
 end;
 $$ language plpgsql called on null input;
-comment on function @NAMESPACE@.determineIdxnameUnique(text, name) is
+comment on function @NAMESPACE@.determineIdxnameUnique(p_tab_fqname text, p_idx_name name) is
 'FUNCTION determineIdxnameUnique (tab_fqname, indexname)
 
 Given a tablename, tab_fqname, check that the unique index, indexname,
@@ -4663,12 +4481,10 @@ is no unique index, it raises an exception.';
 --	the log trigger) of the table. Use the specified unique index or
 --	the primary key (if indexname is NULL).
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.determineAttkindUnique(text, name) returns text
+create or replace function @NAMESPACE@.determineAttkindUnique(p_tab_fqname text, p_idx_name name) returns text
 as $$
 declare
-	p_tab_fqname	alias for $1;
 	v_tab_fqname_quoted	text default '';
-	p_idx_name		alias for $2;
 	v_idx_name_quoted	text;
 	v_idxrow		record;
 	v_attrow		record;
@@ -4766,7 +4582,7 @@ begin
 end;
 $$ language plpgsql called on null input;
 
-comment on function @NAMESPACE@.determineAttkindUnique(text, name) is
+comment on function @NAMESPACE@.determineAttkindUnique(p_tab_fqname text, p_idx_name name) is
 'determineAttKindUnique (tab_fqname, indexname)
 
 Given a tablename, return the Slony-I specific attkind (used for the
@@ -4885,11 +4701,10 @@ allow communications between nodes in the Slony-I cluster.';
 --	This code can be used to create SYNC events every once in a while
 --      even if the 'master' slon daemon is down
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.generate_sync_event(interval)
+create or replace function @NAMESPACE@.generate_sync_event(p_interval interval)
 returns int4
 as $$
 declare
-	p_interval     alias for $1;
 	v_node_row     record;
 
 BEGIN
@@ -4906,7 +4721,7 @@ BEGIN
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.generate_sync_event(interval) is
+comment on function @NAMESPACE@.generate_sync_event(p_interval interval) is
   'Generate a sync event if there has not been one in the requested interval, and this is a provider node.';
 
 -- ----------------------------------------------------------------------
@@ -4914,12 +4729,10 @@ comment on function @NAMESPACE@.generate_sync_event(interval) is
 --
 --      Reset the relnames          
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.updateRelname (int4, int4)
+create or replace function @NAMESPACE@.updateRelname (p_set_id int4, p_only_on_node int4)
 returns int4
 as $$
 declare
-        p_set_id                alias for $1;
-        p_only_on_node          alias for $2;
         v_no_id                 int4;
         v_set_origin            int4;
 begin
@@ -4969,7 +4782,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.updateRelname(int4, int4) is
+comment on function @NAMESPACE@.updateRelname(p_set_id int4, p_only_on_node int4) is
 'updateRelname(set_id, only_on_node)';
 
 -- ----------------------------------------------------------------------
@@ -4978,12 +4791,10 @@ comment on function @NAMESPACE@.updateRelname(int4, int4) is
 --      Reset the relnames
 -- ----------------------------------------------------------------------
 drop function if exists @NAMESPACE@.updateReloid (int4, int4);
-create or replace function @NAMESPACE@.updateReloid (int4, int4)
+create or replace function @NAMESPACE@.updateReloid (p_set_id int4, p_only_on_node int4)
 returns bigint
 as $$
 declare
-        p_set_id                alias for $1;
-        p_only_on_node          alias for $2;
         v_no_id                 int4;
         v_set_origin            int4;
 	prec			record;
@@ -5056,7 +4867,7 @@ begin
 	return 1;
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.updateReloid(int4, int4) is
+comment on function @NAMESPACE@.updateReloid(p_set_id int4, p_only_on_node int4) is
 'updateReloid(set_id, only_on_node)
 
 Updates the respective reloids in sl_table and sl_seqeunce based on
@@ -5092,7 +4903,7 @@ BEGIN
 	if v_current_status = 0 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 3);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamp);
+				'logswitch.laststart', now());
 		raise notice 'Slony-I: Logswitch to sl_log_2 initiated';
 		return 2;
 	end if;
@@ -5104,7 +4915,7 @@ BEGIN
 	if v_current_status = 1 then
 		perform "pg_catalog".setval('@NAMESPACE@.sl_log_status', 2);
 		perform @NAMESPACE@.registry_set_timestamp(
-				'logswitch.laststart', now()::timestamp);
+				'logswitch.laststart', now());
 		raise notice 'Slony-I: Logswitch to sl_log_1 initiated';
 		return 1;
 	end if;
@@ -5357,13 +5168,9 @@ system switches between sl_log_1 and sl_log_2.';
 --
 --	Called by slonik during the function upgrade process. 
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.add_missing_table_field (text, text, text, text) 
+create or replace function @NAMESPACE@.add_missing_table_field (p_namespace text, p_table text, p_field text, p_type text) 
 returns bool as $$
 DECLARE
-  p_namespace alias for $1;
-  p_table     alias for $2;
-  p_field     alias for $3;
-  p_type      alias for $4;
   v_row       record;
   v_query     text;
 BEGIN
@@ -5384,15 +5191,15 @@ BEGIN
   end if;
 END;$$ language plpgsql;
 
-comment on function @NAMESPACE@.add_missing_table_field (text, text, text, text) 
+comment on function @NAMESPACE@.add_missing_table_field (p_namespace text, p_table text, p_field text, p_type text)
 is 'Add a column of a given type to a table if it is missing';
 
-create or replace function @NAMESPACE@.upgradeSchema(text)
+create or replace function @NAMESPACE@.upgradeSchema(p_old text)
 returns text as $$
-
 declare
-        p_old   	alias for $1;
-		v_tab_row	record;
+	v_tab_row	record;
+	v_query text;
+	v_keepstatus text;
 begin
 	-- If old version is pre-2.0, then we require a special upgrade process
 	if p_old like '1.%' then
@@ -5401,11 +5208,38 @@ begin
 
 	perform @NAMESPACE@.add_truncate_triggers();
 
+
+	-- Change all Slony-I-defined columns that are "timestamp without time zone" to "timestamp *WITH* time zone"
+	if exists (select 1 from information_schema.columns c
+            where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
+	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
+		and (c.table_name, c.column_name) in (('sl_confirm', 'con_timestamp'), ('sl_event', 'ev_timestamp'), ('sl_registry', 'reg_timestamp'),('sl_archive_counter', 'ac_timestamp')))
+	then
+
+	  -- Preserve sl_status
+	  select pg_get_viewdef('@NAMESPACE@.sl_status') into v_keepstatus;
+	  execute 'drop view sl_status';
+	  for v_tab_row in select table_schema, table_name, column_name from information_schema.columns c
+            where table_schema = '_@CLUSTERNAME@' and data_type = 'timestamp without time zone'
+	    and exists (select 1 from information_schema.tables t where t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE')
+		and (table_name, column_name) in (('sl_confirm', 'con_timestamp'), ('sl_event', 'ev_timestamp'), ('sl_registry', 'reg_timestamp'),('sl_archive_counter', 'ac_timestamp'))
+	  loop
+		raise notice 'Changing Slony-I column [%.%] to timestamp WITH time zone', v_tab_row.table_name, v_tab_row.column_name;
+		v_query := 'alter table ' || @NAMESPACE@.slon_quote_brute(v_tab_row.table_schema) ||
+                   '.' || v_tab_row.table_name || ' alter column ' || v_tab_row.column_name ||
+                   ' set data type timestamp with time zone;';
+		execute v_query;
+	  end loop;
+	  -- restore sl_status
+	  execute 'create view sl_status as ' || v_keepstatus;
+        end if;
 	return p_old;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path to @NAMESPACE@
+;
 
-comment on function @NAMESPACE@.upgradeSchema(text) is
+comment on function @NAMESPACE@.upgradeSchema(p_old text) is
     'Called during "update functions" by slonik to perform schema changes';
 
 -- ----------------------------------------------------------------------
@@ -5448,7 +5282,7 @@ create or replace view @NAMESPACE@.sl_status as select
 
 comment on view @NAMESPACE@.sl_status is 'View showing how far behind remote nodes are.';
 
-create or replace function @NAMESPACE@.copyFields(integer) 
+create or replace function @NAMESPACE@.copyFields(p_tab_id integer) 
 returns text
 as $$
 declare
@@ -5459,7 +5293,7 @@ begin
 	result := '';
 	prefix := '(';   -- Initially, prefix is the opening paren
 
-	for prec in select @NAMESPACE@.slon_quote_input(a.attname) as column from @NAMESPACE@.sl_table t, pg_catalog.pg_attribute a where t.tab_id = $1 and t.tab_reloid = a.attrelid and a.attnum > 0 and a.attisdropped = false order by attnum
+	for prec in select @NAMESPACE@.slon_quote_input(a.attname) as column from @NAMESPACE@.sl_table t, pg_catalog.pg_attribute a where t.tab_id = p_tab_id and t.tab_reloid = a.attrelid and a.attnum > 0 and a.attisdropped = false order by attnum
 	loop
 		result := result || prefix || prec.column;
 		prefix := ',';   -- Subsequently, prepend columns with commas
@@ -5469,7 +5303,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.copyFields(integer) is
+comment on function @NAMESPACE@.copyFields(p_tab_id integer) is
 'Return a string consisting of what should be appended to a COPY statement
 to specify fields for the passed-in tab_id.  
 
@@ -5481,11 +5315,10 @@ In PG versions > 7.3, this looks like (field1,field2,...fieldn)';
 --	Remove all content from a table before the subscription
 --	content is loaded via COPY and disable index maintenance.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.prepareTableForCopy(int4)
+create or replace function @NAMESPACE@.prepareTableForCopy(p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id		alias for $1;
 	v_tab_oid		oid;
 	v_tab_fqname	text;
 begin
@@ -5524,7 +5357,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.prepareTableForCopy(int4) is
+comment on function @NAMESPACE@.prepareTableForCopy(p_tab_id int4) is
 'Delete all data and suppress index maintenance';
 
 -- ----------------------------------------------------------------------
@@ -5532,11 +5365,10 @@ comment on function @NAMESPACE@.prepareTableForCopy(int4) is
 --
 --	Reenable index maintenance and reindex the table after COPY.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.finishTableAfterCopy(int4)
+create or replace function @NAMESPACE@.finishTableAfterCopy(p_tab_id int4)
 returns int4
 as $$
 declare
-	p_tab_id		alias for $1;
 	v_tab_oid		oid;
 	v_tab_fqname	text;
 begin
@@ -5566,7 +5398,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.finishTableAfterCopy(int4) is
+comment on function @NAMESPACE@.finishTableAfterCopy(p_tab_id int4) is
 'Reenable index maintenance and reindex the table';
 
 create or replace function @NAMESPACE@.setup_vactables_type () returns integer as $$
@@ -5644,14 +5476,8 @@ function is used so that the list is not hardcoded into C code.';
 -- FUNCTION add_empty_table_to_replication (set_id, tab_id, tab_nspname,
 --         tab_tabname, tab_idxname, tab_comment)
 -- -------------------------------------------------------------------------
-create or replace function @NAMESPACE@.add_empty_table_to_replication(int4, int4, text, text, text, text) returns bigint as $$
+create or replace function @NAMESPACE@.add_empty_table_to_replication(p_set_id int4, p_tab_id int4, p_nspname text, p_tabname text, p_idxname text, p_comment text) returns bigint as $$
 declare
-  p_set_id alias for $1;
-  p_tab_id alias for $2;
-  p_nspname alias for $3;
-  p_tabname alias for $4;
-  p_idxname alias for $5;
-  p_comment alias for $6;
 
   prec record;
   v_origin int4;
@@ -5706,7 +5532,7 @@ begin
 end
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.add_empty_table_to_replication(int4, int4, text, text, text, text) is
+comment on function @NAMESPACE@.add_empty_table_to_replication(p_set_id int4, p_tab_id int4, p_nspname text, p_tabname text, p_idxname text, p_comment text) is
 'Verify that a table is empty, and add it to replication.  
 tab_idxname is optional - if NULL, then we use the primary key.
 
@@ -5718,14 +5544,8 @@ nodes.';
 -- FUNCTION replicate_partition (tab_id, tab_nspname, tab_tabname,
 --         tab_idxname, tab_comment)
 -- -------------------------------------------------------------------------
-create or replace function @NAMESPACE@.replicate_partition(int4, text, text, text, text) returns bigint as $$
+create or replace function @NAMESPACE@.replicate_partition(p_tab_id int4, p_nspname text, p_tabname text, p_idxname text, p_comment text) returns bigint as $$
 declare
-  p_tab_id alias for $1;
-  p_nspname alias for $2;
-  p_tabname alias for $3;
-  p_idxname alias for $4;
-  p_comment alias for $5;
-
   prec record;
   prec2 record;
   v_set_id int4;
@@ -5750,7 +5570,7 @@ begin
 end
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.replicate_partition(int4, text, text, text, text) is
+comment on function @NAMESPACE@.replicate_partition(p_tab_id int4, p_nspname text, p_tabname text, p_idxname text, p_comment text) is
 'Add a partition table to replication.
 tab_idxname is optional - if NULL, then we use the primary key.
 This function looks up replication configuration via the parent table.
@@ -5804,11 +5624,7 @@ This may be set as a SECURITY DEFINER in order to eliminate the need
 for superuser access by Slony-I.
 ';
 
-create or replace function @NAMESPACE@.reshapeSubscription (int4, int4, int4) returns int4 as $$
-declare
-	p_sub_set			alias for $1;
-	p_sub_provider		alias for $2;
-	p_sub_receiver		alias for $3;
+create or replace function @NAMESPACE@.reshapeSubscription (p_sub_set int4, p_sub_provider int4, p_sub_receiver int4) returns int4 as $$
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -5825,7 +5641,7 @@ begin
 end
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.reshapeSubscription(int4,int4,int4) is
+comment on function @NAMESPACE@.reshapeSubscription(p_sub_set int4, p_sub_provider int4, p_sub_receiver int4) is
 'Run on a receiver/subscriber node when the provider for that
 subscription is being changed.  Slonik will invoke this method
 before the SUBSCRIBE_SET event propogates to the receiver
@@ -5892,3 +5708,17 @@ $$ language plpgsql;
 comment on function @NAMESPACE@.truncate_deny ()
 is 'trigger function run when a replicated table receives a TRUNCATE request';
 
+create or replace function @NAMESPACE@.store_application_name (i_name text) returns text as $$
+declare
+		p_command text;
+begin
+		if exists (select 1 from pg_catalog.pg_settings where name = 'application_name') then
+		   p_command := 'set application_name to '''|| i_name || ''';';
+		   execute p_command;
+		   return i_name;
+		end if;
+		return NULL::text;
+end $$ language plpgsql;
+
+comment on function @NAMESPACE@.store_application_name (i_name text) is
+'Set application_name GUC, if possible.  Returns NULL if it fails to work.';
