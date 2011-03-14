@@ -528,23 +528,12 @@ becoming a repetitive recursive activity.</para></listitem>
 <listitem><para> Timestamps are based on the clock time of the &lslon;
 process.</para>
 
-<para> It might seem somewhat desirable for the database to record
-DB-centred timestamps, unfortunately that would only be the correct
-time if each thread were responsible for stowing its own activities in
-&slcomponents; in the database.  This would multiply database
-activity, and the implementation instead passes requests to a single
-thread that uses a single DB connection to record things, with the
-consequence that timestamps must be captured based on the system clock
-of the &lslon; process. </para>
-
 <para> In order for the timestamps to be accurate, it is important to
 use NTP or similar technology to keep servers' clocks synchronized, as
-recommended in <xref linkend="requirements">.</para>
-
-<para> If the host where a &lslon; runs has its time significantly out
-of sync with the database that it manages, queries against
-&slcomponents; may provide results that will confuse the
-reader.</para>
+recommended in <xref linkend="requirements">.  If the host where a
+&lslon; runs has its time significantly out of sync with the database
+that it manages, queries against &slcomponents; may provide results
+that will confuse the reader.</para>
 </listitem>
 
 <listitem><para> process.</para> </listitem>

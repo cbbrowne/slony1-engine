@@ -5,8 +5,6 @@
  *
  *	Copyright (c) 2011, PostgreSQL Global Development Group
  *	Author: Christopher Browne, Afilias Canada
- *
- *
  *-------------------------------------------------------------------------
  */
 
@@ -43,7 +41,7 @@ int			monitor_interval;
 /* ----------
  * slon_localMonitorThread
  *
- * Monitoring thread that periodically flushes stackd-up monitoring requests to database
+ * Monitoring thread that periodically flushes stacked-up monitoring requests to database
  * ----------
  */
 void *
@@ -307,6 +305,16 @@ monitor_state(char *actor, int node, pid_t conn_pid, /* @null@ */ char *activity
 	tos->node = node;
 	tos->conn_pid = conn_pid;
 	tos->event = event;
+
+/* It might seem somewhat desirable for the database to record
+ *  DB-centred timestamps, unfortunately that would only be the
+ *  correct time if each thread were responsible for stowing its own
+ *  activities in sl_components in the database.  This would multiply
+ *  database activity, and the implementation instead passes requests
+ *  to a single thread that uses a single DB connection to record
+ *  things, with the consequence that timestamps must be captured
+ *  based on the system clock of the slon process. */
+
 	tos->start_time = time(NULL);
 	if (actor != NULL)
 	{
