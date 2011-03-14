@@ -562,7 +562,7 @@ create table @NAMESPACE@.sl_components (
 	co_node		 integer not null,
 	co_connection_pid integer not null,
 	co_activity	  text,
-	co_starttime	  timestamptz not null default now(),
+	co_starttime	  timestamptz not null,
 	co_event	  bigint,
 	co_eventtype 	  text
 ) without oids;
