@@ -50,7 +50,6 @@ monitorThread_main(void *dummy)
 	SlonConn   *conn;
 	SlonDString beginquery;
 	SlonDString monquery;
-	SlonDString delquery;
 
 	PGconn	   *dbconn;
 	PGresult   *res;
@@ -83,11 +82,6 @@ monitorThread_main(void *dummy)
 		dstring_init(&beginquery);
 		slon_mkquery(&beginquery,
 					 "start transaction;");
-
-		dstring_init(&delquery);
-		slon_mkquery(&delquery,
-					 "delete from %s.sl_components where co_connection_pid not in (select procpid from pg_catalog.pg_stat_activity);",
-					 rtcfg_namespace);
 
 		while ((rc = (ScheduleStatus) sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
 		{
@@ -175,21 +169,6 @@ monitorThread_main(void *dummy)
 					PQclear(res);
 				}
 
-				/*
-				 * Delete obsolete component tuples - where the connection PID
-				 * is dead
-				 */
-				res = PQexec(dbconn, dstring_data(&delquery));
-				if (PQresultStatus(res) != PGRES_COMMAND_OK)
-				{
-					slon_log(SLON_FATAL,
-							 "monitorThread: \"%s\" - %s",
-						 dstring_data(&delquery), PQresultErrorMessage(res));
-					PQclear(res);
-					slon_retry();
-					break;
-				}
-
 #define COMMITQUERY "commit;"
 				res = PQexec(dbconn, COMMITQUERY);
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -213,7 +192,6 @@ monitorThread_main(void *dummy)
 	slon_log(SLON_CONFIG, "monitorThread: exit main loop\n");
 
 	dstring_free(&beginquery);
-	dstring_free(&delquery);
 	dstring_free(&monquery);
 	slon_disconnectdb(conn);
 
