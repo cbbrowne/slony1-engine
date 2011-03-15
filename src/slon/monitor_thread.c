@@ -26,6 +26,7 @@ static void stack_init(void);
 static bool stack_pop(SlonState * current);
 static void stack_dump();
 static void entry_dump(int i, SlonState * tos);
+static int initial_stack_size=6;
 
 /* ----------
  * Global variables
@@ -48,7 +49,7 @@ void *
 monitorThread_main(void *dummy)
 {
 	SlonConn   *conn;
-	SlonDString beginquery;
+	SlonDString beginquery, commitquery;
 	SlonDString monquery;
 
 	PGconn	   *dbconn;
@@ -74,6 +75,26 @@ monitorThread_main(void *dummy)
 		dbconn = conn->dbconn;
 		slon_log(SLON_DEBUG2, "monitorThread: setup DB conn\n");
 
+		/* Start by emptying the sl_components table */
+		dstring_init(&monquery);
+		slon_mkquery(&monquery,
+					 "delete from %s.sl_components;",
+					 rtcfg_namespace);
+
+		res = PQexec(dbconn, dstring_data(&monquery));
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			slon_log(SLON_FATAL,
+					 "monitorThread: \"%s\" - %s",
+					 dstring_data(&monquery), PQresultErrorMessage(res));
+			PQclear(res);
+			dstring_free(&monquery);
+			slon_retry();
+		} else {
+			PQclear(res);
+			dstring_free(&monquery);
+		}
+		
 		monitor_state("local_monitor", 0, (pid_t) conn->conn_pid, "thread main loop", 0, "n/a");
 
 		/*
@@ -82,6 +103,9 @@ monitorThread_main(void *dummy)
 		dstring_init(&beginquery);
 		slon_mkquery(&beginquery,
 					 "start transaction;");
+
+		dstring_init(&commitquery);
+		slon_mkquery(&commitquery, "commit;");
 
 		while ((rc = (ScheduleStatus) sched_wait_time(conn, SCHED_WAIT_SOCK_READ, monitor_interval) == SCHED_STATUS_OK))
 		{
@@ -92,13 +116,12 @@ monitorThread_main(void *dummy)
 			pthread_mutex_unlock(&stack_lock);
 			if (qlen >= 0)
 			{
-#define BEGINQUERY "start transaction;"
-				res = PQexec(dbconn, BEGINQUERY);
+				res = PQexec(dbconn, dstring_data(&beginquery));
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
 					slon_log(SLON_FATAL,
 							 "monitorThread: \"%s\" - %s",
-							 BEGINQUERY, PQresultErrorMessage(res));
+							 dstring_data(&beginquery), PQresultErrorMessage(res));
 					PQclear(res);
 					slon_retry();
 					break;
@@ -168,16 +191,18 @@ monitorThread_main(void *dummy)
 					PQclear(res);
 				}
 
-#define COMMITQUERY "commit;"
-				res = PQexec(dbconn, COMMITQUERY);
+				res = PQexec(dbconn, dstring_data(&commitquery));
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
 					slon_log(SLON_FATAL,
 							 "monitorThread: %s - %s\n",
-							 COMMITQUERY,
+							 dstring_data(&commitquery),
 							 PQresultErrorMessage(res));
 					PQclear(res);
+					dstring_free(&monquery);
 					slon_retry();
+				} else {
+					dstring_free(&monquery);
 				}
 
 			}
@@ -191,7 +216,7 @@ monitorThread_main(void *dummy)
 	slon_log(SLON_CONFIG, "monitorThread: exit main loop\n");
 
 	dstring_free(&beginquery);
-	dstring_free(&monquery);
+	dstring_free(&commitquery);
 	slon_disconnectdb(conn);
 
 	slon_log(SLON_INFO, "monitorThread: thread done\n");
@@ -199,11 +224,10 @@ monitorThread_main(void *dummy)
 	return (void *) 0;
 }
 
-#define INITIAL_STACK_SIZE 6
 static void
 stack_init(void)
 {
-	stack_maxlength = INITIAL_STACK_SIZE;
+	stack_maxlength = initial_stack_size;
 	mstack = malloc(sizeof(SlonState) * (stack_maxlength + 1));
 	if (mstack == NULL)
 	{
@@ -218,7 +242,7 @@ stack_init(void)
 }
 
 void
-monitor_state(char *actor, int node, pid_t conn_pid, /* @null@ */ char *activity, int64 event, /* @null@ */ char *event_type)
+monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const char *activity, int64 event, /* @null@ */ const char *event_type)
 {
 	size_t		len;
 	SlonState  *tos;
@@ -300,7 +324,7 @@ monitor_state(char *actor, int node, pid_t conn_pid, /* @null@ */ char *activity
 		if (ns)
 		{
 			strncpy(ns, actor, len);
-			ns[len] = (char) 0;
+			ns[len] = '\0';
 			tos->actor = ns;
 		}
 		else
@@ -390,14 +414,6 @@ stack_pop( /* @out@ */ SlonState * qentry)
 	}
 }
 
-/*
- * Local Variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
- * End:
- */
-
 static void
 stack_dump()
 {
@@ -405,13 +421,18 @@ stack_dump()
 	SlonState  *tos;
 
 	slon_log(SLON_DEBUG2, "monitorThread: stack_dump()\n");
+	pthread_mutex_lock(&stack_lock);
 	for (i = 0; i < stack_size; i++)
 	{
 		tos = mstack + i;
 		entry_dump(i, tos);
 	}
 	slon_log(SLON_DEBUG2, "monitorThread: stack_dump done\n");
+	pthread_mutex_unlock(&stack_lock);
 }
+
+/* Note that this function accesses stack contents, and thus needs to
+ * be guarded by the pthread mutex on stack_lock */
 
 static void
 entry_dump(int i, SlonState * tos)
