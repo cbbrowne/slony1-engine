@@ -527,6 +527,7 @@ extern void monitor_state (char *actor, int node, pid_t conn_pid, char *activity
  * ----------
  */
 extern int	monitor_interval;
+extern bool	monitor_threads;
 
 
 /* ----------

@@ -57,6 +57,7 @@ int			sched_wakeuppipe[2];
 pthread_mutex_t slon_wait_listen_lock;
 pthread_cond_t slon_wait_listen_cond;
 int            slon_listen_started=0;
+bool	monitor_threads;
 
 /* ----------
  * Local data
@@ -782,13 +783,14 @@ SlonMain(void)
     /*
      * Create the local monitor thread that will process monitoring requests
      */
-    if (pthread_create(&local_monitor_thread, NULL, monitorThread_main, NULL) < 0)
-    {
-        slon_log(SLON_FATAL, "main: cannot create monitorThread - %s\n",
-                 strerror(errno));
-        slon_retry();
-    }
-
+	if (monitor_threads) {
+		if (pthread_create(&local_monitor_thread, NULL, monitorThread_main, NULL) < 0)
+		{
+			slon_log(SLON_FATAL, "main: cannot create monitorThread - %s\n",
+					 strerror(errno));
+			slon_retry();
+		}
+	}
     /*
      * Wait until the scheduler has shut down all remote connections
      */

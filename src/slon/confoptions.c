@@ -832,6 +832,16 @@ static struct config_bool ConfigureNamesBool[] =
 		&keep_alive,
 		true
 	},
+	{
+		{
+			(const char*) "monitor_threads",
+			gettext_noop("Should the monitoring thread be run?"),
+			NULL,
+			SLON_C_BOOL,
+		},
+		&monitor_threads,
+		true
+	},
 
 	{{0}}
 };
