@@ -110,8 +110,7 @@ monitorThread_main(void *dummy)
 				 * the database
 				 */
 				while (stack_pop(&state))
-				{				/* This implicitly locks stack - unlocks
-								 * immediately */
+				{
 					dstring_init(&monquery);
 					slon_mkquery(&monquery,
 								 "select %s.component_state('%s', %d, %d,",
