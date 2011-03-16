@@ -89,6 +89,7 @@ monitorThread_main(void *dummy)
 					 dstring_data(&monquery), PQresultErrorMessage(res));
 			PQclear(res);
 			dstring_free(&monquery);
+			monitor_threads = false;
 			slon_log(SLON_ERROR, "monitorThread: exit monitoring thread\n");
 			pthread_exit(NULL);
 			return (void *) 0;
@@ -219,6 +220,7 @@ monitorThread_main(void *dummy)
 	slon_disconnectdb(conn);
 
 	slon_log(SLON_INFO, "monitorThread: thread done\n");
+	monitor_threads = false;
 	pthread_exit(NULL);
 	return (void *) 0;
 }
@@ -248,6 +250,9 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 	SlonState  *nstack;
 	char	   *ns;
 	pid_t		mypid;
+
+	if (!monitor_threads)   /* Don't collect if this thread is shut off */
+		return;
 
 	mypid = getpid();
 	pthread_mutex_lock(&stack_lock);
