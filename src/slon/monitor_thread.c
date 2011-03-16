@@ -68,7 +68,7 @@ monitorThread_main(void *dummy)
 	 */
 	if ((conn = slon_connectdb(rtcfg_conninfo, "local_monitor")) == NULL)
 	{
-		slon_retry();
+		slon_log(SLON_ERROR, "monitorThread: failure to connect to local database\n");
 	}
 	else
 	{
@@ -84,12 +84,14 @@ monitorThread_main(void *dummy)
 		res = PQexec(dbconn, dstring_data(&monquery));
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			slon_log(SLON_FATAL,
-					 "monitorThread: \"%s\" - %s",
+			slon_log(SLON_ERROR,
+					 "monitorThread: \"%s\" - %s\n",
 					 dstring_data(&monquery), PQresultErrorMessage(res));
 			PQclear(res);
 			dstring_free(&monquery);
-			slon_retry();
+			slon_log(SLON_ERROR, "monitorThread: exit monitoring thread\n");
+			pthread_exit(NULL);
+			return (void *) 0;
 		} else {
 			PQclear(res);
 			dstring_free(&monquery);
@@ -119,11 +121,10 @@ monitorThread_main(void *dummy)
 				res = PQexec(dbconn, dstring_data(&beginquery));
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
-					slon_log(SLON_FATAL,
+					slon_log(SLON_ERROR,
 							 "monitorThread: \"%s\" - %s",
 							 dstring_data(&beginquery), PQresultErrorMessage(res));
 					PQclear(res);
-					slon_retry();
 					break;
 				}
 				PQclear(res);
@@ -181,11 +182,10 @@ monitorThread_main(void *dummy)
 					res = PQexec(dbconn, dstring_data(&monquery));
 					if (PQresultStatus(res) != PGRES_TUPLES_OK)
 					{
-						slon_log(SLON_FATAL,
+						slon_log(SLON_ERROR,
 								 "monitorThread: \"%s\" - %s",
 						 dstring_data(&monquery), PQresultErrorMessage(res));
 						PQclear(res);
-						slon_retry();
 						break;
 					}
 					PQclear(res);
@@ -194,13 +194,12 @@ monitorThread_main(void *dummy)
 				res = PQexec(dbconn, dstring_data(&commitquery));
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
-					slon_log(SLON_FATAL,
+					slon_log(SLON_ERROR,
 							 "monitorThread: %s - %s\n",
 							 dstring_data(&commitquery),
 							 PQresultErrorMessage(res));
 					PQclear(res);
 					dstring_free(&monquery);
-					slon_retry();
 				} else {
 					dstring_free(&monquery);
 				}
@@ -231,7 +230,7 @@ stack_init(void)
 	mstack = malloc(sizeof(SlonState) * (stack_maxlength + 1));
 	if (mstack == NULL)
 	{
-		slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
+		slon_log(SLON_FATAL, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
 		slon_retry();
 	}
 	else
@@ -265,7 +264,7 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 		nstack = realloc(mstack, (size_t) ((stack_maxlength + 1) * sizeof(SlonState)));
 		if (nstack == NULL)
 		{
-			slon_log(SLON_ERROR, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
+			slon_log(SLON_FATAL, "stack_init() - malloc() failure could not allocate %d stack slots\n", stack_maxlength);
 			pthread_mutex_unlock(&stack_lock);
 			slon_retry();
 		}
@@ -329,7 +328,7 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 		}
 		else
 		{
-			slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for actor (len %d)\n", len);
+			slon_log(SLON_FATAL, "monitor_state - unable to allocate memory for actor (len %d)\n", len);
 			pthread_mutex_unlock(&stack_lock);
 			slon_retry();
 		}
@@ -350,7 +349,7 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 		}
 		else
 		{
-			slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for activity (len %d)\n", len);
+			slon_log(SLON_FATAL, "monitor_state - unable to allocate memory for activity (len %d)\n", len);
 			pthread_mutex_unlock(&stack_lock);
 			slon_retry();
 		}
@@ -371,7 +370,7 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 		}
 		else
 		{
-			slon_log(SLON_ERROR, "monitor_state - unable to allocate memory for event_type (len %d)\n", len);
+			slon_log(SLON_FATAL, "monitor_state - unable to allocate memory for event_type (len %d)\n", len);
 			pthread_mutex_unlock(&stack_lock);
 			slon_retry();
 		}
