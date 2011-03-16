@@ -523,7 +523,12 @@ activity.</para>
 &slcomponents;, to report in on its work.  Unfortunately, the fact of
 adding in its own events would make it perpetually busy, as the action
 of processing the queue would add a monitoring entry, in effect
-becoming a repetitive recursive activity.</para></listitem>
+becoming a repetitive recursive activity.</para>
+
+<para> It does report in when it starts up, which means you may expect
+that this entry indicates the time at which the &lslon; process
+began. </para>
+</listitem>
 
 <listitem><para> Timestamps are based on the clock time of the &lslon;
 process.</para>
