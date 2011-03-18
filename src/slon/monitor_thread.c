@@ -264,7 +264,10 @@ monitor_state(const char *actor, int node, pid_t conn_pid, /* @null@ */ const ch
 	if (stack_size >= stack_maxlength)
 	{
 		/* Need to reallocate stack */
-		slon_log(SLON_DEBUG2, "monitorThread: stack reallocation - old address %d, old max size=%d, old size=%d\n", mstack, stack_maxlength, stack_size);
+		if (stack_size > 100) 
+		{
+			slon_log(SLON_WARN, "monitorThread: stack reallocation - size %d > warning threshold of 100.  Stack perhaps isn't getting processed properly by monitoring thread\n", stack_size);
+		}
 		stack_maxlength *= 2;
 
 		nstack = realloc(mstack, (size_t) ((stack_maxlength + 1) * sizeof(SlonState)));
