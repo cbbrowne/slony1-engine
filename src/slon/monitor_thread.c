@@ -90,6 +90,7 @@ monitorThread_main(void *dummy)
 			PQclear(res);
 			dstring_free(&monquery);
 			monitor_threads = false;
+			slon_disconnectdb(conn);
 			slon_log(SLON_ERROR, "monitorThread: exit monitoring thread\n");
 			pthread_exit(NULL);
 			return (void *) 0;
