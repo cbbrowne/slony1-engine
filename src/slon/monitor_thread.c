@@ -187,6 +187,7 @@ monitorThread_main(void *dummy)
 								 "monitorThread: \"%s\" - %s",
 						 dstring_data(&monquery), PQresultErrorMessage(res));
 						PQclear(res);
+						dstring_free(&monquery);
 						break;
 					}
 					PQclear(res);
