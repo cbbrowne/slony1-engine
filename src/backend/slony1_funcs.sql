@@ -5233,6 +5233,22 @@ begin
 	  -- restore sl_status
 	  execute 'create view sl_status as ' || v_keepstatus;
         end if;
+
+	if not exists (select 1 from information_schema.tables where table_schema = '_@CLUSTERNAME@' and table_name = 'sl_components') then
+	   v_query := '
+create table @NAMESPACE@.sl_components (
+	co_actor	 text not null primary key,
+	co_pid		 integer not null,
+	co_node		 integer not null,
+	co_connection_pid integer not null,
+	co_activity	  text,
+	co_starttime	  timestamptz not null,
+	co_event	  bigint,
+	co_eventtype 	  text
+) without oids;
+';
+  	   execute v_query;
+	end if;
 	return p_old;
 end;
 $$ language plpgsql
