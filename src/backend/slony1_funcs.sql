@@ -2573,8 +2573,6 @@ subscribed by the same set of nodes.';
 create or replace function @NAMESPACE@.isSubscriptionInProgress(p_add_id int4)
 returns boolean
 as $$
-DECLARE
-in_progress boolean;
 begin
 	if exists (select true from @NAMESPACE@.sl_event
 			where ev_type = 'ENABLE_SUBSCRIPTION'
