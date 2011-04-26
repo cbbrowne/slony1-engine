@@ -68,7 +68,7 @@
      <para>
       Comments begin at a hash sign (#) and extend to the end of the line.
      </para>
-    <sect2><title>Command groups</title>
+    <sect2 id="tryblock"><title>Command groups</title>
      <para>
       Commands can be combined into groups of commands with optional
       <command>on error</command> and <command>on success</command> conditionals.
