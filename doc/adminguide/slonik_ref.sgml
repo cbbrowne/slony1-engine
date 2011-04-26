@@ -525,8 +525,8 @@ INIT CLUSTER (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para> Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -612,9 +612,9 @@ INIT CLUSTER (
    </refsect1>
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command. </para>
+	   submitting this command. </para>
    </refsect1>
 
    <refsect1> <title> Version Information </title> <para> This command
@@ -695,7 +695,7 @@ INIT CLUSTER (
    </refsect1>
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait until nodes (other than the one being dropped)
+	 <para> Slonik waits until nodes (other than the one being dropped)
             are caught up with non-SYNC events from all other nodes before
 	        submitting the DROP NODE command.
     </para>
@@ -767,8 +767,8 @@ INIT CLUSTER (
    </refsect1>
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -821,8 +821,8 @@ INIT CLUSTER (
 
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title> <para> This command
@@ -906,8 +906,8 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
 
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -964,8 +964,8 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
 
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -1041,9 +1041,9 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
 
 
  <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will wait for the command submitted to the previous
+	 <para>Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title> <para> This command
@@ -1101,9 +1101,9 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
    </refsect1>
       
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title> <para> This command
@@ -1228,9 +1228,9 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
    
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command. Slonik will also wait until any outstanding
+	   submitting this command. Slonik will also wait until any outstanding
 	   DROP SET commands are confirmed by all nodes before it submits
 	   the CREATE SET command.</para>
    </refsect1>
@@ -1293,9 +1293,9 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
 
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -1373,9 +1373,9 @@ STORE PATH ( SERVER = 1, CLIENT = 2,
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-   <para> Slonik will wait for the command submitted to the previous
+   <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.  Slonik will also wait for any 
+	   submitting this command.  Slonik will also wait for any 
        in progress subscriptions involving the ADD ID to be subscribed
        before submitting the MERGE SET command. </para>
    </refsect1>  
@@ -1612,9 +1612,9 @@ SET ADD TABLE (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
 
@@ -1717,9 +1717,9 @@ SET ADD TABLE (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	   <para> Slonik will wait for the command submitted to the previous
+	   <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
 	 </refsect1>
 
 
@@ -1780,9 +1780,9 @@ SET ADD TABLE (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>   
 
    <refsect1> <title> Version Information </title>
@@ -1839,9 +1839,9 @@ SET ADD TABLE (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -1909,9 +1909,9 @@ SET MOVE TABLE (
    </refsect1>
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -1985,9 +1985,9 @@ SET MOVE SEQUENCE (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -2285,18 +2285,18 @@ SUBSCRIBE SET (
     acquiring any locks on the provider node.</para>
 
     <para> On the subscriber node, it will have the effect of locking
-    every table in the replication set.  In version 1.2 or later, exclusive
+    every table in the replication set.  In version 1.2 and later, exclusive
     locks are acquired at the beginning of the process.
     </para>
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait until the provider has confirmed all
-       outstanding configuration events from any other node before contacting
-       the provider to determine the set origin.  Slonik will then wait until
-       The command submitted to the previous
-	   event node to be confirmed on the origin before submitting the 
-	   command to the origin.</para>
+	 <para> Slonik waits until the provider has confirmed all
+	 outstanding configuration events from any other node before
+	 contacting the provider to determine the set origin.  Slonik
+	 then waits for the command submitted to the previous event
+	 node to be confirmed on the origin before submitting this
+	 command to the origin.</para>
 </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -2362,9 +2362,9 @@ UNSUBSCRIBE SET (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
 
@@ -2454,8 +2454,8 @@ LOCK SET (
    </refsect1>
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -2512,8 +2512,8 @@ UNLOCK SET (
    </refsect1>
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -2610,9 +2610,9 @@ MOVE SET (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
  
 
@@ -2832,9 +2832,9 @@ EXECUTE SCRIPT (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para> Slonik will wait for the command submitted to the previous
+	 <para> Slonik waits for the command submitted to the previous
 	   event node to be confirmed on the specified event node before
-	   submitting the command.</para>
+	   submitting this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -2917,8 +2917,8 @@ UPDATE FUNCTIONS (
    </refsect1>
    
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -3109,8 +3109,8 @@ REPAIR CONFIG (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
    
    <refsect1> <title> Version Information </title>
@@ -3155,8 +3155,8 @@ REPAIR CONFIG (
    </refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
    
    <refsect1> <title> Version Information </title>
@@ -3192,8 +3192,8 @@ REPAIR CONFIG (
    </Refsect1>
 
    <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
 
    <refsect1> <title> Version Information </title>
@@ -3292,8 +3292,8 @@ REPAIR CONFIG (
    </Refsect1>
 
     <refsect1> <title> Slonik Event Confirmation Behaviour </title>
-	 <para>Slonik will not wait for event confirmations before 
-	   performing the command.</para>
+	 <para>Slonik does not wait for event confirmations before 
+	   performing this command.</para>
    </refsect1>
    
 
