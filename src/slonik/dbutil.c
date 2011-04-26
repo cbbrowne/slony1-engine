@@ -466,7 +466,7 @@ db_get_version(SlonikStmt * stmt, SlonikAdmInfo * adminfo)
  * ----------
  */
 int
-db_begin_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo, bool supress_locking)
+db_begin_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo, bool suppress_locking)
 {
 	PGresult   *res;
 
@@ -483,7 +483,7 @@ db_begin_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo, bool supress_locking)
 		return -1;
 	}
 	PQclear(res);
-	if(current_try_level > 0 && !supress_locking)
+	if(current_try_level > 0 && !suppress_locking)
 	{
 		/**
 		 * inside of a try block we obtain sl_event_lock

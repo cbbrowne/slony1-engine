@@ -98,7 +98,7 @@ static int slonik_submitEvent(SlonikStmt * stmt,
 							  SlonikAdmInfo * adminfo, 
 							  SlonDString * query,
 							  SlonikScript * script,
-							  int supress_wait_for);
+							  int suppress_wait_for);
 
 static size_t slonik_get_last_event_id(SlonikStmt* stmt,
 									SlonikScript * script,
