@@ -4916,13 +4916,13 @@ slonik_get_next_tab_id(SlonikStmt * stmt)
 			res = db_exec_select((SlonikStmt*)stmt,adminfo,&query);
 			if(res == NULL ) 
 			{
-			printf("%s:%d: Error:could not query node %d for next table id",
-				   stmt->stmt_filename,stmt->stmt_lno,
-				   adminfo->no_id);
-			if( res != NULL)
-				PQclear(res);
-			dstring_terminate(&query);
-			return -1;
+					printf("%s:%d: Error:could not query node %d for next table id",
+						   stmt->stmt_filename,stmt->stmt_lno,
+						   adminfo->no_id);
+					if( res != NULL)
+							PQclear(res);
+					dstring_terminate(&query);
+					return -1;
 			}
 		}
 		else
@@ -5204,6 +5204,7 @@ slonik_is_slony_installed(SlonikStmt * stmt,
 }	
 
 /* slonik_submitEvent(stmt, adminfo, query, script, suppress_wait_for)
+ *
  * Wraps former requests to generate events, folding together the
  * logic for whether or not to do auto wait for or suppress this into
  * one place.
@@ -5256,6 +5257,7 @@ static int slonik_submitEvent(SlonikStmt * stmt,
 }
 
 /**
+ * slonik_get_last_event_id(stmt, script, event_filter, events)
  *
  * query all nodes we have admin conninfo data for and
  * find the last non SYNC event id generated from that node.
