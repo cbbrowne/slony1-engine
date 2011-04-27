@@ -5203,13 +5203,17 @@ slonik_is_slony_installed(SlonikStmt * stmt,
 	
 }	
 
+/* slonik_submitEvent(stmt, adminfo, query, script, suppress_wait_for)
+ * Wraps former requests to generate events, folding together the
+ * logic for whether or not to do auto wait for or suppress this into
+ * one place.
+ */
 					   
 static int slonik_submitEvent(SlonikStmt * stmt,
 							  SlonikAdmInfo * adminfo, 
 							  SlonDString * query,
 							  SlonikScript * script,
 							  int suppress_wait_for)
-	
 {
 	int rc;
 	if ( last_event_node >= 0 &&
