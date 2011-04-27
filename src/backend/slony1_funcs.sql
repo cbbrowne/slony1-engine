@@ -5784,7 +5784,6 @@ create or replace function @NAMESPACE@.is_node_reachable(origin_node_id integer,
 	   receiver_node_id integer) returns boolean as $$
 declare
 		reachable boolean;
-		listen_row record;
 begin
 	reachable:=false;
 	select * into listen_row from @NAMESPACE@.sl_listen where
