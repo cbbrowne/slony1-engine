@@ -5783,6 +5783,7 @@ comment on function @NAMESPACE@.store_application_name (i_name text) is
 create or replace function @NAMESPACE@.is_node_reachable(origin_node_id integer,
 	   receiver_node_id integer) returns boolean as $$
 declare
+		listen_row record;
 		reachable boolean;
 begin
 	reachable:=false;
