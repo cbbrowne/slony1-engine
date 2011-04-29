@@ -1406,9 +1406,9 @@ remoteWorkerThread_main(void *cdata)
 				/**
 				 * Check to make sure this node is part of the set
 				 */
-				slon_log(SLON_INFO, "Checking local node id\n");
+				slon_log(SLON_INFO, "DDL_SCRIPT: Checking local node id\n");
 				localNodeId = db_getLocalNodeId(local_dbconn);
-				slon_log(SLON_INFO, "Found local node id\n");
+				slon_log(SLON_INFO, "DDL_SCRIPT: Found local node id\n");
 				node_in_set = check_set_subscriber(ddl_setid, localNodeId, local_dbconn);
 
 				if (!node_in_set)
@@ -1421,7 +1421,6 @@ remoteWorkerThread_main(void *cdata)
 					 */
 					slon_log(SLON_INFO, "Not forwarding DDL to node %d for set %d\n",
 							 node->no_id, ddl_setid);
-
 				}
 				else
 				{
@@ -5226,9 +5225,9 @@ sync_helper(void *cdata)
 							break;
 						case 'S':
 							slon_appendquery(&(line->data),
-											 "%s;\n",
+											 "set session_replication_role to local;\n%s;\nset session_replication_role to replica;\n",
 											 log_cmddata);
-							pm.num_truncates++;
+							slon_log(SLON_INFO, "DDL applied: %s\n", log_cmddata);
 							break;
 					}
 					line_ncmds++;
