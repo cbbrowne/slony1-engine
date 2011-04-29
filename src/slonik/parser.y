@@ -1307,6 +1307,7 @@ stmt_ddl_script		: lno K_EXECUTE K_SCRIPT option_list
 							STMT_OPTION_STR( O_FILENAME, NULL ),
 							STMT_OPTION_INT( O_EVENT_NODE, -1 ),
 							STMT_OPTION_INT( O_EXECUTE_ONLY_ON, -1 ),
+							STMT_OPTION_STR( O_LOCK, NULL ),
 							STMT_OPTION_END
 						};
 
@@ -1323,6 +1324,7 @@ stmt_ddl_script		: lno K_EXECUTE K_SCRIPT option_list
 							new->ddl_fname		= opt[1].str;
 							new->ev_origin		= opt[2].ival;
 							new->only_on_node	= opt[3].ival;
+							new->locks          = opt[4].str;
 							new->ddl_fd		= NULL;
 						}
 						else
@@ -1701,10 +1703,14 @@ option_list_item	: K_ID '=' option_item_id
 						$3->opt_code	= O_SECONDS;
 						$$ = $3;
 					}
-
 					| K_TABLES '=' option_item_literal
 					{
 						$3->opt_code	= O_TABLES;
+						$$ = $3;
+					}
+                    | K_LOCK '=' option_item_literal
+					{
+						$3->opt_code = O_LOCK;
 						$$ = $3;
 					}
 					| K_SEQUENCES '=' option_item_literal
@@ -1846,6 +1852,7 @@ option_str(option_code opt_code)
 		case O_FORWARD:			return "forward";
 		case O_FQNAME:			return "full qualified name";
 		case O_ID:				return "id";
+     	case O_LOCK:		    return "lock";
 		case O_NEW_ORIGIN:		return "new origin";
 		case O_NEW_SET:			return "new set";
 		case O_NODE_ID:			return "node id";

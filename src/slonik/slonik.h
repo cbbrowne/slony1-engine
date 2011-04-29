@@ -406,6 +406,7 @@ struct SlonikStmt_ddl_script_s
 	char	   *ddl_fname;
 	int			ev_origin;
 	int			only_on_node;
+	char       *locks;
 	FILE	   *ddl_fd;
 };
 
@@ -645,6 +646,7 @@ typedef enum {
 	O_FORWARD,
 	O_FQNAME,
 	O_ID,
+	O_LOCK,
 	O_NEW_ORIGIN,
 	O_NEW_SET,
 	O_NODE_ID,
