@@ -5224,6 +5224,12 @@ sync_helper(void *cdata)
 											 log_cmddata);
 							pm.num_truncates++;
 							break;
+						case 'S':
+							slon_appendquery(&(line->data),
+											 "%s;\n",
+											 log_cmddata);
+							pm.num_truncates++;
+							break;
 					}
 					line_ncmds++;
 
