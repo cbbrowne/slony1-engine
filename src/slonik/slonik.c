@@ -4028,7 +4028,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	dstring_init(&query);
 	slon_mkquery(&query,
 			 "lock table \"_%s\".sl_event_lock;"
-		     "select \"_%s\".ddlScript_prepare(%d, %d, '%s'); ",
+		     "select \"_%s\".ddlScript_prepare(%d, %d); lock table %s;",
 		     stmt->hdr.script->clustername,
 		     stmt->hdr.script->clustername,
 		     stmt->ddl_setid, /* dstring_data(&script),  */ 
