@@ -4027,19 +4027,34 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 
 	dstring_init(&query);
 	slon_mkquery(&query,
-			 "lock table \"_%s\".sl_event_lock;"
-		     "select \"_%s\".ddlScript_prepare(%d, %d); lock table %s;",
-		     stmt->hdr.script->clustername,
-		     stmt->hdr.script->clustername,
-		     stmt->ddl_setid, /* dstring_data(&script),  */ 
-			 stmt->only_on_node,
-			 stmt->locks);
-
+				 "lock table \"_%s\".sl_event_lock;",
+				 stmt->hdr.script->clustername);
 	if (db_exec_evcommand((SlonikStmt *) stmt, adminfo1, &query) < 0)
 	{
 		dstring_free(&query);
 		return -1;
 	}
+	slon_mkquery(&query, 
+				 "select \"_%s\".ddlScript_prepare(%d, %d);",
+				 stmt->hdr.script->clustername,
+				 stmt->ddl_setid,
+				 stmt->only_on_node);
+
+	if (db_exec_select((SlonikStmt *) stmt, adminfo1, &query) < 0)
+	{
+		dstring_free(&query);
+		return -1;
+	}
+	slon_mkquery(&query, 
+				 "lock table %s;",
+				 stmt->hdr.script->clustername,
+				 stmt->locks);
+	if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
+	{
+		dstring_free(&query);
+		return -1;
+	}
+
 
 	/* Need to know whether entries are to be added to sl_log_1 or sl_log_2 */
 	slon_mkquery(&query, "select last_value from \"_%s\".sl_log_status;", 
