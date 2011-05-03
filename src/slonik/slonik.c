@@ -3984,7 +3984,7 @@ int
 slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 {
 	SlonikAdmInfo *adminfo1;
-	SlonDString query;
+	SlonDString query, equery;
 	SlonDString script;
 	int			rc;
 	int         logstatus, use_log;
@@ -4029,7 +4029,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	slon_mkquery(&query,
 				 "lock table \"_%s\".sl_event_lock;",
 				 stmt->hdr.script->clustername);
-	if (db_exec_evcommand((SlonikStmt *) stmt, adminfo1, &query) < 0)
+	if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
 	{
 		dstring_free(&query);
 		return -1;
@@ -4045,17 +4045,18 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		dstring_free(&query);
 		return -1;
 	}
-	slon_mkquery(&query, 
-				 "lock table %s;",
-				 stmt->hdr.script->clustername,
-				 stmt->locks);
-	if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
-	{
-		dstring_free(&query);
-		return -1;
+
+	/* Don't bother locking tables if none were requested */
+	if (stmt->locks != NULL) {
+			slon_mkquery(&query, 
+						 "lock table %s;",
+						 stmt->locks);
+			if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
+			{
+					dstring_free(&query);
+					return -1;
+			}
 	}
-
-
 	/* Need to know whether entries are to be added to sl_log_1 or sl_log_2 */
 	slon_mkquery(&query, "select last_value from \"_%s\".sl_log_status;", 
 				 stmt->hdr.script->clustername);
@@ -4082,16 +4083,11 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	}
 
 	/* This prepares the statement that will be run over and over for each DDL statement */
-	slon_mkquery(&query,
-				 "prepare logddl (text) as insert into \"_%s\".sl_log_%d (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata) "
+	dstring_init(&equery);
+	slon_mkquery(&equery,
+				 "insert into \"_%s\".sl_log_%d (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata) "
 				 "values (%d, \"pg_catalog\".txid_current(), NULL, nextval('\"_%s\".sl_action_seq'), 'S', $1);\n",
-				 stmt->hdr.script->clustername, stmt->ev_origin, stmt->hdr.script->clustername);
-
-	if (db_exec_evcommand((SlonikStmt *) stmt, adminfo1, &query) < 0)
-	{
-		dstring_free(&query);
-		return -1;
-	}
+				 stmt->hdr.script->clustername, stmt->ev_origin, stmt->hdr.script->clustername, stmt->hdr.script->clustername);
 
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
@@ -4124,13 +4120,12 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 			dstring_free(&query);
 			return -1;
 		}
-		slon_mkquery(&query, "execute logddl($1::text);");
 
 		paramlens[PARMCOUNT-1] = 0;
 		paramfmts[PARMCOUNT-1] = 0;
 		params[PARMCOUNT-1] = dstring_data(&query);
 
-		res1 = PQexecParams(adminfo1->dbconn, dstring_data(&query), 1, NULL, params, paramlens, paramfmts, 0);
+		res1 = PQexecParams(adminfo1->dbconn, dstring_data(&equery), 1, NULL, params, NULL, NULL, 0);
 		if (PQresultStatus(res1) != PGRES_COMMAND_OK)
 		{
 				fprintf(stderr, "%s %s - %s",
@@ -4142,18 +4137,14 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		}
 		free(dest);
 	}
+	dstring_free(&equery);
 	
-	slon_mkquery(&query, "select \"_%s\".ddlScript_complete(%d, $1::text, %d); ", 
+	slon_mkquery(&query, "select \"_%s\".ddlScript_complete(%d, %d); ", 
 		     stmt->hdr.script->clustername,
-		     stmt->ddl_setid,  
+		     stmt->ddl_setid,
 		     stmt->only_on_node);
 
-	paramlens[PARMCOUNT-1] = 0;
-	paramfmts[PARMCOUNT-1] = 0;
-	params[PARMCOUNT-1] = dstring_data(&script);
-
-	if (db_exec_evcommand_p((SlonikStmt *)stmt, adminfo1, &query,
-				PARMCOUNT, NULL, params, paramlens, paramfmts, 0) < 0)
+	if (db_exec_command((SlonikStmt *)stmt, adminfo1, &query) < 0)
 	{
 		dstring_free(&query);
 		return -1;

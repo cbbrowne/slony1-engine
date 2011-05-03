@@ -3516,13 +3516,13 @@ comment on function @NAMESPACE@.ddlScript_prepare (p_set_id int4, p_only_on_node
 -- 	perform @NAMESPACE@.ddlScript_int(p_set_id, p_script, p_only_on_node);
 
 -- ----------------------------------------------------------------------
--- FUNCTION ddlScript_complete (set_id, script, only_on_node)
+-- FUNCTION ddlScript_complete (set_id, only_on_node)
 --
 --	Generate the DDL_SCRIPT event
 -- ----------------------------------------------------------------------
-drop function if exists @NAMESPACE@.ddlScript_complete (int4, text, int4);  -- Needed because function signature has changed!
+drop function if exists @NAMESPACE@.ddlScript_complete (int4, int4);  -- Needed because function signature has changed!
 
-create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_script text, p_only_on_node int4)
+create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_only_on_node int4)
 returns bigint
 as $$
 declare
@@ -3532,7 +3532,7 @@ declare
 begin
 	if p_only_on_node = -1 then
 		return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'DDL_SCRIPT', 
-			p_set_id::text, p_script::text, p_only_on_node::text);
+			p_set_id::text, p_only_on_node::text);
 	end if;
 	if p_only_on_node <> -1 then
 		for v_row in execute
@@ -3546,11 +3546,11 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_script text, p_only_on_node int4) is
-'ddlScript_complete(set_id, script, only_on_node)
+comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_only_on_node int4) is
+'ddlScript_complete(set_id, only_on_node)
 
 After script has run on origin, this fixes up relnames, restores
-triggers, and generates a DDL_SCRIPT event to request it to be run on
+triggers, and generates a DDL_SCRIPT event to indicate it is to be run on
 replicated slaves.';
 
 -- ----------------------------------------------------------------------
