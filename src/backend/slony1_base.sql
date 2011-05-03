@@ -425,6 +425,23 @@ comment on column @NAMESPACE@.sl_log_2.log_cmdtype is 'Replication action to tak
 comment on column @NAMESPACE@.sl_log_2.log_cmdupdncols is 'For cmdtype=U the number of updated columns in cmdargs';
 comment on column @NAMESPACE@.sl_log_2.log_cmdargs is 'The data needed to perform the log action on the replica';
 
+-- ----------------------------------------------------------------------
+-- TABLE sl_ddl
+-- ----------------------------------------------------------------------
+create table @NAMESPACE@.sl_ddl (
+	ddl_origin			int4,
+	ddl_txid			bigint,
+	ddl_actionseq		int8,
+	ddl_cmdargs			text[]
+) WITHOUT OIDS;
+create index sl_ddl_idx1 on @NAMESPACE@.sl_ddl
+	(ddl_origin, ddl_txid, ddl_actionseq);
+
+comment on table @NAMESPACE@.sl_ddl is 'Captures DDL queries to be propagated to subscriber nodes';
+comment on column @NAMESPACE@.sl_ddl.ddl_origin is 'Origin name from which the change came';
+comment on column @NAMESPACE@.sl_ddl.ddl_txid is 'Transaction ID on the origin node';
+comment on column @NAMESPACE@.sl_ddl.ddl_actionseq is 'The sequence number in which actions will be applied on replicas';
+comment on column @NAMESPACE@.sl_ddl.ddl_query is 'The data needed to perform the log action on the replica.';
 
 -- ----------------------------------------------------------------------
 -- TABLE sl_registry

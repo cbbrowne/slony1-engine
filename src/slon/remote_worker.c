@@ -1432,7 +1432,8 @@ remoteWorkerThread_main(void *cdata)
 
 				need_reloadListen = true;
 			}
-			else if (strcmp(event->ev_type, "DDL_SCRIPT") == 0)
+			else if (strcmp(event->ev_type, "DDL_SCRIPT") == 0) 
+			{
 				/* don't need to do anything for this event */
 			}
 			else if (strcmp(event->ev_type, "RESET_CONFIG") == 0)
@@ -1491,7 +1492,6 @@ remoteWorkerThread_main(void *cdata)
 	 * free memory
 	 */
 	adjust_provider_info(node, wd, true);
-
 	pthread_mutex_unlock(&(wd->workdata_lock));
 	pthread_mutex_destroy(&(wd->workdata_lock));
 	pthread_cond_destroy(&(wd->repldata_cond));

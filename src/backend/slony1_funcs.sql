@@ -3324,65 +3324,34 @@ Set sequence seq_id to have new value last_value.
 ';
 
 -- ----------------------------------------------------------------------
--- FUNCTION ddlScript_prepare (set_id, only_on_node)
+-- FUNCTION ddl_capture (origin, statement)
 --
---	Generate the DDL_SCRIPT event
+--	Capture DDL into sl_ddl
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_prepare (p_set_id int4, p_only_on_node int4)
+create or replace function @NAMESPACE@.ddl_capture (p_origin integer, p_statement text)
 returns integer
 as $$
-declare
-	v_set_origin		int4;
 begin
-	-- ----
-	-- Check that the set exists and originates here
-	-- ----
-	select set_origin into v_set_origin
-			from @NAMESPACE@.sl_set
-			where set_id = p_set_id
-			for update;
-	if not found then
-		raise exception 'Slony-I: set % not found', p_set_id;
-	end if;
-	if p_only_on_node = -1 then
-		if v_set_origin <> @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@') then
-			raise exception 'Slony-I: set % does not originate on local node',
-				p_set_id;
-		end if;
-		-- ----
-		-- Create a SYNC event
-		-- ----
-		perform @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'SYNC', NULL);
-	else
-		-- If running "ONLY ON NODE", there are two possibilities:
-		-- 1.  Running on origin, where denyaccess() triggers are already shut off
-		-- 2.  Running on replica, where we need the LOCAL role to suppress denyaccess() triggers
-		execute 'create temp table _slony1_saved_session_replication_role (
-					setting text);';
-		execute 'insert into _slony1_saved_session_replication_role
-					select setting from pg_catalog.pg_settings
-					where name = ''session_replication_role'';';
-		if (v_set_origin <> @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@')) then
-			execute 'set session_replication_role to local;';
-		end if;
-	end if;
-	return 1;
+    insert into sl_ddl(ddl_origin, ddl_txid, ddl_actionseq, ddl_cmdargs)
+    values (p_origin, ??, ??, p_statement);
+	return currval();
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_prepare (p_set_id int4, p_only_on_node int4) is 
-'Prepare for DDL script execution on origin';
+comment on function @NAMESPACE@.ddl_capture (p_origin integer, p_statement text) is
+'Capture an SQL statement (usually DDL) that is to be literally replayed on subscribers';
+
 
 -- 	perform @NAMESPACE@.ddlScript_int(p_set_id, p_script, p_only_on_node);
 
 -- ----------------------------------------------------------------------
--- FUNCTION ddlScript_complete (set_id, script, only_on_node)
+-- FUNCTION ddlScript_complete (set_id, only_on_node)
 --
 --	Generate the DDL_SCRIPT event
 -- ----------------------------------------------------------------------
-drop function if exists @NAMESPACE@.ddlScript_complete (int4, text, int4);  -- Needed because function signature has changed!
+drop function if exists @NAMESPACE@.ddlScript_complete (int4, int4);  -- Needed because function signature has changed!
 
-create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_script text, p_only_on_node int4)
+create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_only_on_node int4)
 returns bigint
 as $$
 declare
@@ -3393,7 +3362,7 @@ begin
 	if p_only_on_node = -1 then
 	        perform @NAMESPACE@.ddlScript_complete_int(p_set_id,p_only_on_node);
 		return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'DDL_SCRIPT', 
-			p_set_id::text, p_script::text, p_only_on_node::text);
+			p_set_id::text, p_only_on_node::text);
 	end if;
 	if p_only_on_node <> -1 then
 		for v_row in execute
@@ -3408,11 +3377,11 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_script text, p_only_on_node int4) is
-'ddlScript_complete(set_id, script, only_on_node)
+comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_only_on_node int4) is
+'ddlScript_complete(set_id, only_on_node)
 
 After script has run on origin, this fixes up relnames, restores
-triggers, and generates a DDL_SCRIPT event to request it to be run on
+triggers, and generates a DDL_SCRIPT event to indicate it is to be run on
 replicated slaves.';
 
 -- ----------------------------------------------------------------------
@@ -5164,6 +5133,21 @@ create table @NAMESPACE@.sl_components (
 		comment on column @NAMESPACE@.sl_log_2.log_cmdtype is 'Replication action to take. U = Update, I = Insert, D = DELETE, T = TRUNCATE';
 		comment on column @NAMESPACE@.sl_log_2.log_cmdupdncols is 'For cmdtype=U the number of updated columns in cmdargs';
 		comment on column @NAMESPACE@.sl_log_2.log_cmdargs is 'The data needed to perform the log action on the replica';
+
+        create table @NAMESPACE@.sl_ddl (
+        	ddl_origin			int4,
+        	ddl_txid			bigint,
+        	ddl_actionseq		int8,
+        	ddl_cmdargs			text[]
+        ) WITHOUT OIDS;
+        create index sl_ddl_idx1 on @NAMESPACE@.sl_ddl
+        	(ddl_origin, ddl_txid, ddl_actionseq);
+        
+        comment on table @NAMESPACE@.sl_ddl is 'Captures DDL queries to be propagated to subscriber nodes';
+        comment on column @NAMESPACE@.sl_ddl.ddl_origin is 'Origin name from which the change came';
+        comment on column @NAMESPACE@.sl_ddl.ddl_txid is 'Transaction ID on the origin node';
+        comment on column @NAMESPACE@.sl_ddl.ddl_actionseq is 'The sequence number in which actions will be applied on replicas';
+        comment on column @NAMESPACE@.sl_ddl.ddl_query is 'The data needed to perform the log action on the replica.';
 
 		--
 		-- Put the log apply triggers back onto sl_log_1/2
