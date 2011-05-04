@@ -3923,7 +3923,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 								"else null end "
 						"from %s.sl_log_%d "
 						"where log_origin = %d "
-						"and log_tableid in (",
+						"and ((log_tableid is null and log_cmdtype = 'S') or log_tableid in (",
 								sync_max_rowsize,
 								rtcfg_namespace, sl_log_no,
 								node->no_id);
@@ -3934,7 +3934,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 					dstring_append(provider_query, 
 							PQgetvalue(res2, tupno2, 0));
 				}
-				dstring_append(provider_query, ") ");
+				dstring_append(provider_query, ")) ");
 
 				/*
 				 * and log_txid >= '<maxxid_last_snapshot>'
@@ -3991,7 +3991,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 								"else null end "
 						"from %s.sl_log_%d "
 						"where log_origin = %d "
-						"and log_tableid in (",
+						"and  ((log_tableid is null and log_cmdtype = 'S') or log_tableid in (",
 								sync_max_rowsize,
 								rtcfg_namespace, sl_log_no,
 								node->no_id);
@@ -4002,7 +4002,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 					dstring_append(provider_query, 
 							PQgetvalue(res2, tupno2, 0));
 				}
-				dstring_append(provider_query, ") ");
+				dstring_append(provider_query, ")) ");
 
 				/*
 				 * and log_txid in (select
