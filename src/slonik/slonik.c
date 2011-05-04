@@ -4428,7 +4428,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	slon_mkquery(&equery,
 				 "insert into \"_%s\".sl_log_%d (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata) "
 				 "values (%d, \"pg_catalog\".txid_current(), NULL, nextval('\"_%s\".sl_action_seq'), 'S', $1);\n",
-				 stmt->hdr.script->clustername, stmt->ev_origin, stmt->hdr.script->clustername, stmt->hdr.script->clustername);
+				 stmt->hdr.script->clustername, use_log, stmt->ev_origin, stmt->hdr.script->clustername, stmt->hdr.script->clustername);
 
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
