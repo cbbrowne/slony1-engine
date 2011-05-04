@@ -509,6 +509,7 @@ build_slonconf()
     if [ "x${archive}" = "xtrue" ]; then
 	status "slonconf configures archive logging for node ${node}"
 	echo "archive_dir='${mktmp}/archive_logs_${node}'" >> ${CONFFILE}
+	echo "explain_interval=10" >> ${CONFFILE}
 	eval pgbindir=\$PGBINDIR${node}
     fi
 }
