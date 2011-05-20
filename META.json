@@ -1,0 +1,54 @@
+{
+   "name": "Slony-I",
+   "abstract": "Replication system for PostgreSQL",
+   "description": "Slony-I is a "master to multiple slaves" replication system for PostgreSQL supporting cascading (e.g. - a node can feed another node which feeds another node...) and failover.",
+   "version": "2.0.99",
+   "maintainer": [
+      "Christopher Browne <cbbrowne@acm.org>",
+      "Slony1-general list <slony1-general@slony.info>"
+   ],
+   "license": {
+      "PostgreSQL": "http://www.postgresql.org/about/licence"
+   },
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "plpgsql": 0,
+            "PostgreSQL": "8.3.0"
+         },
+         "recommends": {
+            "PostgreSQL": "9.0.0"
+         }
+      }
+   },
+   "provides": {
+     "slony": {
+       "file": "RELEASE",
+       "docfile": "RELEASE",
+       "version": "2.0.99",
+       "abstract": "Replication system for PostgreSQL"
+     }
+   },
+   "resources": {
+      "homepage": "http://slony.info/",
+      "bugtracker": {
+         "web": "http://bugs.slony.info/bugzilla/"
+      },
+      "repository": {
+        "url":  "git://git.postgresql.org/git/slony1-engine.git",
+        "web":  "http://git.postgresql.org/gitweb?p=slony1-engine.git;a=summary",
+        "type": "git"
+      }
+   },
+   "generated_by": "Christopher B Browne",
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "http://pgxn.org/meta/spec.txt"
+   },
+   "tags": [
+      "replication",
+      "high availability",
+      "triggers",
+      "pl/pgsql"
+   ]
+}
