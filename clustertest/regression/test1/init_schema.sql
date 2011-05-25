@@ -47,3 +47,18 @@ create table table5 (
   d11 text,
   primary key(id, id2, id3)
 );
+
+create table x1 (
+	   id serial,
+	   data text
+);
+
+create table x2 (
+	   id serial,
+	   data text
+);
+
+create table x3 (
+	   id serial,
+	   data text
+);
