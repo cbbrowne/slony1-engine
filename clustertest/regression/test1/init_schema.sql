@@ -49,16 +49,16 @@ create table table5 (
 );
 
 create table x1 (
-	   id serial,
+	   id serial primary key,
 	   data text
 );
 
 create table x2 (
-	   id serial,
+	   id serial primary key,
 	   data text
 );
 
 create table x3 (
-	   id serial,
+	   id serial primary key,
 	   data text
 );

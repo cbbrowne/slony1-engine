@@ -38,7 +38,7 @@ function init_tables() {
 		+"set add table (id=4, set id=1, origin=1, fully qualified name = 'public.table4', comment='a table of many types');\n"
 		+"set add table (id=5, set id=1, origin=1, fully qualified name = 'public.table5', comment='a table with composite PK strewn across the table');\n"
 	    +"try {\n"
-	    +"set add table (set id=1, tables='public.x.*', add sequences=true);\n"
+	    +"set add table (set id=1, tables='public.x.*', origin=1, add sequences=true);\n"
 	    +"} on error {\n"
 		+"echo 'tried to replicate x.*, did not succeed';\n"
 		+ "exit 1;\n"
