@@ -2,7 +2,7 @@
    "name": "Slony-I",
    "abstract": "Replication system for PostgreSQL",
    "description": "Slony-I is a master to multiple slaves replication system for PostgreSQL supporting cascading (e.g. - a node can feed another node which feeds another node...) and failover.",
-   "version": "2.0.99",
+   "version": "2.0.999",
    "maintainer": [
       "Christopher Browne <cbbrowne@acm.org>",
       "Slony1-general list <slony1-general@slony.info>"
@@ -25,7 +25,7 @@
      "slony": {
        "file": "RELEASE",
        "docfile": "RELEASE",
-       "version": "2.0.99",
+       "version": "2.0.999",
        "abstract": "Replication system for PostgreSQL"
      }
    },
