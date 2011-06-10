@@ -5,7 +5,8 @@
 
 - Bug 214 - Add slonikconfdump.sh back into tools
 
-- Bug 218 - obtain a lock on sl_config_lock before calling storePath_int
+- Bug 218 - Acquire lock on sl_config_lock in much the same fashion as
+            with sl_event_lock (bug #196)
 
 - Bug 220 -  Fix issue where changing the provider of an existing subscriber
              passed parameters in the wrong order to the stored procedure.

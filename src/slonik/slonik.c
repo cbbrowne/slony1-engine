@@ -2071,7 +2071,9 @@ slonik_repair_config(SlonikStmt_repair_config * stmt)
 	dstring_init(&query);
 
 	slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock;"
 				 "select \"_%s\".updateReloid(%d, %d); ",
+				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername,
 				 stmt->set_id, stmt->only_on_node);
 	if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
@@ -2238,7 +2240,9 @@ slonik_store_node(SlonikStmt_store_node * stmt)
 		char	   *pa_connretry = PQgetvalue(res, tupno, 3);
 
 		slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock;"
 			     "select \"_%s\".storePath_int(%s, %s, '%q', %s); ",
+			     stmt->hdr.script->clustername,
 			     stmt->hdr.script->clustername,
 			     pa_server, pa_client, pa_conninfo, pa_connretry);
 
@@ -2343,7 +2347,9 @@ slonik_store_node(SlonikStmt_store_node * stmt)
 		char	   *sub_active = PQgetvalue(res, tupno, 4);
 			
 		slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock;"
 			     "select \"_%s\".subscribeSet_int(%s, %s, %s, '%q', 'f'); ",
+			     stmt->hdr.script->clustername,
 			     stmt->hdr.script->clustername,
 			     sub_set, sub_provider, sub_receiver, sub_forward);
 		if (*sub_active == 't')
@@ -2732,7 +2738,9 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 	 * all other nodes.
 	 */
 	slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock; "
 				 "select \"_%s\".failedNode(%d, %d); ",
+				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername,
 				 stmt->no_id, stmt->backup_node);
 	printf("executing failedNode() on %d\n",adminfo1->no_id);
@@ -3252,13 +3260,17 @@ slonik_clone_prepare(SlonikStmt_clone_prepare * stmt)
 	
 	if (stmt->no_comment == NULL)
 		slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock; "
 				 "select \"_%s\".cloneNodePrepare(%d, %d, 'Node %d'); ",
+				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername,
 				 stmt->no_id, stmt->no_provider,
 				 stmt->no_id);
 	else
 		slon_mkquery(&query,
+				 "lock table \"_%s\".sl_config_lock; "
 				 "select \"_%s\".cloneNodePrepare(%d, %d, '%q'); ",
+				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername,
 				 stmt->no_id, stmt->no_provider,
 				 stmt->no_comment);
@@ -4226,7 +4238,9 @@ slonik_subscribe_set(SlonikStmt_subscribe_set * stmt)
 			return -1;
 		}
 		slon_mkquery(&query,
+					 "lock table \"_%s\".sl_config_lock;"
 					 "select \"_%s\".reshapeSubscription(%d,%d,%d);",
+					 stmt->hdr.script->clustername,
 					 stmt->hdr.script->clustername,
 					 stmt->sub_setid,
 					 stmt->sub_provider,
@@ -4820,8 +4834,9 @@ slonik_switch_log(SlonikStmt_switch_log * stmt)
 	dstring_init(&query);
 
 	slon_mkquery(&query,
-				 "lock table \"_%s\".sl_event_lock;"
+				 "lock table \"_%s\".sl_event_lock, \"_%s\".sl_config_lock;"
 				 "select \"_%s\".logswitch_start(); ",
+				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername,
 				 stmt->hdr.script->clustername);
 	if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)

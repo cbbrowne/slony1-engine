@@ -97,7 +97,10 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 	 * Build the query string for calling the cleanupEvent() stored procedure
 	 */
 	dstring_init(&query_baseclean);
-	slon_mkquery(&query_baseclean, "select %s.cleanupEvent('%s'::interval); ",
+	slon_mkquery(&query_baseclean, 
+				 "lock table %s.sl_config_lock;"
+				 "select %s.cleanupEvent('%s'::interval); ",
+				 rtcfg_namespace,
 				 rtcfg_namespace,
 				 cleanup_interval
 		);

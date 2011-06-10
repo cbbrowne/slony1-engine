@@ -791,7 +791,9 @@ remoteWorkerThread_main(void *cdata)
 					rtcfg_disableNode(no_id);
 
 				slon_appendquery(&query1,
+								 "lock table %s.sl_config_lock;"
 								 "select %s.dropNode_int(%d); ",
+								 rtcfg_namespace,
 								 rtcfg_namespace,
 								 no_id);
 
@@ -842,7 +844,9 @@ remoteWorkerThread_main(void *cdata)
 
 				rtcfg_storeNode(no_id, no_comment);
 				slon_appendquery(&query1,
-							"select %s.cloneNodePrepare_int(%d, %d, '%q'); ",
+								 "lock table %s.sl_config_lock;"
+								 "select %s.cloneNodePrepare_int(%d, %d, '%q'); ",
+								 rtcfg_namespace,
 								 rtcfg_namespace,
 								 no_id, no_provider, no_comment);
 				slon_appendquery(&query1,"select coalesce(max(con_seqno),0)"
@@ -1571,9 +1575,11 @@ remoteWorkerThread_main(void *cdata)
 				int			reset_configonly_on_node = (int) strtol(event->ev_data2, NULL, 10);
 
 				slon_appendquery(&query1,
+								 "lock table %s.sl_config_lock;"
 								 "select %s.updateReloid(%d, '%q', %d); ",
 								 rtcfg_namespace,
-							   reset_config_setid, reset_configonly_on_node);
+								 rtcfg_namespace,
+								 reset_config_setid, reset_configonly_on_node);
 			}
 			else
 			{
@@ -2896,8 +2902,11 @@ copy_set(SlonNode *node, SlonConn *local_conn, int set_id,
 				 node->no_id, seq_fqname);
 
 		(void) slon_mkquery(&query1,
-						  "select %s.setAddSequence_int(%d, %s, '%q', '%q')",
-							rtcfg_namespace, set_id, seq_id,
+							"lock table %s.sl_config_lock;"
+							"select %s.setAddSequence_int(%d, %s, '%q', '%q')",
+							rtcfg_namespace, 
+							rtcfg_namespace, 
+							set_id, seq_id,
 							seq_fqname, seq_comment);
 		if (query_execute(node, loc_dbconn, &query1) < 0)
 		{
@@ -2974,9 +2983,11 @@ copy_set(SlonNode *node, SlonConn *local_conn, int set_id,
 		 * suppressed.
 		 */
 		(void) slon_mkquery(&query1,
-					 "select %s.setAddTable_int(%d, %d, '%q', '%q', '%q'); ",
+							"lock table %s.sl_config_lock;"
+							"select %s.setAddTable_int(%d, %d, '%q', '%q', '%q'); ",
 							rtcfg_namespace,
-					   set_id, tab_id, tab_fqname, tab_idxname, tab_comment);
+							rtcfg_namespace,
+							set_id, tab_id, tab_fqname, tab_idxname, tab_comment);
 		if (query_execute(node, loc_dbconn, &query1) < 0)
 		{
 			PQclear(res1);
