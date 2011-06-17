@@ -15,12 +15,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
 #include <sys/types.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/time.h>
+#endif
 
 #include "slon.h"
 
@@ -76,8 +79,9 @@ syncThread_main(void *dummy)
 	slon_mkquery(&query1,
 				 "start transaction;"
 				 "set transaction isolation level serializable;"
+				 "lock table %s.sl_event_lock;"
 				 "select last_value from %s.sl_action_seq;",
-				 rtcfg_namespace);
+				 rtcfg_namespace, rtcfg_namespace);
 
 	/*
 	 * Build the query that calls createEvent() for the SYNC

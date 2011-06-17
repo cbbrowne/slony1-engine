@@ -179,6 +179,11 @@ grant execute on function @NAMESPACE@.getModuleVersion () to public;
 comment on function @NAMESPACE@.getModuleVersion () is
   'Returns the compiled-in version number of the Slony-I shared object';
 
+
+create or replace function @NAMESPACE@.resetSession() returns text
+	   as '$libdir/slony1_funcs','_Slony_I_resetSession'
+	   language C;
+
 create or replace function @NAMESPACE@.checkmoduleversion () returns text as $$
 declare
   moduleversion	text;
@@ -197,6 +202,14 @@ NODE/INIT CLUSTER is being run against a conformant set of
 schema/functions.';
 
 select @NAMESPACE@.checkmoduleversion();
+
+create or replace function @NAMESPACE@.decode_tgargs(bytea) returns text[] as 
+'$libdir/slony1_funcs','_slon_decode_tgargs' language C security definer;
+
+comment on function @NAMESPACE@.decode_tgargs(bytea) is 
+'Translates the contents of pg_trigger.tgargs to an array of text arguments';
+
+grant execute on function @NAMESPACE@.decode_tgargs(bytea) to public;
 
 -----------------------------------------------------------------------
 -- This function checks to see if the namespace name is valid.  
@@ -446,7 +459,7 @@ as $$
 begin
 	return @NAMESPACE@.slonyVersionMajor()::text || '.' || 
 	       @NAMESPACE@.slonyVersionMinor()::text || '.' || 
-	       @NAMESPACE@.slonyVersionPatchlevel()::text;
+	       @NAMESPACE@.slonyVersionPatchlevel()::text || '.b2' ;
 end;
 $$ language plpgsql;
 comment on function @NAMESPACE@.slonyVersion() is 
@@ -1220,6 +1233,20 @@ begin
 								))
 					where sub_set = v_row.set_id
 						and sub_receiver = p_backup_node;		
+			  update @NAMESPACE@.sl_subscribe
+                   set sub_provider = (select min(SS.sub_receiver)
+                           from @NAMESPACE@.sl_subscribe SS
+                           where SS.sub_set = v_row.set_id
+                               and SS.sub_receiver <> p_failed_node
+                               and SS.sub_forward
+                               and exists (
+                                   select 1 from @NAMESPACE@.sl_path
+                                       where pa_server = SS.sub_receiver
+                                         and pa_client = @NAMESPACE@.sl_subscribe.sub_receiver
+                               ))
+                   where sub_set = v_row.set_id
+                       and sub_receiver <> p_backup_node;
+
 			update @NAMESPACE@.sl_subscribe
 					set sub_provider = p_backup_node
 					where sub_set = v_row.set_id
@@ -1229,6 +1256,10 @@ begin
 								where pa_server = p_backup_node
 								  and pa_client = @NAMESPACE@.sl_subscribe.sub_receiver
 						);						
+			delete from @NAMESPACE@.sl_subscribe
+                   where sub_set = v_row.set_id
+                       and sub_receiver = p_backup_node;
+
 		end if;
 	end loop;
 	
@@ -1442,6 +1473,11 @@ comment on function @NAMESPACE@.uninstallNode() is
 'Reset the whole database to standalone by removing the whole
 replication system.';
 
+--
+-- The return type of cloneNodePrepare changed at one point.
+-- drop it to make the script upgrade safe.
+--
+DROP FUNCTION IF EXISTS @NAMESPACE@.cloneNodePrepare(int4,int4,text);
 -- ----------------------------------------------------------------------
 -- FUNCTION cloneNodePrepare ()
 --
@@ -1526,7 +1562,7 @@ declare
 	v_row			record;
 begin
 	perform "pg_catalog".setval('@NAMESPACE@.sl_local_node_id', p_no_id);
-
+	perform @NAMESPACE@.resetSession();
 	for v_row in select sub_set from @NAMESPACE@.sl_subscribe
 			where sub_receiver = p_no_id
 	loop
@@ -2478,11 +2514,12 @@ comment on function @NAMESPACE@.dropSet(p_set_id int4) is
 --
 --	Generate the MERGE_SET event.
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.mergeSet (p_set_id int4, p_add_id int4)
+create or replace function @NAMESPACE@.mergeSet (p_set_id int4, p_add_id int4) 
 returns bigint
 as $$
 declare
 	v_origin			int4;
+	in_progress			boolean;
 begin
 	-- ----
 	-- Grab the central configuration lock
@@ -2541,13 +2578,9 @@ begin
 	-- ----
 	-- Check that all ENABLE_SUBSCRIPTION events for the set are confirmed
 	-- ----
-	if exists (select true from @NAMESPACE@.sl_event
-			where ev_type = 'ENABLE_SUBSCRIPTION'
-			and ev_data1 = p_add_id::text
-			and ev_seqno > (select max(con_seqno) from @NAMESPACE@.sl_confirm
-					where con_origin = ev_origin
-					and con_received::text = ev_data3))
-	then
+	select @NAMESPACE@.isSubscriptionInProgress(p_add_id) into in_progress ;
+	
+	if in_progress then
 		raise exception 'Slony-I: set % has subscriptions in progress - cannot merge',
 				p_add_id;
 	end if;
@@ -2566,6 +2599,28 @@ comment on function @NAMESPACE@.mergeSet(p_set_id int4, p_add_id int4) is
 
 Both sets must exist, and originate on the same node.  They must be
 subscribed by the same set of nodes.';
+
+
+create or replace function @NAMESPACE@.isSubscriptionInProgress(p_add_id int4)
+returns boolean
+as $$
+begin
+	if exists (select true from @NAMESPACE@.sl_event
+			where ev_type = 'ENABLE_SUBSCRIPTION'
+			and ev_data1 = p_add_id::text
+			and ev_seqno > (select max(con_seqno) from @NAMESPACE@.sl_confirm
+					where con_origin = ev_origin
+					and con_received::text = ev_data3))
+	then
+		return true;
+	else
+		return false;
+	end if;
+end;
+$$ language plpgsql;
+comment on function @NAMESPACE@.isSubscriptionInProgress(p_add_id int4) is
+'Checks to see if a subscription for the indicated set is in progress.
+Returns true if a subscription is in progress. Otherwise false';
 
 -- ----------------------------------------------------------------------
 -- FUNCTION mergeSet_int (set_id, add_id)
@@ -3531,6 +3586,7 @@ declare
 	v_row				record;
 begin
 	if p_only_on_node = -1 then
+	        perform @NAMESPACE@.ddlScript_complete_int(p_set_id,p_only_on_node);
 		return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'DDL_SCRIPT', 
 			p_set_id::text, p_script::text, p_only_on_node::text);
 	end if;
@@ -3541,6 +3597,7 @@ begin
 		end loop;
 		execute v_query;
 		execute 'drop table _slony1_saved_session_replication_role';
+		perform @NAMESPACE@.ddlScript_complete_int(p_set_id,p_only_on_node);
 	end if;
 	return NULL;
 end;
@@ -3622,6 +3679,7 @@ declare
 	v_row				record;
 begin
 	perform @NAMESPACE@.updateRelname(p_set_id, p_only_on_node);
+	perform @NAMESPACE@.repair_log_triggers(true);
 	return p_set_id;
 end;
 $$ language plpgsql;
@@ -3879,7 +3937,15 @@ begin
 	--
 	if not exists (select no_id from @NAMESPACE@.sl_node where no_id=
 	       	      p_sub_receiver) then
-		      raise exception 'Slony-I: subscribeSet() the receiver does not exist receiver id:%' , p_sub_receiver;
+		      raise exception 'Slony-I: subscribeSet() receiver % does not exist' , p_sub_receiver;
+	end if;
+
+	--
+	-- Check that the provider exists
+	--
+	if not exists (select no_id from @NAMESPACE@.sl_node where no_id=
+	       	      p_sub_provider) then
+		      raise exception 'Slony-I: subscribeSet() provider % does not exist' , p_sub_provider;
 	end if;
 
 	-- ----
@@ -5115,13 +5181,14 @@ BEGIN
 --                                       PartInd_test_db_sl_log_2-node-1
 	-- Add missing indices...
 	for v_dummy in select distinct set_origin from @NAMESPACE@.sl_set loop
-            v_iname := 'PartInd_@CLUSTERNAME@_sl_log_' || v_log::text || '-node-' || v_dummy.set_origin;
+            v_iname := 'PartInd_@CLUSTERNAME@_sl_log_' || v_log::text || '-node-' 
+			|| v_dummy.set_origin::text;
 	   -- raise notice 'Consider adding partial index % on sl_log_%', v_iname, v_log;
 	   -- raise notice 'schema: [_@CLUSTERNAME@] tablename:[sl_log_%]', v_log;
             select * into v_dummy2 from pg_catalog.pg_indexes where tablename = 'sl_log_' || v_log::text and  indexname = v_iname;
             if not found then
 		-- raise notice 'index was not found - add it!';
-        v_iname := 'PartInd_@CLUSTERNAME@_sl_log_' || v_log::text || '-node-' || v_dummy.set_origin;
+        v_iname := 'PartInd_@CLUSTERNAME@_sl_log_' || v_log::text || '-node-' || v_dummy.set_origin::text;
 		v_ilen := pg_catalog.length(v_iname);
 		v_maxlen := pg_catalog.current_setting('max_identifier_length'::text)::int4;
                 if v_ilen > v_maxlen then
@@ -5227,7 +5294,7 @@ begin
 		raise notice 'Changing Slony-I column [%.%] to timestamp WITH time zone', v_tab_row.table_name, v_tab_row.column_name;
 		v_query := 'alter table ' || @NAMESPACE@.slon_quote_brute(v_tab_row.table_schema) ||
                    '.' || v_tab_row.table_name || ' alter column ' || v_tab_row.column_name ||
-                   ' set data type timestamp with time zone;';
+                   ' type timestamp with time zone;';
 		execute v_query;
 	  end loop;
 	  -- restore sl_status
@@ -5249,6 +5316,10 @@ create table @NAMESPACE@.sl_components (
 ';
   	   execute v_query;
 	end if;
+	if not exists (select 1 from information_schema.tables t where table_schema = '_@CLUSTERNAME@' and table_name = 'sl_event_lock') then
+	   v_query := 'create table @NAMESPACE@.sl_event_lock (dummy integer);';
+	   execute v_query;
+        end if;
 	return p_old;
 end;
 $$ language plpgsql
@@ -5766,3 +5837,72 @@ language plpgsql;
 
 comment on function @NAMESPACE@.component_state (i_actor text, i_pid integer, i_node integer, i_conn_pid integer, i_activity text, i_starttime timestamptz, i_event bigint, i_eventtype text) is
 'Store state of a Slony component.  Useful for monitoring';
+
+create or replace function @NAMESPACE@.recreate_log_trigger(p_fq_table_name text,
+       p_tab_id oid, p_tab_attkind text) returns integer as $$
+begin
+	execute 'drop trigger "_@CLUSTERNAME@_logtrigger" on ' ||
+		p_fq_table_name	;
+		-- ----
+	execute 'create trigger "_@CLUSTERNAME@_logtrigger"' || 
+			' after insert or update or delete on ' ||
+			p_fq_table_name 
+			|| ' for each row execute procedure @NAMESPACE@.logTrigger (' ||
+                               pg_catalog.quote_literal('_@CLUSTERNAME@') || ',' || 
+				pg_catalog.quote_literal(p_tab_id::text) || ',' || 
+				pg_catalog.quote_literal(p_tab_attkind) || ');';
+	return 0;
+end
+$$ language plpgsql;
+
+comment on function  @NAMESPACE@.recreate_log_trigger(p_fq_table_name text,
+       p_tab_id oid, p_tab_attkind text) is
+'A function that drops and recreates the log trigger on the specified table.
+It is intended to be used after the primary_key/unique index has changed.';
+
+create or replace function @NAMESPACE@.repair_log_triggers(only_locked boolean)
+returns integer as $$
+declare
+	retval integer;
+	table_row record;
+begin
+	retval=0;
+	for table_row in	
+		select  tab_nspname,tab_relname,
+				tab_idxname, tab_id, mode,
+				@NAMESPACE@.determineAttKindUnique(tab_nspname||
+					'.'||tab_relname,tab_idxname) as attkind
+		from
+				@NAMESPACE@.sl_table
+				left join 
+				pg_locks on (relation=tab_reloid and pid=pg_backend_pid()
+				and mode='AccessExclusiveLock')				
+				,pg_trigger
+		where tab_reloid=tgrelid and 
+		@NAMESPACE@.determineAttKindUnique(tab_nspname||'.'
+						||tab_relname,tab_idxname)
+			!=(@NAMESPACE@.decode_tgargs(tgargs))[2]
+			and tgname =  '_@CLUSTERNAME@'
+			|| '_logtrigger'
+		LOOP
+				if (only_locked=false) or table_row.mode='AccessExclusiveLock' then
+					 perform @NAMESPACE@.recreate_log_trigger
+					 		 (table_row.tab_nspname||'.'||table_row.tab_relname,
+							 table_row.tab_id,table_row.attkind);
+					retval=retval+1;
+				else 
+					 raise notice '%.% has an invalid configuration on the log trigger. This was not corrected because only_lock is true and the table is not locked.',
+					 table_row.tab_nspname,table_row.tab_relname;
+			
+				end if;
+		end loop;
+	return retval;
+end
+$$
+language plpgsql;
+comment on function @NAMESPACE@.repair_log_triggers(only_locked boolean)
+is '
+repair the log triggers as required.  If only_locked is true then only 
+tables that are already exclusivly locked by the current transaction are 
+repaired. Otherwise all replicated tables with outdated trigger arguments
+are recreated.';
