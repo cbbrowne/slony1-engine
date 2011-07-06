@@ -1279,7 +1279,10 @@ remoteWorkerThread_main(void *cdata)
 
 					(void) slon_mkquery(&query2, "rollback transaction");
 					check_config = true;
-
+					
+					slon_appendquery(&query1,
+									 "lock table %s.sl_config_lock; ",
+									 rtcfg_namespace);
 					while (true)
 					{
 						/*
@@ -1323,7 +1326,7 @@ remoteWorkerThread_main(void *cdata)
 								slon_mkquery(&query1, "start transaction;"
 											 "set transaction isolation level serializable;");
 								slon_appendquery(&query1,
-												 "lock table %s.sl_config_lock; ",
+												  "lock table %s.sl_config_lock; ",
 												 rtcfg_namespace);
 
 								if (query_execute(node, local_dbconn, &query1) < 0)
