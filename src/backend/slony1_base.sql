@@ -104,10 +104,10 @@ comment on column @NAMESPACE@.sl_setsync.ssy_action_list is 'action list used du
 create table @NAMESPACE@.sl_table (
 	tab_id				int4,
 	tab_reloid			oid UNIQUE NOT NULL,
-	tab_relname			name NOT NULL,
-	tab_nspname			name NOT NULL,
+	tab_relname			text NOT NULL,
+	tab_nspname			text NOT NULL,
 	tab_set				int4,
-	tab_idxname			name NOT NULL,
+	tab_idxname			text NOT NULL,
 	tab_altered			boolean NOT NULL,
 	tab_comment			text,
 
@@ -134,8 +134,8 @@ comment on column @NAMESPACE@.sl_table.tab_comment is 'Human-oriented descriptio
 create table @NAMESPACE@.sl_sequence (
 	seq_id				int4,
 	seq_reloid			oid UNIQUE NOT NULL,
-	seq_relname			name NOT NULL,
-	seq_nspname			name NOT NULL,
+	seq_relname			text NOT NULL,
+	seq_nspname			text NOT NULL,
 	seq_set				int4,
 	seq_comment			text,
 
