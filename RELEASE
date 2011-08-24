@@ -20,6 +20,8 @@
                to prevent deadlock.
 - Include additional C headers required for Postgresql 9.2(master)
 
+- Bug #236 :: Add extra whitespace to configuration option so date is separated from log
+
 ** 2.1.0 (beta 3)
 
 - Bug #159 :: distclean deletes the slony_logshipper flex/bison generated files.
