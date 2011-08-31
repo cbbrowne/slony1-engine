@@ -251,7 +251,7 @@ int			explain_thistime;
 
 typedef enum
 {
-	SYNC_INITIAL,
+	SYNC_INITIAL = 1,
 	SYNC_PENDING,
 	SYNC_SUCCESS,
 	SYNC_FAILURE
@@ -332,8 +332,8 @@ remoteWorkerThread_main(void *cdata)
 	char		conn_symname[32];
 
 	SlonSyncStatus sync_status = SYNC_INITIAL;
-	int syncgroup_n = 1;
-	int syncgroup_k = 0;
+	int sg_proposed = 1;
+	int sg_last_grouping = 0;
 	int sync_group_size = 0;
 
 	slon_log(SLON_INFO,
@@ -579,26 +579,18 @@ remoteWorkerThread_main(void *cdata)
 			sync_group[0] = event;
 			if (true)
 			{
-				int old_n = syncgroup_n;
+				int initial_proposed = sg_proposed;
 				if (sync_status == SYNC_SUCCESS) 
-				{
-					/* syncgroup_n = min (max (syncgroup_k*2, syncgroup_n), sync_group_maxsize); */
-					syncgroup_k ++;
-					if ((syncgroup_k * 2) > syncgroup_n)
-						syncgroup_n = syncgroup_k * 2;
-					
-					if (syncgroup_n > sync_group_maxsize) 
-						syncgroup_n = sync_group_maxsize;
-				} 
+					sg_proposed = sg_last_grouping * 2;
 				else 
-				{
-					/* syncgroup_n = max(1, (syncgroup_n/2)); */
-					syncgroup_n /= 2;
-					if (syncgroup_n < 1)
-						syncgroup_n = 1;
-				}
-				slon_log(SLON_INFO, "SYNC Group sizing: old n:%d k:%d maxsize:%d proposed n:%d\n",
-						 old_n, syncgroup_k, sync_group_maxsize, syncgroup_n);
+					sg_proposed /= 2;
+				if (sg_proposed < 1)
+					sg_proposed = 1;
+				if (sg_proposed > sync_group_maxsize) 
+					sg_proposed = sync_group_maxsize;
+				slon_log(SLON_INFO, "SYNC Group sizing: prev state: %d initial proposed:%d k:%d maxsize:%d ultimately proposed n:%d\n",
+						 sync_status,
+						 initial_proposed, sg_last_grouping, sync_group_maxsize, sg_proposed);
 				sync_status = SYNC_PENDING;    /* Indicate that we're now working on a group of SYNCs */
 
 				/*
@@ -609,9 +601,9 @@ remoteWorkerThread_main(void *cdata)
 				{
 					if (quit_sync_provider == node->no_id)
 					{
-						if ((syncgroup_n + (event->ev_seqno)) > quit_sync_finalsync)
+						if ((sg_proposed + (event->ev_seqno)) > quit_sync_finalsync)
 						{
-							syncgroup_n = quit_sync_finalsync - event->ev_seqno;
+							sg_proposed = quit_sync_finalsync - event->ev_seqno;
 						}
 						if (event->ev_seqno >= quit_sync_finalsync)
 						{
@@ -626,9 +618,9 @@ remoteWorkerThread_main(void *cdata)
 				}
 
 				pthread_mutex_lock(&(node->message_lock));
-				syncgroup_k = 1;   /* reset sizes */
+				sg_last_grouping = 1;   /* reset sizes */
 				sync_group_size = 0;
-				while (sync_group_size < syncgroup_n && sync_group_size < MAXGROUPSIZE && node->message_head != NULL)
+				while (sync_group_size < sg_proposed && sync_group_size < MAXGROUPSIZE && node->message_head != NULL)
 				{
 					if (node->message_head->msg_type != WMSG_EVENT)
 						break;
@@ -639,9 +631,9 @@ remoteWorkerThread_main(void *cdata)
 					msg = node->message_head;
 					event = (SlonWorkMsg_event *) (node->message_head);
 					sync_group[sync_group_size++] = event;
-					syncgroup_k++;
 					DLLIST_REMOVE(node->message_head, node->message_tail, msg);
 				}
+				sg_last_grouping = sync_group_size;
 				pthread_mutex_unlock(&(node->message_lock));
 			}
 			while (true)
@@ -660,6 +652,7 @@ remoteWorkerThread_main(void *cdata)
 				seconds = sync_event(node, local_conn, wd, event);
 				if (seconds == 0)
 				{
+					sync_status = SYNC_SUCCESS;   /* The group of SYNCs have succeeded!  Hurray! */
 					rc = SCHED_STATUS_OK;
 					break;
 				}
@@ -685,13 +678,13 @@ remoteWorkerThread_main(void *cdata)
 			 * the last one (it's freed further down).
 			 */
 			dstring_reset(&query1);
-			syncgroup_k = 0;
+			sg_last_grouping = 0;
 			for (i = 0; i < sync_group_size; i++)
 			{
 					query_append_event(&query1, sync_group[i]);
 					if (i < (sync_group_size - 1))
 							free(sync_group[i]);
-					syncgroup_k++;
+					sg_last_grouping++;
 			}
 			slon_appendquery(&query1, "commit transaction;");
 
@@ -1580,7 +1573,6 @@ remoteWorkerThread_main(void *cdata)
 					slon_appendquery(&query1, "commit transaction;");
 					if (archive_close(node) < 0)
 							slon_retry();
-					sync_status = SYNC_SUCCESS;   /* The group of SYNCs have succeeded!  Hurray! */
 			}
 			else
 			{
