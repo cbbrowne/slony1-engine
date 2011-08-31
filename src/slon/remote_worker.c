@@ -588,7 +588,7 @@ remoteWorkerThread_main(void *cdata)
 					sg_proposed = 1;
 				if (sg_proposed > sync_group_maxsize) 
 					sg_proposed = sync_group_maxsize;
-				slon_log(SLON_INFO, "SYNC Group sizing: prev state: %d initial proposed:%d k:%d maxsize:%d ultimately proposed n:%d\n",
+				slon_log(SLON_DEBUG2, "SYNC Group sizing: prev state: %d initial proposed:%d k:%d maxsize:%d ultimately proposed n:%d\n",
 						 sync_status,
 						 initial_proposed, sg_last_grouping, sync_group_maxsize, sg_proposed);
 				sync_status = SYNC_PENDING;    /* Indicate that we're now working on a group of SYNCs */
