@@ -91,25 +91,32 @@ function do_test(coordinator) {
 
     run_sample_load(coordinator);
 
-    // now, truncate line_items
+    var TruncateList = ["truncate-basic", "truncate-cascade", "truncate-multiple"];
 
-    // another data load
-    run_sample_load(coordinator);
+    for (var i=0 ; i < TruncateList.length; i++) {
+	var sqlScript = coordinator.readFile('regression/testtruncate/' + TruncateList[i] + '.sql');
+	psql = coordinator.createPsqlCommand('db1',sqlScript);
+	psql.run();
+	coordinator.join(psql);
 
-    // now, truncate orders with cascade
-
-    // another data load
-    run_sample_load(coordinator);
-
-    // truncate customers, orders, line_items
-    
-
-    // final data load
-    run_sample_load(coordinator);
+	run_sample_load(coordinator);
+    }
 
     // drop test_237 out of replication
-    
+    var slonikScript = "set drop table (origin=1, id=237);";
+    var preamble = get_slonik_preamble();
+    run_slonik('Drop test_237 table', coordinator, preamble, slonikScript);
+
+    wait_for_sync(coordinator);
+
     // truncate test_237 on both db1 and db2
+    var dblist = ["db1", "db2"];
+    for (var i=0 ; i < dblist.length; i++) {
+	var sqlScript = coordinator.readFile('regression/testtruncate/truncate-237.sql');
+	psql = coordinator.createPsqlCommand(dblist[i],sqlScript);
+	psql.run();
+	coordinator.join(psql);
+    }    
 
     wait_for_sync(coordinator);
     coordinator.log("done");
