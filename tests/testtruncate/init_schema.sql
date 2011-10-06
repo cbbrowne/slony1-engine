@@ -23,6 +23,14 @@ create table line_items (
    quantity integer
 );
 
+create table test_237 (
+   id serial primary key,
+   value text unique not null
+);
+
+insert into test_237 (value) 
+values ('initial-1'), ('initial-2'), ('initial-3'), ('initial-4');
+
 create or replace function mkproduct (i_pname text, i_price numeric(12,2)) returns integer as $$
 begin
 		insert into products(pname, price) values (i_pname, i_price);
