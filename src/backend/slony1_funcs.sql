@@ -5034,10 +5034,7 @@ begin
 		raise exception 'Upgrading to Slony-I 2.x requires running slony_upgrade_20';
 	end if;
 
-	-- 2.0 was the only 2.x version without truncate support
-	if p_old like '2.0.%' then
-		perform @NAMESPACE@.upgradeSchemaAddTruncateTriggers();
-	end if;
+	perform @NAMESPACE@.upgradeSchemaAddTruncateTriggers();
 
 	-- Change all Slony-I-defined columns that are "timestamp without time zone" to "timestamp *WITH* time zone"
 	if exists (select 1 from information_schema.columns c
