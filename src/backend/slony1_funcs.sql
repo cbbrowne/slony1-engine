@@ -1277,8 +1277,12 @@ begin
 								where pa_server = p_backup_node
 								  and pa_client = @NAMESPACE@.sl_subscribe.sub_receiver
 						);
+			delete from @NAMESPACE@.sl_subscribe
+					where sub_set = v_row.set_id
+						and sub_receiver = p_backup_node;				
 		end if;
 	end loop;
+	
 
 	-- Rewrite sl_listen table
 	perform @NAMESPACE@.RebuildListenEntries();
@@ -1421,6 +1425,10 @@ begin
 				set set_origin = p_backup_node
 				where set_id = p_set_id;
 	end if;
+
+	update @NAMESPACE@.sl_node
+		   set no_active=false WHERE 
+		   no_id=p_failed_node;
 
 	-- Rewrite sl_listen table
 	perform @NAMESPACE@.RebuildListenEntries();
@@ -3917,7 +3925,8 @@ begin
 				and PGXC.relname = T.tab_idxname
 				for update;
 	if not found then
-		raise exception 'Slony-I: alterTableDropTriggers(): Table with id % not found', p_tab_id;
+		raise notice 'Slony-I: alterTableDropTriggers(): Table with id % not found', p_tab_id;
+		return 0;
 	end if;
 	v_tab_fqname = v_tab_row.tab_fqname;
 
@@ -3983,7 +3992,8 @@ begin
 				and PGXC.relname = T.tab_idxname
 				for update;
 	if not found then
-		raise exception 'Slony-I: alterTableConfigureTriggers(): Table with id % not found', p_tab_id;
+		raise notice 'Slony-I: alterTableConfigureTriggers(): Table with id % not found', p_tab_id;
+		return 0;
 	end if;
 	v_tab_fqname = v_tab_row.tab_fqname;
 
@@ -4840,12 +4850,15 @@ begin
 		-- If we use the event origin as a data provider for any
 		-- set that originates on that very node, we are a direct
 		-- subscriber to that origin and listen there only.
-		if exists (select true from @NAMESPACE@.sl_set, @NAMESPACE@.sl_subscribe
+		if exists (select true from @NAMESPACE@.sl_set, @NAMESPACE@.sl_subscribe				, @NAMESPACE@.sl_node p		   		
 				where set_origin = v_row.origin
 				  and sub_set = set_id
 				  and sub_provider = v_row.origin
 				  and sub_receiver = v_row.receiver
-				  and sub_active)
+				  and sub_active
+				  and p.no_active
+				  and p.no_id=sub_provider
+				  )
 		then
 			delete from @NAMESPACE@.sl_listen
 				where li_origin = v_row.origin
@@ -5767,3 +5780,29 @@ comment on function @NAMESPACE@.replicate_partition(int4, text, text, text, text
 tab_idxname is optional - if NULL, then we use the primary key.
 This function looks up replication configuration via the parent table.';
 
+create or replace function @NAMESPACE@.reshapeSubscription (int4, int4, int4) returns int4 as $$
+declare
+	p_sub_set			alias for $1;
+	p_sub_provider		alias for $2;
+	p_sub_receiver		alias for $3;
+begin
+	-- ----
+	-- Grab the central configuration lock
+	-- ----
+	lock table @NAMESPACE@.sl_config_lock;
+
+	update @NAMESPACE@.sl_subscribe set sub_provider=p_sub_provider
+		   WHERE sub_set=p_sub_set AND sub_receiver=p_sub_receiver;
+	if found then
+	   perform @NAMESPACE@.RebuildListenEntries();
+	   notify "_@CLUSTERNAME@_Restart";
+	end if;
+	return 0;
+end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.reshapeSubscription(int4,int4,int4) is
+'Run on a receiver/subscriber node when the provider for that
+subscription is being changed.  Slonik will invoke this method
+before the SUBSCRIBE_SET event propogates to the receiver
+so listen paths can be updated.';

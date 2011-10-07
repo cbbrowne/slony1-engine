@@ -83,6 +83,11 @@ char	   *pid_file;
 char	   *archive_dir = NULL;
 static int			child_status;
 
+/**
+ * A variable to indicate that the 
+ * worker has been restarted by the watchdog.
+ */
+int worker_restarted=0;
 
 /* ----------
  * Usage
@@ -787,19 +792,37 @@ static void
 SlonWatchdog(void)
 {
 	pid_t		pid;
-
+	int shutdown=0;
 #if !defined(CYGWIN) && !defined(WIN32)
 	struct sigaction act;
 #endif
 	slon_log(SLON_INFO, "slon: watchdog process started\n");
 
-	/*
+
+
+	slon_log(SLON_CONFIG, "slon: watchdog ready - pid = %d\n", slon_watchdog_pid);
+
+	slon_worker_pid = fork();
+	if (slon_worker_pid == 0)
+	{
+		SlonMain();
+		exit(-1);
+	}
+	else if (slon_worker_pid < 0) 
+	{
+		slon_log(SLON_FATAL, "slon: failed to fork child: %d %s\n",
+				 errno,strerror(errno));
+		slon_exit(-1);
+		
+	}
+		/*
 	 * Install signal handlers
 	 */
 #ifndef CYGWIN
 	act.sa_handler = &sighandler;
 	(void) sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_NODEFER;
+
 
 	if (sigaction(SIGHUP, &act, NULL) < 0)
 #else
@@ -830,72 +853,89 @@ SlonWatchdog(void)
 		slon_log(SLON_FATAL, "slon: SIGTERM signal handler setup failed -(%d) %s\n", errno, strerror(errno));
 		slon_exit(-1);
 	}
-	if (signal(SIGCHLD, sighandler) == SIG_ERR)
-	{
-		slon_log(SLON_FATAL, "slon: SIGCHLD signal handler setup failed -(%d) %s\n", errno, strerror(errno));
-		slon_exit(-1);
-	}
+
+
 	if (signal(SIGQUIT, sighandler) == SIG_ERR)
 	{
 		slon_log(SLON_FATAL, "slon: SIGQUIT signal handler setup failed -(%d) %s\n", errno, strerror(errno));
 		slon_exit(-1);
 	}
 
-	slon_log(SLON_CONFIG, "slon: watchdog ready - pid = %d\n", slon_watchdog_pid);
-
-	slon_worker_pid = fork();
-	if (slon_worker_pid == 0)
-	{
-		SlonMain();
-		exit(-1);
-	}
-
 	slon_log(SLON_CONFIG, "slon: worker process created - pid = %d\n",
 			 slon_worker_pid);
-	while ((pid = wait(&child_status)) != slon_worker_pid)
+	while(!shutdown)
 	{
-		if (pid < 0 && errno == EINTR)
-			continue;
+		while ((pid = wait(&child_status)) != slon_worker_pid)
+		{
+			if (pid < 0 && errno == EINTR)
+				continue;
+
+			slon_log(SLON_CONFIG, "slon: child terminated status: %d; pid: %d, current worker pid: %d\n", child_status, pid, slon_worker_pid);
+		}
 
 		slon_log(SLON_CONFIG, "slon: child terminated status: %d; pid: %d, current worker pid: %d\n", child_status, pid, slon_worker_pid);
-	}
-	slon_log(SLON_CONFIG, "slon: child terminated status: %d; pid: %d, current worker pid: %d\n", child_status, pid, slon_worker_pid);
 
-	(void) alarm(0);
 
-	switch (watchdog_status)
-	{
-		case SLON_WATCHDOG_RESTART:
-			(void) execvp(main_argv[0], main_argv);
-			slon_log(SLON_FATAL, "slon: cannot restart via execvp() - %s\n",
-					 strerror(errno));
-			slon_exit(-1);
-			break;
-
-		case SLON_WATCHDOG_NORMAL:
-		case SLON_WATCHDOG_RETRY:
-			watchdog_status = SLON_WATCHDOG_RETRY;
-			if (child_status != 0)
-			{
-				slon_log(SLON_CONFIG, "slon: restart of worker in 10 seconds\n");
-				(void) sleep(10);
-			}
-			else
-			{
-				slon_log(SLON_CONFIG, "slon: restart of worker\n");
-			}
-			if (watchdog_status == SLON_WATCHDOG_RETRY)
-			{
-				(void) execvp(main_argv[0], main_argv);
-				slon_log(SLON_FATAL, "slon: cannot restart via execvp() - %s\n",
-						 strerror(errno));
-				slon_exit(-1);
-			}
-			break;
-
-		default:
-			break;
-	}
+		switch (watchdog_status)
+		{
+			case SLON_WATCHDOG_RESTART:
+				slon_log(SLON_CONFIG,"slon: restart of worker in 20 seconds\n");
+				sleep(20);
+				slon_worker_pid = fork();
+				if(slon_worker_pid==0) 
+				{
+					worker_restarted=1;
+					SlonMain();
+					exit(-1);
+				}
+				else if (slon_worker_pid < 0) 
+				{
+					slon_log(SLON_FATAL, "slon: failed to fork child: %d %s\n",
+							 errno,strerror(errno));
+					slon_exit(-1);
+					
+				}				
+				watchdog_status=SLON_WATCHDOG_NORMAL;
+				continue;
+				
+			case SLON_WATCHDOG_NORMAL:
+			case SLON_WATCHDOG_RETRY:
+				watchdog_status = SLON_WATCHDOG_RETRY;
+				if (child_status != 0)
+				{
+					slon_log(SLON_CONFIG, "slon: restart of worker in 10 seconds\n");
+					(void) sleep(10);
+				}
+				else
+				{
+					slon_log(SLON_CONFIG, "slon: restart of worker\n");
+				}
+				if (watchdog_status == SLON_WATCHDOG_RETRY)
+				{
+					slon_worker_pid=fork();
+					if(slon_worker_pid == 0)
+					{
+						worker_restarted=1;
+						SlonMain();
+						exit(-1);
+					}
+					else if (slon_worker_pid < 0) 
+					{
+						slon_log(SLON_FATAL, "slon: failed to fork child: %d %s\n",
+								 errno,strerror(errno));
+						slon_exit(-1);
+						
+					}
+					watchdog_status=SLON_WATCHDOG_NORMAL;
+					continue;
+				}
+				break;
+				
+			default:
+			  shutdown=1;
+				break;
+		} /*switch*/
+	}/*while*/
 
 	slon_log(SLON_INFO, "slon: done\n");
 
@@ -916,7 +956,6 @@ sighandler(int signo)
 	switch (signo)
 	{
 		case SIGALRM:
-			slon_log(SLON_INFO, "slon: child termination timeout - kill child\n");
 			kill(slon_worker_pid, SIGKILL);
 			break;
 
@@ -924,26 +963,22 @@ sighandler(int signo)
 			break;
 
 		case SIGHUP:
-			slon_log(SLON_INFO, "slon: restart requested\n");
 			watchdog_status = SLON_WATCHDOG_RESTART;
 			slon_terminate_worker();
 			break;
 
 		case SIGUSR1:
-			slon_log(SLON_INFO, "slon: retry requested\n");
 			watchdog_status = SLON_WATCHDOG_RETRY;
 			slon_terminate_worker();
 			break;
 
 		case SIGINT:
 		case SIGTERM:
-			slon_log(SLON_INFO, "slon: shutdown requested\n");
 			watchdog_status = SLON_WATCHDOG_SHUTDOWN;
 			slon_terminate_worker();
 			break;
 
 		case SIGQUIT:
-			slon_log(SLON_INFO, "slon: shutdown now requested\n");
 			kill(slon_worker_pid, SIGKILL);
 			slon_exit(-1);
 			break;
@@ -958,19 +993,8 @@ sighandler(int signo)
 void
 slon_terminate_worker()
 {
-#ifndef WIN32 /* does not support in windows. */
-	slon_log(SLON_INFO, "slon: notify worker process to shutdown\n");
+	(void) kill(slon_worker_pid, SIGKILL);
 
-	if (pipewrite(sched_wakeuppipe[1], "p", 1) != 1)
-	{
-		slon_log(SLON_FATAL, "main: write to worker pipe failed -(%d) %s\n", errno, strerror(errno));
-		(void) kill(slon_worker_pid, SIGKILL);
-		slon_exit(-1);
-	}
-        (void) close(sched_wakeuppipe[0]);
-	(void) close(sched_wakeuppipe[1]);
-	(void) alarm(20);
-#endif
 }
 
 /* ---------- 
