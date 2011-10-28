@@ -717,6 +717,16 @@ begin
 		raise notice 'You may run into problems later!';
 	end if;
 	
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_1
+		for each row execute procedure @NAMESPACE@.log_apply();
+	alter table @NAMESPACE@.sl_log_1
+	  enable replica trigger apply_trigger;
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_2
+		for each row execute procedure @NAMESPACE@.log_apply();
+	alter table @NAMESPACE@.sl_log_2
+			enable replica trigger apply_trigger;
 	return p_local_node_id;
 end;
 $$ language plpgsql;
@@ -5907,7 +5917,6 @@ begin
 
 		execute v_command;
 	end if;
-
 	if NEW.log_cmdtype = 'U' then
 		v_command = 'UPDATE ONLY ' ||
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
@@ -5938,7 +5947,6 @@ begin
 
 			v_and = ' AND ';
 		end loop;
-
 		execute v_command;
 	end if;
 
@@ -5969,17 +5977,4 @@ begin
 	return NEW;
 end;
 $$ language plpgsql;
-
-drop trigger if exists apply_trigger on @NAMESPACE@.sl_log_1;
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_1
-	for each row execute procedure @NAMESPACE@.log_apply();
-alter table @NAMESPACE@.sl_log_1
-	enable replica trigger apply_trigger;
-drop trigger if exists apply_trigger on @NAMESPACE@.sl_log_2;
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_2
-	for each row execute procedure @NAMESPACE@.log_apply();
-alter table @NAMESPACE@.sl_log_2
-	enable replica trigger apply_trigger;
 
