@@ -3334,139 +3334,23 @@ Set sequence seq_id to have new value last_value.
 ';
 
 -- ----------------------------------------------------------------------
--- FUNCTION ddl_capture (origin, statement)
+-- FUNCTION ddlCapture (origin, statement)
 --
 --	Capture DDL into sl_ddl
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddl_capture (p_origin integer, p_statement text)
+create or replace function @NAMESPACE@.ddlCapture (p_origin integer, p_statement text)
 returns integer
 as $$
 begin
-    insert into sl_ddl(ddl_origin, ddl_txid, ddl_actionseq, ddl_cmdargs)
-    values (p_origin, ??, ??, p_statement);
+    insert into sl_ddl(ddl_origin, ddl_txid, ddl_actionseq, ddl_query)
+    values (p_origin, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
 	return currval();
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddl_capture (p_origin integer, p_statement text) is
+comment on function @NAMESPACE@.ddlCapture (p_origin integer, p_statement text) is
 'Capture an SQL statement (usually DDL) that is to be literally replayed on subscribers';
 
-
--- 	perform @NAMESPACE@.ddlScript_int(p_set_id, p_script, p_only_on_node);
-
--- ----------------------------------------------------------------------
--- FUNCTION ddlScript_complete (set_id, only_on_node)
---
---	Generate the DDL_SCRIPT event
--- ----------------------------------------------------------------------
-drop function if exists @NAMESPACE@.ddlScript_complete (int4, int4);  -- Needed because function signature has changed!
-
-create or replace function @NAMESPACE@.ddlScript_complete (p_set_id int4, p_only_on_node int4)
-returns bigint
-as $$
-declare
-	v_set_origin		int4;
-	v_query				text;
-	v_row				record;
-begin
-	if p_only_on_node = -1 then
-	        perform @NAMESPACE@.ddlScript_complete_int(p_set_id,p_only_on_node);
-		return  @NAMESPACE@.createEvent('_@CLUSTERNAME@', 'DDL_SCRIPT', 
-			p_set_id::text, p_only_on_node::text);
-	end if;
-	if p_only_on_node <> -1 then
-		for v_row in execute
-			'select setting from _slony1_saved_session_replication_role' loop
-			v_query := 'set session_replication_role to ' || v_row.setting;
-		end loop;
-		execute v_query;
-		execute 'drop table _slony1_saved_session_replication_role';
-		perform @NAMESPACE@.ddlScript_complete_int(p_set_id,p_only_on_node);
-	end if;
-	return NULL;
-end;
-$$ language plpgsql;
-
-comment on function @NAMESPACE@.ddlScript_complete(p_set_id int4, p_only_on_node int4) is
-'ddlScript_complete(set_id, only_on_node)
-
-After script has run on origin, this fixes up relnames, restores
-triggers, and generates a DDL_SCRIPT event to indicate it is to be run on
-replicated slaves.';
-
--- ----------------------------------------------------------------------
--- FUNCTION ddlScript_prepare_int (set_id, only_on_node)
---
---	Prepare for the DDL_SCRIPT event
--- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_prepare_int (p_set_id int4, p_only_on_node int4)
-returns int4
-as $$
-declare
-	v_set_origin		int4;
-	v_no_id				int4;
-	v_row				record;
-begin
-	-- ----
-	-- Check that we either are the set origin or a current
-	-- subscriber of the set.
-	-- ----
-	v_no_id := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
-	select set_origin into v_set_origin
-			from @NAMESPACE@.sl_set
-			where set_id = p_set_id
-			for update;
-	if not found then
-		raise exception 'Slony-I: set % not found', p_set_id;
-	end if;
-	if v_set_origin <> v_no_id
-			and not exists (select 1 from @NAMESPACE@.sl_subscribe
-						where sub_set = p_set_id
-						and sub_receiver = v_no_id)
-	then
-		return 0;
-	end if;
-
-	-- ----
-	-- If execution on only one node is requested, check that
-	-- we are that node.
-	-- ----
-	if p_only_on_node > 0 and p_only_on_node <> v_no_id then
-		return 0;
-	end if;
-
-	return p_set_id;
-end;
-$$ language plpgsql;
-
-comment on function @NAMESPACE@.ddlScript_prepare_int (p_set_id int4, p_only_on_node int4) is
-'ddlScript_prepare_int (set_id, only_on_node)
-
-Do preparatory work for a DDL script, restoring 
-triggers/rules to original state.';
-
-
--- ----------------------------------------------------------------------
--- FUNCTION ddlScript_complete_int (set_id, only_on_node)
---
---	Complete the DDL_SCRIPT event
--- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlScript_complete_int (p_set_id int4, p_only_on_node int4)
-returns int4
-as $$
-declare
-	v_row				record;
-begin
-	perform @NAMESPACE@.updateRelname(p_set_id, p_only_on_node);
-	perform @NAMESPACE@.repair_log_triggers(true);
-	return p_set_id;
-end;
-$$ language plpgsql;
-comment on function @NAMESPACE@.ddlScript_complete_int(p_set_id int4, p_only_on_node int4) is
-'ddlScript_complete_int(set_id, script, only_on_node)
-
-Complete processing the DDL_SCRIPT event.  This puts tables back into
-replicated mode.';
 
 -- ----------------------------------------------------------------------
 -- FUNCTION alterTableAddTriggers (tab_id)
@@ -5148,7 +5032,7 @@ create table @NAMESPACE@.sl_components (
         	ddl_origin			int4,
         	ddl_txid			bigint,
         	ddl_actionseq		int8,
-        	ddl_cmdargs			text[]
+        	ddl_query			text
         ) WITHOUT OIDS;
         create index sl_ddl_idx1 on @NAMESPACE@.sl_ddl
         	(ddl_origin, ddl_txid, ddl_actionseq);
@@ -5988,7 +5872,12 @@ begin
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' CASCADE';
 	end if;
-
+    if NEW.log_cmdtype = 'S' then
+	    execute NEW.log_tablerelname;
+        insert into @NAMESPACE@.sl_ddl (ddl_origin, ddl_txid, ddl_actionseq, ddl_query)
+        values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
+		return NULL;   -- if DDL, don't bother capturing this into the log table
+    end if;
 	return NEW;
 end;
 $$ language plpgsql;

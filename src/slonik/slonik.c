@@ -4562,65 +4562,11 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	}
 	dstring_terminate(&script);
 
-	dstring_init(&query);
-	slon_mkquery(&query,
-				 "lock table \"_%s\".sl_event_lock, \"_%s\".sl_config_lock;"
-				 "select \"_%s\".ddlScript_prepare(%d, %d); ",
-				 stmt->hdr.script->clustername,
-				 stmt->hdr.script->clustername,
-				 stmt->hdr.script->clustername,
-				 stmt->ddl_setid, /* dstring_data(&script),  */ 
-				 stmt->only_on_node);
-
-	if (slonik_submitEvent((SlonikStmt *) stmt, adminfo1, &query, 
-						   stmt->hdr.script,auto_wait_disabled) < 0)
-	{
-		dstring_free(&query);
-		return -1;
-	}
-
-	/* Don't bother locking tables if none were requested */
-	if (stmt->locks != NULL) {
-			slon_mkquery(&query, 
-						 "lock table %s;",
-						 stmt->locks);
-			if (db_exec_command((SlonikStmt *) stmt, adminfo1, &query) < 0)
-			{
-					dstring_free(&query);
-					return -1;
-			}
-	}
-	/* Need to know whether entries are to be added to sl_log_1 or sl_log_2 */
-	slon_mkquery(&query, "select last_value from \"_%s\".sl_log_status;", 
-				 stmt->hdr.script->clustername);
-
-	res1 = db_exec_select((SlonikStmt *) stmt, adminfo1, &query);
-	if (res1 == NULL)
-	{
-		PQclear(res1);
-		dstring_free(&query);
-		return -1;
-	}
-	logstatus = atoi(PQgetvalue(res1,0,0));
-	PQclear(res1);
-	if ((logstatus == 0) ||(logstatus == 2)) {
-			use_log = 1;
-	} else {
-			if ((logstatus == 1) ||(logstatus == 3)) {
-					use_log = 2;
-			} else {
-					printf("ERROR: invalid last_value from sl_log_status: %d\n", logstatus);
-					dstring_free(&query);
-					return -1;
-			}
-	}
-
 	/* This prepares the statement that will be run over and over for each DDL statement */
 	dstring_init(&equery);
 	slon_mkquery(&equery,
-				 "insert into \"_%s\".sl_log_%d (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata) "
-				 "values (%d, \"pg_catalog\".txid_current(), NULL, nextval('\"_%s\".sl_action_seq'), 'S', $1);\n",
-				 stmt->hdr.script->clustername, stmt->ev_origin, stmt->hdr.script->clustername, stmt->hdr.script->clustername);
+				 "select \"_%s\".ddlCapture(%d, $1);",
+				 stmt->hdr.script->clustername, stmt->ev_origin);
 
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
@@ -4634,6 +4580,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	for (stmtno=0; stmtno < num_statements;  stmtno++) {
 		int startpos, endpos;
 		char *dest;
+		PGresult   *res1;
 		if (stmtno == 0)
 			startpos = 0;
 		else
@@ -4672,17 +4619,6 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		free(dest);
 	}
 	dstring_free(&equery);
-	
-	slon_mkquery(&query, "select \"_%s\".ddlScript_complete(%d, %d); ", 
-		     stmt->hdr.script->clustername,
-		     stmt->ddl_setid,
-		     stmt->only_on_node);
-
-	if (db_exec_command((SlonikStmt *)stmt, adminfo1, &query) < 0)
-	{
-		dstring_free(&query);
-		return -1;
-	}
 	
 	dstring_free(&script);
 	dstring_free(&query);

@@ -3958,13 +3958,34 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 					dstring_free(&actionseq_subquery);
 				}
 			}
-		
-		
-
 			PQclear(res2);
 		}
 		PQclear(res1);
 
+		slon_appendquery(provider_query, " union all select ddl_origin, ddl_txid, ddl_actionseq, NULL::text, ddl_query, 'S', NULL, NULL "
+					   " from %s.sl_ddl "
+					   " where log_origin = %d ",
+					   rtcfg_namespace, node->no_id);
+
+		slon_appendquery(provider_query,
+						 "and ddl_txid in (select * from "
+						 "\"pg_catalog\".txid_snapshot_xip('%s') "
+						 "except "
+						 "select * from "
+						 "\"pg_catalog\".txid_snapshot_xip('%s') )",
+						 ssy_snapshot,
+						 event->ev_snapshot_c);
+		actionlist_len = strlen(ssy_action_list);
+		if (actionlist_len > 0)
+		{
+			dstring_init(&actionseq_subquery);
+			compress_actionseq(ssy_action_list, &actionseq_subquery);
+			slon_appendquery(provider_query,
+							 " and (%s)",
+							 dstring_data(&actionseq_subquery));
+			dstring_free(&actionseq_subquery);
+		}
+		
 		/*
 		 * Finally add the order by clause.
 		 */

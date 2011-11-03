@@ -432,7 +432,7 @@ create table @NAMESPACE@.sl_ddl (
 	ddl_origin			int4,
 	ddl_txid			bigint,
 	ddl_actionseq		int8,
-	ddl_cmdargs			text[]
+	ddl_query			text
 ) WITHOUT OIDS;
 create index sl_ddl_idx1 on @NAMESPACE@.sl_ddl
 	(ddl_origin, ddl_txid, ddl_actionseq);
