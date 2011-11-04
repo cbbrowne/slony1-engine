@@ -3342,6 +3342,7 @@ create or replace function @NAMESPACE@.ddlCapture (p_statement text)
 returns integer
 as $$
 begin
+	execute p_statement;
     insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query)
     values (@NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'), pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
 	return currval('@NAMESPACE@.sl_action_seq');
@@ -5874,6 +5875,7 @@ begin
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' CASCADE';
 	end if;
     if NEW.log_cmdtype = 'S' then
+	    raise notice 'log_apply(DDL) - ' || NEW.log_tablerelname;
 	    execute NEW.log_tablerelname;
         insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
