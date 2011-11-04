@@ -4565,8 +4565,8 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	/* This prepares the statement that will be run over and over for each DDL statement */
 	dstring_init(&equery);
 	slon_mkquery(&equery,
-				 "select \"_%s\".ddlCapture(%d, $1);",
-				 stmt->hdr.script->clustername, stmt->ev_origin);
+				 "select \"_%s\".ddlCapture($1);",
+				 stmt->hdr.script->clustername);
 
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */

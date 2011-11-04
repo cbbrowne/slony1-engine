@@ -3338,17 +3338,17 @@ Set sequence seq_id to have new value last_value.
 --
 --	Capture DDL into sl_ddl
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlCapture (p_origin integer, p_statement text)
+create or replace function @NAMESPACE@.ddlCapture (p_statement text)
 returns integer
 as $$
 begin
-    insert into sl_ddl(ddl_origin, ddl_txid, ddl_actionseq, ddl_query)
-    values (p_origin, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
-	return currval();
+    insert into @NAMESPACE@.sl_ddl(ddl_origin, log_txid, log_actionseq, ddl_query)
+    values (@NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'), pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
+	return currval('@NAMESPACE@.sl_action_seq');
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlCapture (p_origin integer, p_statement text) is
+comment on function @NAMESPACE@.ddlCapture (p_statement text) is
 'Capture an SQL statement (usually DDL) that is to be literally replayed on subscribers';
 
 
@@ -4085,6 +4085,7 @@ begin
           where (ev_origin, ev_seqno) in (select ev_origin, min(ev_seqno) from @NAMESPACE@.sl_event where ev_type = 'SYNC' group by ev_origin)
 	loop
 		delete from @NAMESPACE@.sl_seqlog where seql_origin = v_origin and seql_ev_seqno < v_seqno;
+		delete from @NAMESPACE@.sl_ddl where ddl_origin = v_origin and log_txid < v_xmin;
     end loop;
 	
 	v_rc := @NAMESPACE@.logswitch_finish();
@@ -5030,17 +5031,17 @@ create table @NAMESPACE@.sl_components (
 
         create table @NAMESPACE@.sl_ddl (
         	ddl_origin			int4,
-        	ddl_txid			bigint,
-        	ddl_actionseq		int8,
+        	log_txid			bigint,
+        	log_actionseq		int8,
         	ddl_query			text
         ) WITHOUT OIDS;
         create index sl_ddl_idx1 on @NAMESPACE@.sl_ddl
-        	(ddl_origin, ddl_txid, ddl_actionseq);
+        	(ddl_origin, log_txid, log_actionseq);
         
         comment on table @NAMESPACE@.sl_ddl is 'Captures DDL queries to be propagated to subscriber nodes';
         comment on column @NAMESPACE@.sl_ddl.ddl_origin is 'Origin name from which the change came';
-        comment on column @NAMESPACE@.sl_ddl.ddl_txid is 'Transaction ID on the origin node';
-        comment on column @NAMESPACE@.sl_ddl.ddl_actionseq is 'The sequence number in which actions will be applied on replicas';
+        comment on column @NAMESPACE@.sl_ddl.log_txid is 'Transaction ID on the origin node';
+        comment on column @NAMESPACE@.sl_ddl.log_actionseq is 'The sequence number in which actions will be applied on replicas';
         comment on column @NAMESPACE@.sl_ddl.ddl_query is 'The data needed to perform the log action on the replica.';
 
 		--
@@ -5874,7 +5875,7 @@ begin
 	end if;
     if NEW.log_cmdtype = 'S' then
 	    execute NEW.log_tablerelname;
-        insert into @NAMESPACE@.sl_ddl (ddl_origin, ddl_txid, ddl_actionseq, ddl_query)
+        insert into @NAMESPACE@.sl_ddl (ddl_origin, log_txid, log_actionseq, ddl_query)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
 		return NULL;   -- if DDL, don't bother capturing this into the log table
     end if;
