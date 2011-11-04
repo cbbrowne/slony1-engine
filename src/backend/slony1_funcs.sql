@@ -3336,13 +3336,13 @@ Set sequence seq_id to have new value last_value.
 -- ----------------------------------------------------------------------
 -- FUNCTION ddlCapture (origin, statement)
 --
---	Capture DDL into sl_log_ddl
+--	Capture DDL into sl_log_script
 -- ----------------------------------------------------------------------
 create or replace function @NAMESPACE@.ddlCapture (p_statement text)
 returns integer
 as $$
 begin
-    insert into @NAMESPACE@.sl_log_ddl(log_origin, log_txid, log_actionseq, log_query)
+    insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query)
     values (@NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'), pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
 	return currval('@NAMESPACE@.sl_action_seq');
 end;
@@ -4085,7 +4085,7 @@ begin
           where (ev_origin, ev_seqno) in (select ev_origin, min(ev_seqno) from @NAMESPACE@.sl_event where ev_type = 'SYNC' group by ev_origin)
 	loop
 		delete from @NAMESPACE@.sl_seqlog where seql_origin = v_origin and seql_ev_seqno < v_seqno;
-		delete from @NAMESPACE@.sl_log_ddl where log_origin = v_origin and log_txid < v_xmin;
+		delete from @NAMESPACE@.sl_log_script where log_origin = v_origin and log_txid < v_xmin;
     end loop;
 	
 	v_rc := @NAMESPACE@.logswitch_finish();
@@ -5029,20 +5029,20 @@ create table @NAMESPACE@.sl_components (
 		comment on column @NAMESPACE@.sl_log_2.log_cmdupdncols is 'For cmdtype=U the number of updated columns in cmdargs';
 		comment on column @NAMESPACE@.sl_log_2.log_cmdargs is 'The data needed to perform the log action on the replica';
 
-        create table @NAMESPACE@.sl_log_ddl (
+        create table @NAMESPACE@.sl_log_script (
         	log_origin			int4,
         	log_txid			bigint,
         	log_actionseq		int8,
         	log_query			text
         ) WITHOUT OIDS;
-        create index sl_log_ddl_idx1 on @NAMESPACE@.sl_log_ddl
+        create index sl_log_script_idx1 on @NAMESPACE@.sl_log_script
         	(log_origin, log_txid, log_actionseq);
         
-        comment on table @NAMESPACE@.sl_log_ddl is 'Captures DDL queries to be propagated to subscriber nodes';
-        comment on column @NAMESPACE@.sl_log_ddl.log_origin is 'Origin name from which the change came';
-        comment on column @NAMESPACE@.sl_log_ddl.log_txid is 'Transaction ID on the origin node';
-        comment on column @NAMESPACE@.sl_log_ddl.log_actionseq is 'The sequence number in which actions will be applied on replicas';
-        comment on column @NAMESPACE@.sl_log_ddl.log_query is 'The data needed to perform the log action on the replica.';
+        comment on table @NAMESPACE@.sl_log_script is 'Captures DDL queries to be propagated to subscriber nodes';
+        comment on column @NAMESPACE@.sl_log_script.log_origin is 'Origin name from which the change came';
+        comment on column @NAMESPACE@.sl_log_script.log_txid is 'Transaction ID on the origin node';
+        comment on column @NAMESPACE@.sl_log_script.log_actionseq is 'The sequence number in which actions will be applied on replicas';
+        comment on column @NAMESPACE@.sl_log_script.log_query is 'The data needed to perform the log action on the replica.';
 
 		--
 		-- Put the log apply triggers back onto sl_log_1/2
@@ -5875,7 +5875,7 @@ begin
 	end if;
     if NEW.log_cmdtype = 'S' then
 	    execute NEW.log_tablerelname;
-        insert into @NAMESPACE@.sl_log_ddl (log_origin, log_txid, log_actionseq, log_query)
+        insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
 		return NULL;   -- if DDL, don't bother capturing this into the log table
     end if;

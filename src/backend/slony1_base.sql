@@ -426,22 +426,22 @@ comment on column @NAMESPACE@.sl_log_2.log_cmdupdncols is 'For cmdtype=U the num
 comment on column @NAMESPACE@.sl_log_2.log_cmdargs is 'The data needed to perform the log action on the replica';
 
 -- ----------------------------------------------------------------------
--- TABLE sl_log_ddl
+-- TABLE sl_log_script
 -- ----------------------------------------------------------------------
-create table @NAMESPACE@.sl_log_ddl (
+create table @NAMESPACE@.sl_log_script (
 	log_origin			int4,
 	log_txid			bigint,
 	log_actionseq		int8,
 	log_query			text
 ) WITHOUT OIDS;
-create index sl_log_ddl_idx1 on @NAMESPACE@.sl_log_ddl
+create index sl_log_script_idx1 on @NAMESPACE@.sl_log_script
 	(log_origin, log_txid, log_actionseq);
 
-comment on table @NAMESPACE@.sl_log_ddl is 'Captures DDL queries to be propagated to subscriber nodes';
-comment on column @NAMESPACE@.sl_log_ddl.log_origin is 'Origin name from which the change came';
-comment on column @NAMESPACE@.sl_log_ddl.log_txid is 'Transaction ID on the origin node';
-comment on column @NAMESPACE@.sl_log_ddl.log_actionseq is 'The sequence number in which actions will be applied on replicas';
-comment on column @NAMESPACE@.sl_log_ddl.log_query is 'The data needed to perform the log action on the replica.';
+comment on table @NAMESPACE@.sl_log_script is 'Captures SQL script queries to be propagated to subscriber nodes';
+comment on column @NAMESPACE@.sl_log_script.log_origin is 'Origin name from which the change came';
+comment on column @NAMESPACE@.sl_log_script.log_txid is 'Transaction ID on the origin node';
+comment on column @NAMESPACE@.sl_log_script.log_actionseq is 'The sequence number in which actions will be applied on replicas';
+comment on column @NAMESPACE@.sl_log_script.log_query is 'The data needed to perform the log action on the replica.';
 
 -- ----------------------------------------------------------------------
 -- TABLE sl_registry
