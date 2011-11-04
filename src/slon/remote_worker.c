@@ -3960,9 +3960,9 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 			}
 			slon_appendquery(provider_query, 
 							 " union all " 
-							 " select ddl_origin, log_txid, NULL::integer, log_actionseq, NULL::text, ddl_query, 'S', NULL, NULL "
-							 " from %s.sl_ddl "
-							 " where ddl_origin = %d ",
+							 " select log_origin, log_txid, NULL::integer, log_actionseq, NULL::text, log_query, 'S', NULL, NULL "
+							 " from %s.sl_log_ddl "
+							 " where log_origin = %d ",
 					   rtcfg_namespace, node->no_id);
 			
 			slon_appendquery(provider_query,
