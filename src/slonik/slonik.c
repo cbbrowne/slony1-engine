@@ -4553,7 +4553,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	while (fgets(rex1, 256, stmt->ddl_fd) != NULL)
 	{
 		rc = strlen(rex1);
-		rex1[rc] = '\0';
+ 		rex1[rc] = '\0';
 		replace_token(rex3, rex1, "@CLUSTERNAME@", stmt->hdr.script->clustername);
 		replace_token(rex4, rex3, "@MODULEVERSION@", SLONY_I_VERSION_STRING);
 		replace_token(buf, rex4, "@NAMESPACE@", rex2);
@@ -4576,8 +4576,7 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	if ((num_statements < 0) || (num_statements >= MAXSTATEMENTS)) {
 		printf("DDL - number of statements invalid - %d not between 0 and %d\n", num_statements, MAXSTATEMENTS);
 		return -1;
-	}
-
+	} 
 	dstring_init(&query);
 	for (stmtno=0; stmtno < num_statements;  stmtno++) {
 		int startpos, endpos;
@@ -4598,27 +4597,19 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		slon_mkquery(&query, "%s", dest);
 		free(dest);
 
-		if (db_exec_command((SlonikStmt *)stmt, adminfo1, &query) < 0)
-		{
-			dstring_free(&query);
-			return -1;
-		}
-
 		paramlens[PARMCOUNT-1] = 0;
 		paramfmts[PARMCOUNT-1] = 0;
 		params[PARMCOUNT-1] = dstring_data(&query);
 
 		res1 = PQexecParams(adminfo1->dbconn, dstring_data(&equery), 1, NULL, params, NULL, NULL, 0);
-		if (PQresultStatus(res1) != PGRES_COMMAND_OK)
+		if (PQresultStatus(res1) != PGRES_TUPLES_OK)
 		{
-				fprintf(stderr, "%s %s - %s",
+				fprintf(stderr, "%s [%s] - %s",
 						PQresStatus(PQresultStatus(res1)),
 						dstring_data(&query), PQresultErrorMessage(res1));
 				PQclear(res1);
-				free(dest);
 				return -1;
 		}
-		free(dest);
 	}
 	dstring_free(&equery);
 	
