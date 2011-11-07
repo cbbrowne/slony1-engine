@@ -4577,6 +4577,8 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		printf("DDL - number of statements invalid - %d not between 0 and %d\n", num_statements, MAXSTATEMENTS);
 		return -1;
 	}
+
+	dstring_init(&query);
 	for (stmtno=0; stmtno < num_statements;  stmtno++) {
 		int startpos, endpos;
 		char *dest;
