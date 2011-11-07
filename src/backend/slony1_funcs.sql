@@ -5875,7 +5875,6 @@ begin
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' CASCADE';
 	end if;
     if NEW.log_cmdtype = 'S' then
-	    raise notice 'log_apply(DDL) - ' || NEW.log_tablerelname;
 	    execute NEW.log_tablerelname;
         insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
