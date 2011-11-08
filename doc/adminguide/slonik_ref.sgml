@@ -2873,12 +2873,12 @@ EXECUTE SCRIPT (
    with the same transaction and ordering information as is used for
    &sllog1; and &sllog2;.  </para>
 
-   <para> An alternative to the use of &stmtddlscript; is to run DDL
+   <para> An alternative to the use of <xref linkend="stmtddlscript"> is to run DDL
    requests by wrapping them with the function
    <function>ddlCapture(p_statement text, p_nodes text);</function>,
    so that the DDL is captured in the &slony1; log tables to be
    executed at the right point in the execution stream just as it
-   would be if run by &stmtddlscript;. </para>
+   would be if run by <xref linkend="stmtddlscript">. </para>
 
    </refsect1>
   </refentry>
