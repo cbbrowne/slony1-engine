@@ -1306,7 +1306,7 @@ stmt_ddl_script		: lno K_EXECUTE K_SCRIPT option_list
 							STMT_OPTION_INT( O_SET_ID, -1 ),
 							STMT_OPTION_STR( O_FILENAME, NULL ),
 							STMT_OPTION_INT( O_EVENT_NODE, -1 ),
-							STMT_OPTION_STR( O_EXECUTE_ONLY_ON, -1 ),
+							STMT_OPTION_STR( O_EXECUTE_ONLY_ON, NULL ),
 							STMT_OPTION_END
 						};
 
