@@ -3355,7 +3355,7 @@ begin
 		   	  raise exception 'ddlcapture(%,%) - node % does not exist!', p_statement, p_nodes, c_only;
 		   end if;
 		   if c_node = (c_only::integer) then
-		   	  c_found := 't';
+		   	  c_found_origin := 't';
 		   end if;
 	   end loop;
 	   if not c_found_origin then
@@ -3369,7 +3369,7 @@ begin
 end;
 $$ language plpgsql;
 
-comment on function @NAMESPACE@.ddlCapture (p_statement text) is
+comment on function @NAMESPACE@.ddlCapture (p_statement text, p_nodes text) is
 'Capture an SQL statement (usually DDL) that is to be literally replayed on subscribers';
 
 
