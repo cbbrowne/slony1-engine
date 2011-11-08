@@ -1306,7 +1306,7 @@ stmt_ddl_script		: lno K_EXECUTE K_SCRIPT option_list
 							STMT_OPTION_INT( O_SET_ID, -1 ),
 							STMT_OPTION_STR( O_FILENAME, NULL ),
 							STMT_OPTION_INT( O_EVENT_NODE, -1 ),
-							STMT_OPTION_INT( O_EXECUTE_ONLY_ON, -1 ),
+							STMT_OPTION_STR( O_EXECUTE_ONLY_ON, -1 ),
 							STMT_OPTION_END
 						};
 
@@ -1322,7 +1322,7 @@ stmt_ddl_script		: lno K_EXECUTE K_SCRIPT option_list
 							new->ddl_setid		= opt[0].ival;
 							new->ddl_fname		= opt[1].str;
 							new->ev_origin		= opt[2].ival;
-							new->only_on_node	= opt[3].ival;
+							new->only_on_node	= opt[3].str;
 							new->ddl_fd		= NULL;
 						}
 						else

@@ -3816,7 +3816,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 			/*
 			 * ... and build up the provider query
 			 */
-			for (sl_log_no = 1; sl_log_no <= 2; sl_log_no++)
+			for (sl_log_no = 1; sl_log_no <= 3; sl_log_no++)
 			{
 				/*
 				 * We only need to query sl_log_1 when log_status is
@@ -3831,6 +3831,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				if (sl_log_no == 2 && provider->log_status == 0)
 					continue;
 
+				/* We *always* process #3, which is sl_log_script */
 
 				if (need_union)
 				{
@@ -3846,24 +3847,32 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				 *     where log_origin = X
 				 *     and log_tableid in (<this set's tables>)
 				 */
-				slon_appendquery(provider_query,
-					"select log_origin, log_txid, log_tableid, "
-							"log_actionseq, log_tablenspname, "
-							"log_tablerelname, log_cmdtype, "
-							"log_cmdupdncols, log_cmdargs "
-						"from %s.sl_log_%d "
-						"where log_origin = %d "
-						"and log_tableid in (",
-								rtcfg_namespace, sl_log_no,
-								node->no_id);
-				for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
-				{
-					if (tupno2 > 0)
-						dstring_addchar(provider_query, ',');
-					dstring_append(provider_query, 
-							PQgetvalue(res2, tupno2, 0));
+				if (sl_log_no == 3) {
+					slon_appendquery(provider_query,
+									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
+									 " from %s.sl_log_script "
+									 " where log_origin = %d ",
+									 rtcfg_namespace, node->no_id);
+				} else { /* sl_log_1 and sl_log_2 */
+					slon_appendquery(provider_query,
+									 "select log_origin, log_txid, log_tableid, "
+									 "log_actionseq, log_tablenspname, "
+									 "log_tablerelname, log_cmdtype, "
+									 "log_cmdupdncols, log_cmdargs "
+									 "from %s.sl_log_%d "
+									 "where log_origin = %d "
+									 "and log_tableid in (",
+									 rtcfg_namespace, sl_log_no,
+									 node->no_id);
+					for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
+					{
+						if (tupno2 > 0)
+							dstring_addchar(provider_query, ',');
+						dstring_append(provider_query, 
+									   PQgetvalue(res2, tupno2, 0));
+					}
+					dstring_append(provider_query, ") ");
 				}
-				dstring_append(provider_query, ") ");
 
 				/*
 				 * and log_txid >= '<maxxid_last_snapshot>'
@@ -3910,26 +3919,35 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				 *     where log_origin = X
 				 *     and log_tableid in (<this set's tables>)
 				 */
-				slon_appendquery(provider_query,
-					"union all "
-					"select log_origin, log_txid, log_tableid, "
-							"log_actionseq, log_tablenspname, "
-							"log_tablerelname, log_cmdtype, "
-							"log_cmdupdncols, log_cmdargs "
-						"from %s.sl_log_%d "
-						"where log_origin = %d "
-						"and log_tableid in (",
-								rtcfg_namespace, sl_log_no,
-								node->no_id);
-				for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
-				{
-					if (tupno2 > 0)
-						dstring_addchar(provider_query, ',');
-					dstring_append(provider_query, 
-							PQgetvalue(res2, tupno2, 0));
-				}
-				dstring_append(provider_query, ") ");
 
+				if (sl_log_no == 3) {
+					slon_appendquery(provider_query,
+									 "union all "
+									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
+									 " from %s.sl_log_script "
+									 " where log_origin = %d ",
+									 rtcfg_namespace, node->no_id);
+				} else {  /* sl_log_1 and sl_log_2 */
+					slon_appendquery(provider_query,
+									 "union all "
+									 "select log_origin, log_txid, log_tableid, "
+									 "log_actionseq, log_tablenspname, "
+									 "log_tablerelname, log_cmdtype, "
+									 "log_cmdupdncols, log_cmdargs "
+									 "from %s.sl_log_%d "
+									 "where log_origin = %d "
+									 "and log_tableid in (",
+								rtcfg_namespace, sl_log_no,
+									 node->no_id);
+					for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
+					{
+						if (tupno2 > 0)
+							dstring_addchar(provider_query, ',');
+						dstring_append(provider_query, 
+							PQgetvalue(res2, tupno2, 0));
+					}
+					dstring_append(provider_query, ") ");
+				}
 				/*
 				 * and log_txid in (select
 				 *				txid_snapshot_xip('<last_snapshot>'))
@@ -3957,31 +3975,6 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 									 dstring_data(&actionseq_subquery));
 					dstring_free(&actionseq_subquery);
 				}
-			}
-			slon_appendquery(provider_query, 
-							 " union all " 
-							 " select log_origin, log_txid, NULL::integer, log_actionseq, NULL::text, log_query, 'S', NULL, NULL "
-							 " from %s.sl_log_script "
-							 " where log_origin = %d ",
-					   rtcfg_namespace, node->no_id);
-			
-			slon_appendquery(provider_query,
-							 " and log_txid in (select * from "
-							 "\"pg_catalog\".txid_snapshot_xip('%s') "
-							 " except "
-							 " select * from "
-							 "\"pg_catalog\".txid_snapshot_xip('%s') )",
-							 ssy_snapshot,
-							 event->ev_snapshot_c);
-			actionlist_len = strlen(ssy_action_list);
-			if (actionlist_len > 0)
-			{
-				dstring_init(&actionseq_subquery);
-				compress_actionseq(ssy_action_list, &actionseq_subquery);
-				slon_appendquery(provider_query,
-								 " and (%s)",
-								 dstring_data(&actionseq_subquery));
-				dstring_free(&actionseq_subquery);
 			}
 			PQclear(res2);
 		}

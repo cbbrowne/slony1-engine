@@ -3338,13 +3338,33 @@ Set sequence seq_id to have new value last_value.
 --
 --	Capture DDL into sl_log_script
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.ddlCapture (p_statement text)
+create or replace function @NAMESPACE@.ddlCapture (p_statement text, p_nodes text)
 returns integer
 as $$
+declare
+		c_node integer;
+		c_found_origin boolean;
+		c_only text;
 begin
+    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
+	if p_nodes is not null then
+	   c_found_origin := 'f';
+	   -- p_nodes list needs to consist of a list of nodes that exist, and that include the current node ID
+	   for c_only in select node from pg_catalog.regexp_split_to_table(p_nodes, ',') as foo loop
+	   	   if not exists (select 1 from @NAMESPACE@.sl_node where no_id = (c_only::integer)) then
+		   	  raise exception 'ddlcapture(%,%) - node % does not exist!', p_statement, p_nodes, c_only;
+		   end if;
+		   if c_node = (c_only::integer) then
+		   	  c_found := 't';
+		   end if;
+	   end loop;
+	   if not c_found_origin then
+		   	  raise exception 'ddlcapture(%,%) - origin node % not included in ONLY ON list!', p_statement, p_nodes, c_node;
+       end if;
+    end if;
 	execute p_statement;
     insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query)
-    values (@NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'), pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
+    values (c_node, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
 	return currval('@NAMESPACE@.sl_action_seq');
 end;
 $$ language plpgsql;
@@ -5034,7 +5054,8 @@ create table @NAMESPACE@.sl_components (
         	log_origin			int4,
         	log_txid			bigint,
         	log_actionseq		int8,
-        	log_query			text
+        	log_query			text,
+			log_only_on			text
         ) WITHOUT OIDS;
         create index sl_log_script_idx1 on @NAMESPACE@.sl_log_script
         	(log_origin, log_txid, log_actionseq);
@@ -5044,6 +5065,7 @@ create table @NAMESPACE@.sl_components (
         comment on column @NAMESPACE@.sl_log_script.log_txid is 'Transaction ID on the origin node';
         comment on column @NAMESPACE@.sl_log_script.log_actionseq is 'The sequence number in which actions will be applied on replicas';
         comment on column @NAMESPACE@.sl_log_script.log_query is 'The data needed to perform the log action on the replica.';
+		comment on column @NAMESPACE@.sl_log_script.log_only_on is 'Optional list of nodes on which scripts are to be executed';
 
 		--
 		-- Put the log apply triggers back onto sl_log_1/2
@@ -5781,6 +5803,8 @@ declare
 	v_idx		integer = 1;
 	v_nargs		integer;
 	v_i			integer = 0;
+    v_ddl		text;
+    v_only_on	text;
 begin
 	v_nargs = array_upper(NEW.log_cmdargs, 1);
 
@@ -5875,9 +5899,14 @@ begin
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' CASCADE';
 	end if;
     if NEW.log_cmdtype = 'S' then
-	    execute NEW.log_tablerelname;
-        insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query)
-        values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, NEW.log_tablerelname);
+        v_ddl := NEW.log_tablerelname;
+		v_only_on := NEW.log_tablenspname;
+	    raise notice 'Running DDL: % on node list [%]', v_ddl, v_only_on;
+		if v_only_on is null or (v_only_on is not null and exists (select 1 from pg_catalog.regexp_split_to_table(v_only_on, ',') as foo where foo = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'))) then
+			    execute v_ddl;
+		end if;				
+        insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query, log_only_on)
+        values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, v_ddl, v_only_on);
 		return NULL;   -- if DDL, don't bother capturing this into the log table
     end if;
 	return NEW;

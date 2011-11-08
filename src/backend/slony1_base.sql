@@ -432,7 +432,8 @@ create table @NAMESPACE@.sl_log_script (
 	log_origin			int4,
 	log_txid			bigint,
 	log_actionseq		int8,
-	log_query			text
+	log_query			text,
+    log_only_on			text
 ) WITHOUT OIDS;
 create index sl_log_script_idx1 on @NAMESPACE@.sl_log_script
 	(log_origin, log_txid, log_actionseq);
@@ -441,6 +442,7 @@ comment on table @NAMESPACE@.sl_log_script is 'Captures SQL script queries to be
 comment on column @NAMESPACE@.sl_log_script.log_origin is 'Origin name from which the change came';
 comment on column @NAMESPACE@.sl_log_script.log_txid is 'Transaction ID on the origin node';
 comment on column @NAMESPACE@.sl_log_script.log_actionseq is 'The sequence number in which actions will be applied on replicas';
+comment on column @NAMESPACE@.sl_log_script.log_only_on is 'Optional list of nodes on which scripts are to be executed';
 comment on column @NAMESPACE@.sl_log_script.log_query is 'The data needed to perform the log action on the replica.';
 
 -- ----------------------------------------------------------------------

@@ -988,15 +988,6 @@ script_check_stmts(SlonikScript * script, SlonikStmt * hdr)
 					SlonikStmt_ddl_script *stmt =
 					(SlonikStmt_ddl_script *) hdr;
 
-					if ((stmt->only_on_node > -1) && (stmt->ev_origin > -1)
-							&& (stmt->ev_origin != stmt->only_on_node)) {
-						printf ("If ONLY ON NODE is given, "
-								"EVENT ORIGIN must be the same node");
-						errors++;
-					}
-					if (stmt->only_on_node > -1)
-						stmt->ev_origin = stmt->only_on_node;
-
 					if (stmt->ev_origin < 0)
 					{
 						printf("%s:%d: Error: require EVENT NODE\n", 
@@ -4536,8 +4527,6 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 #define PARMCOUNT 1  
 
 	const char *params[PARMCOUNT];
-	int paramlens[PARMCOUNT];
-	int paramfmts[PARMCOUNT];
 
 	adminfo1 = get_active_adminfo((SlonikStmt *) stmt, stmt->ev_origin);
 	if (adminfo1 == NULL)
@@ -4565,8 +4554,8 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	/* This prepares the statement that will be run over and over for each DDL statement */
 	dstring_init(&equery);
 	slon_mkquery(&equery,
-				 "select \"_%s\".ddlCapture($1);",
-				 stmt->hdr.script->clustername);
+				 "select \"_%s\".ddlCapture($1, '%s');",
+				 stmt->hdr.script->clustername, stmt->only_on_node);
 
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
@@ -4597,8 +4586,6 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 		slon_mkquery(&query, "%s", dest);
 		free(dest);
 
-		paramlens[PARMCOUNT-1] = 0;
-		paramfmts[PARMCOUNT-1] = 0;
 		params[PARMCOUNT-1] = dstring_data(&query);
 
 		res1 = PQexecParams(adminfo1->dbconn, dstring_data(&equery), 1, NULL, params, NULL, NULL, 0);
