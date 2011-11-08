@@ -1696,6 +1696,11 @@ option_list_item	: K_ID '=' option_item_id
 						$5->opt_code	= O_EXECUTE_ONLY_ON;
 						$$ = $5;
 					}
+					| K_EXECUTE K_ONLY K_ON '=' option_item_literal
+					{
+						$5->opt_code	= O_EXECUTE_ONLY_ON;
+						$$ = $5;
+					}
 					| K_SECONDS '=' option_item_id
 					{
 						$3->opt_code	= O_SECONDS;

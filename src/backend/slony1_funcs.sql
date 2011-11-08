@@ -3350,7 +3350,7 @@ begin
 	if p_nodes is not null then
 	   c_found_origin := 'f';
 	   -- p_nodes list needs to consist of a list of nodes that exist, and that include the current node ID
-	   for c_only in select node from pg_catalog.regexp_split_to_table(p_nodes, ',') as foo loop
+	   for c_only in select node from pg_catalog.regexp_split_to_table(p_nodes, ',') as node loop
 	   	   if not exists (select 1 from @NAMESPACE@.sl_node where no_id = (c_only::integer)) then
 		   	  raise exception 'ddlcapture(%,%) - node % does not exist!', p_statement, p_nodes, c_only;
 		   end if;
@@ -5902,7 +5902,7 @@ begin
         v_ddl := NEW.log_tablerelname;
 		v_only_on := NEW.log_tablenspname;
 	    raise notice 'Running DDL: % on node list [%]', v_ddl, v_only_on;
-		if v_only_on is null or (v_only_on is not null and exists (select 1 from pg_catalog.regexp_split_to_table(v_only_on, ',') as foo where foo = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'))) then
+		if v_only_on is null or (v_only_on is not null and exists (select 1 from pg_catalog.regexp_split_to_table(v_only_on, ',') as node where node::integer = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'))) then
 			    execute v_ddl;
 		end if;				
         insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query, log_only_on)
