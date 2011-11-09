@@ -4554,15 +4554,14 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 	/* This prepares the statement that will be run over and over for each DDL statement */
 	dstring_init(&equery);
 	if (stmt->only_on_node == NULL) {
-			printf ("Capturing DDL on all nodes\n");
 			slon_mkquery(&equery,
 						 "select \"_%s\".ddlCapture($1, NULL::text);",
 						 stmt->hdr.script->clustername);
 	} else {
-			printf ("Capturing DDL only on nodes %s\n", stmt->only_on_node);
 			slon_mkquery(&equery,
 						 "select \"_%s\".ddlCapture($1, '%s');",
 						 stmt->hdr.script->clustername, stmt->only_on_node);
+
 	}
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
