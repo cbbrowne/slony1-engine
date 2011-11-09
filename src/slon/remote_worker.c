@@ -1391,144 +1391,9 @@ remoteWorkerThread_main(void *cdata)
 
 				need_reloadListen = true;
 			}
-			else if (strcmp(event->ev_type, "DDL_SCRIPT") == 0)
+			else if (strcmp(event->ev_type, "DDL_SCRIPT") == 0) 
 			{
-				int			ddl_setid = (int) strtol(event->ev_data1, NULL, 10);
-				char	   *ddl_script = event->ev_data2;
-				int			ddl_only_on_node = (int) strtol(event->ev_data3, NULL, 10);
-				int			num_statements = -1,
-							stmtno;
-				int			node_in_set;
-				int			localNodeId;
-
-				PGresult   *res;
-				ExecStatusType rstat;
-
-				/**
-				 * Check to make sure this node is part of the set
-				 */
-				slon_log(SLON_INFO, "Checking local node id\n");
-				localNodeId = db_getLocalNodeId(local_dbconn);
-				slon_log(SLON_INFO, "Found local node id\n");
-				node_in_set = check_set_subscriber(ddl_setid, localNodeId, local_dbconn);
-
-				if (!node_in_set)
-				{
-					/**
-					 *
-					 * Node is not part of the set.
-					 * Do not forward the DDL to the node,
-					 * nor should it be included in the log for log-shipping.
-					 */
-					slon_log(SLON_INFO, "Not forwarding DDL to node %d for set %d\n",
-							 node->no_id, ddl_setid);
-
-				}
-				else
-				{
-
-					slon_appendquery(&query1,
-									 "set session_replication_role to local; "
-									 "lock table %s.sl_config_lock;"
-									 "select %s.ddlScript_prepare_int(%d, %d); ",
-									 rtcfg_namespace,
-									 rtcfg_namespace,
-									 ddl_setid, ddl_only_on_node);
-
-					if (query_execute(node, local_dbconn, &query1) < 0)
-					{
-						slon_log(SLON_ERROR, "remoteWorkerThread_%d: DDL preparation failed - set %d - only on node %d\n",
-								 node->no_id, ddl_setid, ddl_only_on_node);
-						slon_retry();
-					}
-
-					num_statements = scan_for_statements(ddl_script);
-					slon_log(SLON_CONFIG, "remoteWorkerThread_%d: DDL request with %d statements\n",
-							 node->no_id, num_statements);
-					if ((num_statements < 0) || (num_statements >= MAXSTATEMENTS))
-					{
-						slon_log(SLON_ERROR, "remoteWorkerThread_%d: DDL had invalid number of statements - %d\n",
-								 node->no_id, num_statements);
-						slon_retry();
-					}
-
-					for (stmtno = 0; stmtno < num_statements; stmtno++)
-					{
-						int			startpos,
-									endpos;
-						char	   *dest;
-
-						if (stmtno == 0)
-							startpos = 0;
-						else
-							startpos = STMTS[stmtno - 1];
-
-						endpos = STMTS[stmtno];
-						dest = (char *) malloc(endpos - startpos + 1);
-						if (dest == 0)
-						{
-							slon_log(SLON_ERROR, "remoteWorkerThread_%d: malloc() failure in DDL_SCRIPT - could not allocate %d bytes of memory\n",
-									 node->no_id, endpos - startpos + 1);
-							slon_retry();
-						}
-						strncpy(dest, ddl_script + startpos, endpos - startpos);
-						dest[STMTS[stmtno] - startpos] = 0;
-						(void) slon_mkquery(&query1, "%s", dest);
-						slon_log(SLON_CONFIG, "remoteWorkerThread_%d: DDL Statement %d: [%s]\n",
-								 node->no_id, stmtno, dest);
-						free(dest);
-
-						res = PQexec(local_dbconn, dstring_data(&query1));
-
-						if (PQresultStatus(res) != PGRES_COMMAND_OK &&
-							PQresultStatus(res) != PGRES_TUPLES_OK &&
-							PQresultStatus(res) != PGRES_EMPTY_QUERY)
-						{
-							rstat = PQresultStatus(res);
-							slon_log(SLON_ERROR, "DDL Statement failed - %s\n", PQresStatus(rstat));
-							PQclear(res);
-							dstring_free(&query1);
-							slon_retry();
-						}
-						rstat = PQresultStatus(res);
-						slon_log(SLON_CONFIG, "DDL success - %s\n", PQresStatus(rstat));
-						PQclear(res);
-					}
-
-					(void) slon_mkquery(&query1,
-								 "select %s.ddlScript_complete_int(%d, %d); "
-								 "set session_replication_role to replica; ",
-										rtcfg_namespace,
-										ddl_setid,
-										ddl_only_on_node);
-
-					/*
-					 * DDL_SCRIPT needs to be turned into a log shipping
-					 * script
-					 */
-
-					/*
-					 * Note that the issue about parsing that mandates
-					 * breaking up compound statements into
-					 * individually-processed statements does not apply to log
-					 * shipping as psql parses and processes each statement
-					 * individually
-					 */
-
-					if (archive_dir)
-					{
-						if ((ddl_only_on_node < 1) || (ddl_only_on_node == rtcfg_nodeid))
-						{
-
-							if (archive_append_str(node, "set session_replication_role to local;\n") < 0)
-								slon_retry();
-							if (archive_append_str(node, ddl_script) < 0)
-								slon_retry();
-							if (archive_append_str(node, "set session_replication_role to replica;\n") < 0)
-								slon_retry();
-						}
-					}
-				}
+				/* don't need to do anything for this event */
 			}
 			else if (strcmp(event->ev_type, "RESET_CONFIG") == 0)
 			{
@@ -3951,7 +3816,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 			/*
 			 * ... and build up the provider query
 			 */
-			for (sl_log_no = 1; sl_log_no <= 2; sl_log_no++)
+			for (sl_log_no = 1; sl_log_no <= 3; sl_log_no++)
 			{
 				/*
 				 * We only need to query sl_log_1 when log_status is
@@ -3966,6 +3831,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				if (sl_log_no == 2 && provider->log_status == 0)
 					continue;
 
+				/* We *always* process #3, which is sl_log_script */
 
 				if (need_union)
 				{
@@ -3981,24 +3847,32 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				 *     where log_origin = X
 				 *     and log_tableid in (<this set's tables>)
 				 */
-				slon_appendquery(provider_query,
-					"select log_origin, log_txid, log_tableid, "
-							"log_actionseq, log_tablenspname, "
-							"log_tablerelname, log_cmdtype, "
-							"log_cmdupdncols, log_cmdargs "
-						"from %s.sl_log_%d "
-						"where log_origin = %d "
-						"and log_tableid in (",
-								rtcfg_namespace, sl_log_no,
-								node->no_id);
-				for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
-				{
-					if (tupno2 > 0)
-						dstring_addchar(provider_query, ',');
-					dstring_append(provider_query, 
-							PQgetvalue(res2, tupno2, 0));
+				if (sl_log_no == 3) {
+					slon_appendquery(provider_query,
+									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
+									 " from %s.sl_log_script "
+									 " where log_origin = %d ",
+									 rtcfg_namespace, node->no_id);
+				} else { /* sl_log_1 and sl_log_2 */
+					slon_appendquery(provider_query,
+									 "select log_origin, log_txid, log_tableid, "
+									 "log_actionseq, log_tablenspname, "
+									 "log_tablerelname, log_cmdtype, "
+									 "log_cmdupdncols, log_cmdargs "
+									 "from %s.sl_log_%d "
+									 "where log_origin = %d "
+									 "and log_tableid in (",
+									 rtcfg_namespace, sl_log_no,
+									 node->no_id);
+					for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
+					{
+						if (tupno2 > 0)
+							dstring_addchar(provider_query, ',');
+						dstring_append(provider_query, 
+									   PQgetvalue(res2, tupno2, 0));
+					}
+					dstring_append(provider_query, ") ");
 				}
-				dstring_append(provider_query, ") ");
 
 				/*
 				 * and log_txid >= '<maxxid_last_snapshot>'
@@ -4045,26 +3919,35 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				 *     where log_origin = X
 				 *     and log_tableid in (<this set's tables>)
 				 */
-				slon_appendquery(provider_query,
-					"union all "
-					"select log_origin, log_txid, log_tableid, "
-							"log_actionseq, log_tablenspname, "
-							"log_tablerelname, log_cmdtype, "
-							"log_cmdupdncols, log_cmdargs "
-						"from %s.sl_log_%d "
-						"where log_origin = %d "
-						"and log_tableid in (",
-								rtcfg_namespace, sl_log_no,
-								node->no_id);
-				for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
-				{
-					if (tupno2 > 0)
-						dstring_addchar(provider_query, ',');
-					dstring_append(provider_query, 
-							PQgetvalue(res2, tupno2, 0));
-				}
-				dstring_append(provider_query, ") ");
 
+				if (sl_log_no == 3) {
+					slon_appendquery(provider_query,
+									 "union all "
+									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
+									 " from %s.sl_log_script "
+									 " where log_origin = %d ",
+									 rtcfg_namespace, node->no_id);
+				} else {  /* sl_log_1 and sl_log_2 */
+					slon_appendquery(provider_query,
+									 "union all "
+									 "select log_origin, log_txid, log_tableid, "
+									 "log_actionseq, log_tablenspname, "
+									 "log_tablerelname, log_cmdtype, "
+									 "log_cmdupdncols, log_cmdargs "
+									 "from %s.sl_log_%d "
+									 "where log_origin = %d "
+									 "and log_tableid in (",
+								rtcfg_namespace, sl_log_no,
+									 node->no_id);
+					for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
+					{
+						if (tupno2 > 0)
+							dstring_addchar(provider_query, ',');
+						dstring_append(provider_query, 
+							PQgetvalue(res2, tupno2, 0));
+					}
+					dstring_append(provider_query, ") ");
+				}
 				/*
 				 * and log_txid in (select
 				 *				txid_snapshot_xip('<last_snapshot>'))
@@ -4093,9 +3976,6 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 					dstring_free(&actionseq_subquery);
 				}
 			}
-		
-		
-
 			PQclear(res2);
 		}
 		PQclear(res1);

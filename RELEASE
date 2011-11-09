@@ -10,14 +10,6 @@
      As a consequence, at the time of upgrade, it is essential that
      these tables be empty.
 
-	 They need to /already/ be empty, as the ~upgradeSchema()~
-	 function runs locally on each node, and there is no readily
-	 available mechanism to recover from the problem of discovering
-	 that one node still has data that needs to be applied against
-	 another node.  We may make some /best efforts/ to prevent
-	 problems, but there is only limited cross-node coordination that
-	 may readily be done.
-
      We intend to offer several mechanisms to help this to happen,
      including:
 
