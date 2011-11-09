@@ -3363,8 +3363,8 @@ begin
        end if;
     end if;
 	execute p_statement;
-    insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query)
-    values (c_node, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement);
+    insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query, log_only_on)
+    values (c_node, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement, p_nodes);
 	return currval('@NAMESPACE@.sl_action_seq');
 end;
 $$ language plpgsql;
