@@ -717,6 +717,16 @@ begin
 		raise notice 'You may run into problems later!';
 	end if;
 	
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_1
+		for each row execute procedure @NAMESPACE@.log_apply();
+	alter table @NAMESPACE@.sl_log_1
+	  enable replica trigger apply_trigger;
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_2
+		for each row execute procedure @NAMESPACE@.log_apply();
+	alter table @NAMESPACE@.sl_log_2
+			enable replica trigger apply_trigger;
 	return p_local_node_id;
 end;
 $$ language plpgsql;
@@ -5909,8 +5919,11 @@ begin
 			v_list1 = v_list1 || v_comma ||
 				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]);
 			v_idx = v_idx + 1;
-			v_list2 = v_list2 || v_comma ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			if NEW.log_cmdargs[v_idx] is null then
+			   v_list2 = v_list2 || v_comma || 'null';
+			else 
+			     v_list2 = v_list2 || v_comma ||
+			     	pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);			end if;
 			v_idx = v_idx + 1;
 
 			v_comma = ',';
@@ -5923,17 +5936,20 @@ begin
 
 		execute v_command;
 	end if;
-
 	if NEW.log_cmdtype = 'U' then
 		v_command = 'UPDATE ONLY ' ||
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' SET ';
-		while v_i < NEW.log_cmdupdncols loop
+		while v_i < NEW.log_cmdupdncols loop		      	
 			v_command = v_command || v_comma ||
 				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
 			v_idx = v_idx + 1;
-			v_command = v_command ||
+			if NEW.log_cmdargs[v_idx] is null then
+			   v_command = v_command || 'null';
+			else 
+			     v_command = v_command ||
 				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			end if;
 			v_idx = v_idx + 1;
 			v_comma = ',';
 			v_i = v_i + 1;
@@ -5948,13 +5964,16 @@ begin
 			v_command = v_command || v_and ||
 				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
 			v_idx = v_idx + 1;
-			v_command = v_command ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			if NEW.log_cmdargs[v_idx] is null then
+			   v_command = v_command || 'null';
+			else
+				v_command = v_command ||
+					  pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			end if;
 			v_idx = v_idx + 1;
 
 			v_and = ' AND ';
 		end loop;
-
 		execute v_command;
 	end if;
 
@@ -5966,8 +5985,12 @@ begin
 			v_command = v_command || v_and ||
 				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
 			v_idx = v_idx + 1;
-			v_command = v_command ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			if NEW.log_cmdargs[v_idx] is null then
+			   v_command = v_command || 'null';
+			else
+				v_command = v_command ||
+					  pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
+			end if;
 			v_idx = v_idx + 1;
 
 			v_and = ' AND ';
@@ -5977,23 +6000,11 @@ begin
 	end if;
 
 	if NEW.log_cmdtype = 'T' then
-		perform @NAMESPACE@.TruncateOnlyTable(
+		execute 'TRUNCATE TABLE ONLY ' ||
 			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname));
+			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' CASCADE';
 	end if;
 
 	return NEW;
 end;
 $$ language plpgsql;
-
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_1
-	for each row execute procedure @NAMESPACE@.log_apply();
-alter table @NAMESPACE@.sl_log_1
-	enable replica trigger apply_trigger;
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_2
-	for each row execute procedure @NAMESPACE@.log_apply();
-alter table @NAMESPACE@.sl_log_2
-	enable replica trigger apply_trigger;
-
