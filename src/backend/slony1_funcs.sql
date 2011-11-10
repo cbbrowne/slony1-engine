@@ -717,6 +717,16 @@ begin
 		raise notice 'You may run into problems later!';
 	end if;
 	
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_1
+		for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
+	alter table @NAMESPACE@.sl_log_1
+	  enable replica trigger apply_trigger;
+	create trigger apply_trigger
+		before INSERT on @NAMESPACE@.sl_log_2
+		for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
+	alter table @NAMESPACE@.sl_log_2
+			enable replica trigger apply_trigger;
 	return p_local_node_id;
 end;
 $$ language plpgsql;
@@ -5899,16 +5909,4 @@ create or replace function @NAMESPACE@.logApply () returns trigger
     as '$libdir/slony1_funcs', '_Slony_I_logApply'
 	language C
 	security definer;
-
-
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_1
-	for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
-alter table @NAMESPACE@.sl_log_1
-	enable replica trigger apply_trigger;
-create trigger apply_trigger
-	before INSERT on @NAMESPACE@.sl_log_2
-	for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
-alter table @NAMESPACE@.sl_log_2
-	enable replica trigger apply_trigger;
 

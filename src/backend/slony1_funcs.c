@@ -443,6 +443,7 @@ _Slony_I_logTrigger(PG_FUNCTION_ARGS)
 			if ((col_value = SPI_getvalue(new_row, tupdesc, i + 1)) == NULL)
 			{
 				*cmdnullselem++ = true;
+				cmdargselem++;
 			}
 			else
 			{
@@ -561,8 +562,11 @@ _Slony_I_logTrigger(PG_FUNCTION_ARGS)
 			*cmdargselem++ = DirectFunctionCall1(textin,
 					CStringGetDatum(SPI_fname(tupdesc, i + 1)));
 			*cmdnullselem++ = false;
-			if (new_isnull)
+			if (new_isnull) 
+			{
 				*cmdnullselem++ = true;
+				cmdargselem++;
+			}
 			else
 			{
 				*cmdargselem++ = DirectFunctionCall1(textin,
@@ -1643,6 +1647,11 @@ getClusterStatus(Name cluster_name, int need_plan_mask)
  * prepare the plan for the curren sl_log_x insert query.
  *
  */
+
+#ifndef TEXTARRAYOID
+#define TEXTARRAYOID 1009
+#endif
+
 int prepareLogPlan(Slony_I_ClusterStatus * cs,
 				int log_status)
 {
