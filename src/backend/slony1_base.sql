@@ -371,7 +371,7 @@ create table @NAMESPACE@.sl_log_1 (
 	log_actionseq		int8,
 	log_tablenspname	text,
 	log_tablerelname	text,
-	log_cmdtype			char,
+	log_cmdtype			"char",
 	log_cmdupdncols		int4,
 	log_cmdargs			text[]
 ) WITHOUT OIDS;
@@ -403,7 +403,7 @@ create table @NAMESPACE@.sl_log_2 (
 	log_actionseq		int8,
 	log_tablenspname	text,
 	log_tablerelname	text,
-	log_cmdtype			char,
+	log_cmdtype			"char",
 	log_cmdupdncols		int4,
 	log_cmdargs			text[]
 ) WITHOUT OIDS;

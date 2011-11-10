@@ -5170,12 +5170,12 @@ create table @NAMESPACE@.sl_components (
 		--
 		create trigger apply_trigger
 			before INSERT on @NAMESPACE@.sl_log_1
-			for each row execute procedure @NAMESPACE@.log_apply();
+			for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
 		alter table @NAMESPACE@.sl_log_1
 			enable replica trigger apply_trigger;
 		create trigger apply_trigger
 			before INSERT on @NAMESPACE@.sl_log_2
-			for each row execute procedure @NAMESPACE@.log_apply();
+			for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
 		alter table @NAMESPACE@.sl_log_2
 			enable replica trigger apply_trigger;
 	end if;
@@ -5890,110 +5890,25 @@ repaired. Otherwise all replicated tables with outdated trigger arguments
 are recreated.';
 
 
-create or replace function @NAMESPACE@.log_apply() returns trigger
-as $$
-declare
-	v_command	text = 'not implemented yet';
-	v_list1		text = '';
-	v_list2		text = '';
-	v_comma		text = '';
-	v_and		text = '';
-	v_idx		integer = 1;
-	v_nargs		integer;
-	v_i			integer = 0;
-begin
-	v_nargs = array_upper(NEW.log_cmdargs, 1);
+-- ----------------------------------------------------------------------
+-- FUNCTION logApply ()
+--
+--	
+-- ----------------------------------------------------------------------
+create or replace function @NAMESPACE@.logApply () returns trigger
+    as '$libdir/slony1_funcs', '_Slony_I_logApply'
+	language C
+	security definer;
 
-	if NEW.log_cmdtype = 'I' then
-		while v_idx < v_nargs loop
-			v_list1 = v_list1 || v_comma ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]);
-			v_idx = v_idx + 1;
-			v_list2 = v_list2 || v_comma ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
-			v_idx = v_idx + 1;
-
-			v_comma = ',';
-		end loop;
-
-		v_command = 'INSERT INTO ' || 
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' (' ||
-			v_list1 || ') VALUES (' || v_list2 || ')';
-
-		execute v_command;
-	end if;
-
-	if NEW.log_cmdtype = 'U' then
-		v_command = 'UPDATE ONLY ' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' SET ';
-		while v_i < NEW.log_cmdupdncols loop
-			v_command = v_command || v_comma ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
-			v_idx = v_idx + 1;
-			v_command = v_command ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
-			v_idx = v_idx + 1;
-			v_comma = ',';
-			v_i = v_i + 1;
-		end loop;
-		if NEW.log_cmdupdncols = 0 then
-			v_command = v_command ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[1]) || '=' ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[1]);
-		end if;
-		v_command = v_command || ' WHERE ';
-		while v_idx < v_nargs loop
-			v_command = v_command || v_and ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
-			v_idx = v_idx + 1;
-			v_command = v_command ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
-			v_idx = v_idx + 1;
-
-			v_and = ' AND ';
-		end loop;
-
-		execute v_command;
-	end if;
-
-	if NEW.log_cmdtype = 'D' then
-		v_command = 'DELETE FROM ONLY ' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname) || ' WHERE ';
-		while v_idx < v_nargs loop
-			v_command = v_command || v_and ||
-				@NAMESPACE@.slon_quote_brute(NEW.log_cmdargs[v_idx]) || '=';
-			v_idx = v_idx + 1;
-			v_command = v_command ||
-				pg_catalog.quote_literal(NEW.log_cmdargs[v_idx]);
-			v_idx = v_idx + 1;
-
-			v_and = ' AND ';
-		end loop;
-
-		execute v_command;
-	end if;
-
-	if NEW.log_cmdtype = 'T' then
-		perform @NAMESPACE@.TruncateOnlyTable(
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablenspname) || '.' ||
-			@NAMESPACE@.slon_quote_brute(NEW.log_tablerelname));
-	end if;
-
-	return NEW;
-end;
-$$ language plpgsql;
 
 create trigger apply_trigger
 	before INSERT on @NAMESPACE@.sl_log_1
-	for each row execute procedure @NAMESPACE@.log_apply();
+	for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
 alter table @NAMESPACE@.sl_log_1
 	enable replica trigger apply_trigger;
 create trigger apply_trigger
 	before INSERT on @NAMESPACE@.sl_log_2
-	for each row execute procedure @NAMESPACE@.log_apply();
+	for each row execute procedure @NAMESPACE@.logApply('_@CLUSTERNAME@');
 alter table @NAMESPACE@.sl_log_2
 	enable replica trigger apply_trigger;
 
