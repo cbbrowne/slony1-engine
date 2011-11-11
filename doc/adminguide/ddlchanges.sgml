@@ -17,9 +17,19 @@ built.</para>
 <para>&slony1; can not automatically detect and replicate database schema
 changes however, &slony1; does provide facilities to assist in making 
 database schema changes.  Schema changes can be done on a replicated
-database either by using the &slony1;  <xref
-linkend="stmtddlscript"> (slonik) command or by manually applying the
-changes to each node.</para>
+database either by using:
+<itemizedlist>
+
+<listitem><para> The &slony1; <xref linkend="stmtddlscript"> (slonik)
+command, </para></listitem>
+
+<listitem><para> Submitting DDL using the function
+<function>ddlCapture(p_statement text, p_nodes text)</function>
+</para></listitem>
+
+<listitem><para> In some cases, it may be satisfactory to submit SQL
+changes to each node via a &postgres; client such as
+<application>psql</application>.</para></listitem>
 
 <sect2>
 <title>DDL Changes with Execute Script</title>
@@ -59,17 +69,9 @@ you should manually (via psql) make the required changes so that the
 DDL change succeeds the next time slon attempts it.
 </para></listitem>
 
-<listitem><para>&slony1; 2.0.x and 2.1.x suffer from an issue where
-concurrent transactions involving the same tables as are referenced
-in the script might not be replayed in exactly the same order on the
-replica nodes.  It is advisiable to not be concurrently inserting,deleting
-or updating rows to a table while a script changing that table (adding or
-deleting columns) is also running.</para></listitem>
-
 </itemizedlist>
 
 </sect2>
-
 
 <sect2>
 <title>Applying DDL Changes Directly</title>
