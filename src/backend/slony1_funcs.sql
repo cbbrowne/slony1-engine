@@ -5402,6 +5402,11 @@ begin
 	if @NAMESPACE@.ShouldSlonyVacuumTable(prec.nspname, prec.relname) then
 		return next prec;
 	end if;
+	prec.nspname := '_@CLUSTERNAME@';
+	prec.relname := 'sl_log_script';
+	if @NAMESPACE@.ShouldSlonyVacuumTable(prec.nspname, prec.relname) then
+		return next prec;
+	end if;
 	prec.nspname := 'pg_catalog';
 	prec.relname := 'pg_listener';
 	if @NAMESPACE@.ShouldSlonyVacuumTable(prec.nspname, prec.relname) then
