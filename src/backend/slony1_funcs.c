@@ -25,6 +25,7 @@
 #include "parser/keywords.h"
 #include "parser/parse_type.h"
 #include "executor/spi.h"
+#include "libpq/md5.h"
 #include "commands/trigger.h"
 #include "commands/async.h"
 #include "catalog/pg_operator.h"
@@ -38,6 +39,7 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/lsyscache.h"
+#include "utils/hsearch.h"
 #ifdef HAVE_GETACTIVESNAPSHOT
 #include "utils/snapmgr.h"
 #endif
@@ -125,6 +127,27 @@ typedef struct slony_I_cluster_status
 
 	struct slony_I_cluster_status *next;
 } Slony_I_ClusterStatus;
+
+
+typedef struct apply_cache_entry
+{
+	char		key[16];
+
+	void	   *plan;
+	struct apply_cache_entry *prev;
+	struct apply_cache_entry *next;
+	struct apply_cache_entry *self;
+} ApplyCacheEntry;
+
+
+static HTAB				   *applyCacheHash = NULL;
+static ApplyCacheEntry	   *applyCacheHead = NULL;
+static ApplyCacheEntry	   *applyCacheTail = NULL;
+static int					applyCacheSize = 100;
+static int					applyCacheUsed = 0;
+
+
+
 
 /*@null@*/
 static Slony_I_ClusterStatus *clusterStatusList = NULL;
@@ -767,8 +790,11 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	char		*querynulls = NULL;
 	char		**querycolnames = NULL;
 	int			i;
+	int			spi_rc;
 
-	void		*plan;
+	ApplyCacheEntry	   *cacheEnt;
+	char				cacheKey[16];
+	bool				found;
 
 	/*
 	 * Get the trigger call context
@@ -810,6 +836,26 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	 */
 	if (!TransactionIdEquals(currentXid, newXid))
 	{
+		HASHCTL		hctl;
+
+		for (cacheEnt = applyCacheHead; cacheEnt; cacheEnt = cacheEnt->next)
+		{
+			if (cacheEnt->plan != NULL)
+				SPI_freeplan(cacheEnt->plan);
+			cacheEnt->plan = NULL;
+		}
+		applyCacheHead = NULL;
+		applyCacheTail = NULL;
+		applyCacheUsed = 0;
+
+		if (applyCacheHash != NULL)
+			hash_destroy(applyCacheHash);
+		memset(&hctl, 0, sizeof(hctl));
+		hctl.keysize = 16;
+		hctl.entrysize = sizeof(ApplyCacheEntry);
+		applyCacheHash = hash_create("Slony-I apply cache",
+					50, &hctl, HASH_ELEM);
+
 		currentXid = newXid;
 	}
 
@@ -1037,6 +1083,18 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 							colname);
 
 				/*
+				 * Special case if there were no columns updated.
+				 * We tell it to set the first PK column to itself.
+				 */
+				if (cmdupdncols == 0)
+				{
+					sprintf(query_pos, "%s = %s",
+							slon_quote_identifier(colname),
+							slon_quote_identifier(colname));
+					query_pos += strlen(query_pos);
+				}
+
+				/*
 				 * If we are at the transition point from SET to WHERE,
 				 * add the WHERE keyword.
 				 */
@@ -1190,15 +1248,115 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	RelationClose(target_rel);
 
 	/*
-	 * Create and execute the query.
+	 * Check the query cache if we have an entry.
 	 */
-	plan = SPI_prepare(query, querynvals, querytypes);
-	if (plan == NULL)
-		elog(ERROR, "Slony-I: SPI_prepare() for query '%s' failed",
-				query);
-	if (SPI_execp(plan, queryvals, querynulls, 0) < 0)
-		elog(ERROR, "Slony-I: SPI_execp() for query '%s' failed",
-				query);
+	pg_md5_binary(query, strlen(query), &cacheKey);
+	cacheEnt = hash_search(applyCacheHash, &cacheKey, HASH_ENTER, &found);
+	if (found)
+	{
+		/*
+		 * We are reusing an existing query plan. Just move it
+		 * to the end of the list.
+		 */
+		if (cacheEnt->self != cacheEnt)
+			elog(ERROR, "logApply(): cacheEnt != cacheEnt->self");
+		if (cacheEnt != applyCacheTail)
+		{
+			/*
+			 * Remove the entry from the list
+			 */
+			if (cacheEnt->prev == NULL)
+				applyCacheHead = cacheEnt->next;
+			else
+				cacheEnt->prev->next = cacheEnt->next;
+			if (cacheEnt->next == NULL)
+				applyCacheTail = cacheEnt->prev;
+			else
+				cacheEnt->next->prev = cacheEnt->prev;
+
+			/*
+			 * Put the entry back at the end of the list.
+			 */
+			if (applyCacheHead == NULL)
+			{
+				cacheEnt->prev = NULL;
+				cacheEnt->next = NULL;
+				applyCacheHead = cacheEnt;
+				applyCacheTail = cacheEnt;
+			}
+			else
+			{
+				cacheEnt->prev = applyCacheTail;
+				cacheEnt->next = NULL;
+				applyCacheTail->next = cacheEnt;
+				applyCacheTail = cacheEnt;
+			}
+		}
+	}
+	else
+	{
+		/*
+		 * Query plan not found in plan cache, need to SPI_prepare() it.
+		 */
+		cacheEnt->plan	= SPI_saveplan(
+				SPI_prepare(query, querynvals, querytypes));
+		if (cacheEnt->plan == NULL)
+			elog(ERROR, "Slony-I: SPI_prepare() failed for query '%s'", query);
+
+		/*
+		 * Add the plan to the double linked LRU list
+		 */
+		if (applyCacheHead == NULL)
+		{
+			cacheEnt->prev = NULL;
+			cacheEnt->next = NULL;
+			applyCacheHead = cacheEnt;
+			applyCacheTail = cacheEnt;
+		}
+		else
+		{
+			cacheEnt->prev = applyCacheTail;
+			cacheEnt->next = NULL;
+			applyCacheTail->next = cacheEnt;
+			applyCacheTail = cacheEnt;
+		}
+		cacheEnt->self = cacheEnt;
+		applyCacheUsed++;
+
+		/*
+		 * If that pushes us over the maximum allowed cached plans,
+		 * evict the one that wasn't used the longest.
+		 */
+		if (applyCacheUsed > applyCacheSize)
+		{
+			ApplyCacheEntry *evict = applyCacheHead;
+
+			SPI_freeplan(evict->plan);
+
+			if (evict->prev == NULL)
+				applyCacheHead = evict->next; 
+			else
+				evict->prev->next = evict->next;
+			if (evict->next == NULL)
+				applyCacheTail = evict->prev;
+			else
+				evict->next->prev = evict->prev;
+
+			hash_search(applyCacheHash, &(evict->key), HASH_REMOVE, &found);
+			if (!found)
+				elog(ERROR, "Slony-I: cached queries hash entry not found "
+						"on evict");
+		}
+	}
+
+	/*
+	 * Execute the query.
+	 */
+	if (cacheEnt->plan == NULL)
+		elog(ERROR, "Slony-I: cacheEnt->plan is NULL");
+	if ((spi_rc = SPI_execp(cacheEnt->plan, queryvals, querynulls, 0)) < 0)
+		elog(ERROR, "Slony-I: SPI_execp() for query '%s' failed - rc=%d",
+				query, spi_rc);
 
 	SPI_finish();
 	return PointerGetDatum(tg->tg_trigtuple);
