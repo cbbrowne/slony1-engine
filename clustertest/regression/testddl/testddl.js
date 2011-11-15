@@ -96,7 +96,7 @@ function individual_ddl(coordinator, nodenum) {
 	
 	premable = get_slonik_preamble();
 	slonikScript = 'EXECUTE SCRIPT(set id=1, FILENAME=\'regression/testddl/ddl_update_part2.sql\''
-		+ ' ,EVENT NODE=' + nodenum + ' ,EXECUTE ONLY ON = ' + nodenum +');';
+		+ ' ,EVENT NODE=' + nodenum + ' ,EXECUTE ONLY ON = \'' + nodenum +'\');';
 	run_slonik('update ddl',coordinator,preamble,slonikScript);
 	
 }
