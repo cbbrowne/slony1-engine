@@ -5630,29 +5630,16 @@ $$
 	begin
         c_tabid := tg_argv[0];
 	    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
-		select tab_nspname, tab_relname into c_nspname, c_relname
-				  from @NAMESPACE@.sl_table where tab_id = c_tabid;
-		select last_value into c_log from @NAMESPACE@.sl_log_status;
-		if c_log in (0, 2) then
-			insert into @NAMESPACE@.sl_log_1 (
-					log_origin, log_txid, log_tableid, 
-					log_actionseq, log_tablenspname, 
-					log_tablerelname, log_cmdtype, 
-					log_cmdupdncols, log_cmdargs
-				) values (
-					c_node, pg_catalog.txid_current(), c_tabid,
-					nextval('@NAMESPACE@.sl_action_seq'), c_nspname,
-					c_relname, 'T', 0, array[]::text[]);
-		else   -- (1, 3) 
-			insert into @NAMESPACE@.sl_log_2 (
-					log_origin, log_txid, log_tableid, 
-					log_actionseq, log_tablenspname, 
-					log_tablerelname, log_cmdtype, 
-					log_cmdupdncols, log_cmdargs
-				) values (
-					c_node, pg_catalog.txid_current(), c_tabid,
-					nextval('@NAMESPACE@.sl_action_seq'), c_nspname,
-					c_relname, 'T', 0, array[]::text[]);
+                 c_command := 'TRUNCATE TABLE ONLY "' || tab_nspname || '"."' ||
+                                   tab_relname || '" CASCADE' 
+                                   from @NAMESPACE@.sl_table where tab_id = c_tabid;
+                select last_value into c_log from @NAMESPACE@.sl_log_status;
+                if c_log in (0, 2) then
+                   insert into @NAMESPACE@.sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+                      values (c_node, pg_catalog.txid_current(), c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
+                else   -- (1, 3) 
+                   insert into @NAMESPACE@.sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+                       values (c_node, pg_catalog.txid_current(), c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
 		end if;
 		return NULL;
     end
