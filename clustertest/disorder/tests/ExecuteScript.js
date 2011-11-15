@@ -251,7 +251,7 @@ ExecuteScript.prototype.testAddDropColumn = function(setid, eventNode,
 
 		slonikScript = 'EXECUTE SCRIPT( SET ID=' + setid + ', FILENAME=\''
 				+ scriptFile_drop.getAbsolutePath() + '\' , EVENT NODE=' + idx
-				+ ', EXECUTE ONLY ON=' + idx + ');';
+				+ ', EXECUTE ONLY ON=\'' + idx + '\');';
 
 		slonik = this.coordinator.createSlonik(' test drop column',
 				slonikPreamble, slonikScript);
