@@ -14,22 +14,11 @@ get rather deranged because they disagree on how particular tables are
 built.</para>
 
 
-<para>&slony1; can not automatically detect and replicate database schema
-changes however, &slony1; does provide facilities to assist in making 
-database schema changes.  Schema changes can be done on a replicated
-database either by using:
-<itemizedlist>
-
-<listitem><para> The &slony1; <xref linkend="stmtddlscript"> (slonik)
-command, </para></listitem>
-
-<listitem><para> Submitting DDL using the function
-<function>ddlCapture(p_statement text, p_nodes text)</function>
-</para></listitem>
-
-<listitem><para> In some cases, it may be satisfactory to submit SQL
-changes to each node via a &postgres; client such as
-<application>psql</application>.</para></listitem>
+<para>&slony1; can not automatically detect and replicate database
+schema changes however, &slony1; does provide facilities to assist in
+making database schema changes.  Schema changes can be done on a
+replicated database using the &slony1; <xref linkend="stmtddlscript">
+(slonik) command. </para>
 
 <sect2>
 <title>DDL Changes with Execute Script</title>
