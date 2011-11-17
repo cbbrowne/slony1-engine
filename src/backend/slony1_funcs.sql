@@ -5621,27 +5621,28 @@ comment on function @NAMESPACE@.slon_node_health_check() is 'called when slon st
 
 create or replace function @NAMESPACE@.log_truncate () returns trigger as
 $$
-	declare
-		c_nspname text;
-		c_relname text;
-		c_log integer;
-		c_node integer;
-		c_tabid integer;
-	begin
-        c_tabid := tg_argv[0];
-	    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
-                 c_command := 'TRUNCATE TABLE ONLY "' || tab_nspname || '"."' ||
+declare
+	c_nspname text;
+	c_relname text;
+	c_log integer;
+	c_node integer;
+	c_tabid integer;
+	c_command text;
+begin
+	c_tabid := tg_argv[0];
+	c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
+        c_command := 'TRUNCATE TABLE ONLY "' || tab_nspname || '"."' ||
                                    tab_relname || '" CASCADE' 
                                    from @NAMESPACE@.sl_table where tab_id = c_tabid;
-                select last_value into c_log from @NAMESPACE@.sl_log_status;
-                if c_log in (0, 2) then
-                   insert into @NAMESPACE@.sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+        select last_value into c_log from @NAMESPACE@.sl_log_status;
+        if c_log in (0, 2) then
+	   insert into @NAMESPACE@.sl_log_1 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
                       values (c_node, pg_catalog.txid_current(), c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
-                else   -- (1, 3) 
-                   insert into @NAMESPACE@.sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
+        else   -- (1, 3) 
+           insert into @NAMESPACE@.sl_log_2 (log_origin, log_txid, log_tableid, log_actionseq, log_cmdtype, log_cmddata)
                        values (c_node, pg_catalog.txid_current(), c_tabid, nextval('_@CLUSTERNAME@.sl_action_seq'), 'T', c_command);
-		end if;
-		return NULL;
+	end if;
+	return NULL;
     end
 $$ language plpgsql;
 

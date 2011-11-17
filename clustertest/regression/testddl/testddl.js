@@ -74,21 +74,63 @@ function generate_data() {
 }
 
 function exec_ddl(coordinator) {
-	preamble = get_slonik_preamble();
-	var slonikScript = 'EXECUTE SCRIPT(set id=1, FILENAME=\'regression/testddl/ddl_updates.sql\''
-		+',EVENT NODE=1);\n';
-	var slonikScript2='try {\n '
-		+ 'execute script(set id=1, FILENAME=\'regression/testddl/bad_ddl.sql\''
-		+', event node=1);\n'
-		+ '}\n'
-		+ 'on error{ \n'
-		+ 'echo \'a bad DDL script gets rolled back on the master\';\n'
-		+ '}\n'
-		+' on success {\n' 
-		+ 'echo \'a bad DDL script did not get rolled back - ERROR!\';\n'
-		+ 'exit -1;\n'
-		+ '}\n';
-	run_slonik('update ddl',coordinator,preamble,slonikScript);
+    preamble = get_slonik_preamble();
+    var slonikScript = 'EXECUTE SCRIPT(set id=1, FILENAME=\'regression/testddl/ddl_updates.sql\''
+	+',EVENT NODE=1);\n';
+    run_slonik('update ddl',coordinator,preamble,slonikScript);
+    slonikScript='try {\n '
+	+ 'execute script(set id=1, FILENAME=\'regression/testddl/bad_ddl.sql\''
+	+', event node=1);\n'
+	+ '}\n'
+	+ 'on error{ \n'
+	+ 'echo \'a bad DDL script gets rolled back on the master\';\n'
+	+ '}\n'
+	+' on success {\n' 
+	+ 'echo \'a bad DDL script did not get rolled back - ERROR!\';\n'
+	+ 'exit 1;\n'
+	+ '}\n';
+    run_slonik('bad ddl script',coordinator,preamble,slonikScript);
+    preamble = get_slonik_preamble();
+    slonikScript =
+        'execute script (set id=1, filename=\'regression/testddl/bad_ddl.sql\', event node=1, execute only on=1, execute only on=\'1,2\');\n'
+    run_slonik('try EXECUTE SCRIPT with string+int EXECUTE ONLY ON that should fail',coordinator,preamble,slonikScript);
+    preamble = get_slonik_preamble();
+    slonikScript =
+        'try {\n'
+        + '  execute script (set id=1, filename=\'regression/testddl/bad_ddl.sql\', event node=1, execute only on=\'1,2,3,4\');\n'
+        + '} on error {\n'
+	+ 'echo \'attempt to reference non-existent nodes fails\';\n'
+	+ '}\n'
+	+' on success {\n' 
+	+ 'echo \'a bad DDL script did not get rolled back - ERROR!\';\n'
+	+ 'exit 1;\n'
+	+ '}\n';
+    
+    run_slonik('try EXECUTE SCRIPT with EXECUTE ONLY ON referencing nodes that do not exist',coordinator,preamble,slonikScript);
+    preamble = get_slonik_preamble();
+    slonikScript = 
+	'try {\n'
+        + '  execute script (set id=1, filename=\'regression/testddl/ok_ddl.sql\', event node=1, execute only on=1);\n'
+        + '} on error {\n'
+	+ 'echo \'attempt to load valid DDL failed\';\n'
+	+ 'exit 1;\n'
+	+ '}\n'
+	+' on success {\n' 
+	+ 'echo \'DDL loaded OK on node 1\';\n'
+	+ '}\n';
+    run_slonik('try EXECUTE SCRIPT with integer ONLY ON',coordinator,preamble,slonikScript);
+    preamble = get_slonik_preamble();
+    slonikScript = 
+	'try {\n' 
+	+ '  execute script (set id=1, filename=\'regression/testddl/ok_ddl.sql\', event node=1, execute only on=\'1,2\');\n'
+        + '} on error {\n'
+	+ 'echo \'attempt to load valid DDL failed\';\n'
+	+ 'exit 1;\n'
+	+ '}\n'
+	+' on success {\n' 
+	+ 'echo \'DDL loaded OK on node 1+2\';\n'
+	+ '}\n';
+    run_slonik('try EXECUTE SCRIPT with multiple valued ONLY ON',coordinator,preamble,slonikScript);
 }
 
 

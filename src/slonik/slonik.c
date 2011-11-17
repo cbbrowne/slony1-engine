@@ -1008,6 +1008,13 @@ script_check_stmts(SlonikScript * script, SlonikStmt * hdr)
 							   hdr->stmt_filename, hdr->stmt_lno);
 						errors++;
 					}
+					if ((stmt->only_on_node > 0) && (stmt->only_on_nodes != NULL))
+					{
+						printf("%s:%d: Error: "
+							   "cannot specify singular node as well as node list\n",
+							   hdr->stmt_filename, hdr->stmt_lno);
+						errors++;
+					}
 
 					if (script_check_adminfo(hdr, stmt->ev_origin) < 0)
 						errors++;
@@ -4553,15 +4560,20 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 
 	/* This prepares the statement that will be run over and over for each DDL statement */
 	dstring_init(&equery);
-	if (stmt->only_on_node == NULL) {
+	if ((stmt->only_on_nodes == NULL) && (stmt->only_on_node < 0)) {
 			slon_mkquery(&equery,
 						 "select \"_%s\".ddlCapture($1, NULL::text);",
 						 stmt->hdr.script->clustername);
 	} else {
+		if (stmt->only_on_node > 0) {
+			slon_mkquery(&equery,
+						 "select \"_%s\".ddlCapture($1, '%d');",
+						 stmt->hdr.script->clustername, stmt->only_on_node);
+		} else {  /* stmt->only_on_nodes is populated */
 			slon_mkquery(&equery,
 						 "select \"_%s\".ddlCapture($1, '%s');",
-						 stmt->hdr.script->clustername, stmt->only_on_node);
-
+						 stmt->hdr.script->clustername, stmt->only_on_nodes);
+		}
 	}
 	/* Split the script into a series of SQL statements - each needs to
 	   be submitted separately */
