@@ -2775,10 +2775,11 @@ FAILOVER (
 	  be omitted.</para></listitem>
       
      </varlistentry>
-     <varlistentry><term><literal> EXECUTE ONLY ON = sval
+     <varlistentry><term><literal> EXECUTE ONLY ON = sval or ival
        </literal></term> <listitem><para> (Optional) A list of
        comma-separated integers indicating nodes on which to actually
-       execute the script.</para></listitem>
+       execute the script, or an integer indicating the sole node on
+       which to execute the script.</para></listitem>
      </varlistentry>
     </variablelist>
     
