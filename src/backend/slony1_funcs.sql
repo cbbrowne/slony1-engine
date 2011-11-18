@@ -5780,7 +5780,7 @@ language plpgsql;
 comment on function @NAMESPACE@.repair_log_triggers(only_locked boolean)
 is '
 repair the log triggers as required.  If only_locked is true then only 
-tables that are already exclusivly locked by the current transaction are 
+tables that are already exclusively locked by the current transaction are 
 repaired. Otherwise all replicated tables with outdated trigger arguments
 are recreated.';
 
@@ -5897,6 +5897,7 @@ begin
 	    raise notice 'Running DDL: % on node list [%]', v_ddl, v_only_on;
 		if v_only_on is null or (v_only_on is not null and exists (select 1 from pg_catalog.regexp_split_to_table(v_only_on, ',') as node where node::integer = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'))) then
 			    execute v_ddl;
+			    perform @NAMESPACE@.repair_log_triggers('t'::boolean);
 		end if;				
         insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query, log_only_on)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, v_ddl, v_only_on);
