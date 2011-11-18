@@ -4615,9 +4615,9 @@ slonik_ddl_script(SlonikStmt_ddl_script * stmt)
 				PQclear(res1);
 				return -1;
 		}
+		PQclear(res1);
 	}
 	dstring_free(&equery);
-	
 	dstring_free(&script);
 	dstring_free(&query);
 	return 0;
