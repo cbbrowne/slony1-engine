@@ -117,23 +117,39 @@ function run_slonik(name,coordinator,preamble,script) {
 			results.assertCheck("slonik did not finish in the timelimit:"+name,true,false);
 			//kill the slonik			
 			slonik.stop();
-			
-			
 		}		
-	
 	};
 	var timeoutObserver = new Packages.info.slony.clustertest.testcoordinator.script.ExecutionObserver(abortTest);
 	var timer = coordinator.addTimerTask('sync failed',60*4 /*2 minutes*/, timeoutObserver );
 	
 	slonik.run();
 	coordinator.join(slonik);
-	results.assertCheck('slonik return code for' + name, slonik.getReturnCode(),0);
+	results.assertCheck('slonik return code for ' + name, slonik.getReturnCode(),0);
 	coordinator.removeObserver(timer,Packages.info.slony.clustertest.testcoordinator.Coordinator.EVENT_TIMER,timeoutObserver);
+}
+function run_bad_slonik(name,coordinator,preamble,script) {
+    var slonik = coordinator.createSlonik(name,preamble,script);
+    
+    //If replication has stopped because of a problem the sync will never finish
+    //we don't want to be waiting on slonik forever.
+    //Setup a timer event.
+    var abortTest = {
+	onEvent : function(source,eventType) {
+	    results.assertCheck("slonik did not finish in the timelimit:"+name,true,false);
+	    //kill the slonik			
+	    slonik.stop();
+	}		
+    };
+    var timeoutObserver = new Packages.info.slony.clustertest.testcoordinator.script.ExecutionObserver(abortTest);
+    var timer = coordinator.addTimerTask('sync failed',60*4 /*2 minutes*/, timeoutObserver );
+    
+    slonik.run();
+    coordinator.join(slonik);
+    results.assertCheck('slonik return code for ' + name, slonik.getReturnCode(),255);
+    coordinator.removeObserver(timer,Packages.info.slony.clustertest.testcoordinator.Coordinator.EVENT_TIMER,timeoutObserver);
 }
 
 function get_slonik_preamble() {
-	
-	
 	var slonikPre = 'cluster name=slonyregress;\n';
 	for(var idx = 1; idx <= NUM_NODES; idx++) {
 		var port='';
