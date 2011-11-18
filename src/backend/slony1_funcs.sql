@@ -4501,12 +4501,14 @@ begin
                 tab_relname = PGC.relname, tab_nspname = PGN.nspname
                 from pg_catalog.pg_class PGC, pg_catalog.pg_namespace PGN 
                 where @NAMESPACE@.sl_table.tab_reloid = PGC.oid
-                        and PGC.relnamespace = PGN.oid;
+                        and PGC.relnamespace = PGN.oid and
+                    (tab_relname <> PGC.relname or tab_nspname <> PGN.nspname);
         update @NAMESPACE@.sl_sequence set
                 seq_relname = PGC.relname, seq_nspname = PGN.nspname
                 from pg_catalog.pg_class PGC, pg_catalog.pg_namespace PGN
                 where @NAMESPACE@.sl_sequence.seq_reloid = PGC.oid
-                and PGC.relnamespace = PGN.oid;
+                and PGC.relnamespace = PGN.oid and
+ 		    (seq_relname <> PGC.relname or seq_nspname <> PGN.nspname);
         return p_set_id;
 end;
 $$ language plpgsql;
@@ -5898,6 +5900,7 @@ begin
 		if v_only_on is null or (v_only_on is not null and exists (select 1 from pg_catalog.regexp_split_to_table(v_only_on, ',') as node where node::integer = @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@'))) then
 			    execute v_ddl;
 			    perform @NAMESPACE@.repair_log_triggers('t'::boolean);
+			    perform @NAMESPACE@.updateRelname(sub_set, NULL::integer) from (select distinct sub_set from @NAMESPACE@.sl_subscribe) as subscriptions;
 		end if;				
         insert into @NAMESPACE@.sl_log_script (log_origin, log_txid, log_actionseq, log_query, log_only_on)
         values (NEW.log_origin, NEW.log_txid, NEW.log_actionseq, v_ddl, v_only_on);
