@@ -6,7 +6,7 @@
  *	Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *
- *	
+ *
  * ----------------------------------------------------------------------
  */
 
@@ -123,7 +123,7 @@ typedef struct slony_I_cluster_status
 	int			cmddata_size;
 
 	struct slony_I_cluster_status *next;
-} Slony_I_ClusterStatus;
+}	Slony_I_ClusterStatus;
 
 /*@null@*/
 static Slony_I_ClusterStatus *clusterStatusList = NULL;
@@ -133,7 +133,7 @@ getClusterStatus(Name cluster_name,
 static const char *slon_quote_identifier(const char *ident);
 static char *slon_quote_literal(char *str);
 static int prepareLogPlan(Slony_I_ClusterStatus * cs,
-					   int log_status);
+			   int log_status);
 
 Datum
 _Slony_I_createEvent(PG_FUNCTION_ARGS)
@@ -345,7 +345,7 @@ _Slony_I_logTrigger(PG_FUNCTION_ARGS)
 	if (!TransactionIdEquals(cs->currentXid, newXid))
 	{
 		int32		log_status;
-		bool isnull;
+		bool		isnull;
 
 		/*
 		 * Determine the currently active log table
@@ -356,9 +356,9 @@ _Slony_I_logTrigger(PG_FUNCTION_ARGS)
 			elog(ERROR, "Slony-I: cannot determine log status");
 
 		log_status = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											SPI_tuptable->tupdesc, 1, &isnull));
+										 SPI_tuptable->tupdesc, 1, &isnull));
 		SPI_freetuptable(SPI_tuptable);
-		prepareLogPlan(cs,log_status);
+		prepareLogPlan(cs, log_status);
 		switch (log_status)
 		{
 			case 0:
@@ -957,7 +957,7 @@ typedef struct
 {
 	int32		seqid;
 	int64		seqval;
-} SeqTrack_elem;
+}	SeqTrack_elem;
 
 static int
 seqtrack_cmp(void *seq1, void *seq2)
@@ -1025,7 +1025,7 @@ slon_quote_literal(char *str)
 	char	   *cp1;
 	char	   *cp2;
 	int			len;
-	int wl;
+	int			wl;
 
 	if (str == NULL)
 		return NULL;
@@ -1123,10 +1123,10 @@ slon_quote_identifier(const char *ident)
 #ifdef SCANKEYWORDLOOKUP_1
 		if (ScanKeywordLookup(ident) != NULL)
 #endif
-#ifdef SCANKEYWORDLOOKUP_3		   
-			if (ScanKeywordLookup(ident,ScanKeywords,NumScanKeywords) != NULL)
+#ifdef SCANKEYWORDLOOKUP_3
+			if (ScanKeywordLookup(ident, ScanKeywords, NumScanKeywords) != NULL)
 #endif
-			safe = false;
+				safe = false;
 	}
 
 	if (safe)
@@ -1375,17 +1375,17 @@ getClusterStatus(Name cluster_name, int need_plan_mask)
  * prepare the plan for the curren sl_log_x insert query.
  *
  */
-int prepareLogPlan(Slony_I_ClusterStatus * cs,
-				int log_status)
+int
+prepareLogPlan(Slony_I_ClusterStatus * cs,
+			   int log_status)
 {
 	char		query[1024];
 	Oid			plan_types[9];
 
-	if( (log_status==0 ||
-		 log_status==2) &&
-		cs->plan_insert_log_1==NULL)
+	if ((log_status == 0 ||
+		 log_status == 2) &&
+		cs->plan_insert_log_1 == NULL)
 	{
-
 		/*
 		 * Create the saved plan's
 		 */
@@ -1403,9 +1403,9 @@ int prepareLogPlan(Slony_I_ClusterStatus * cs,
 		if (cs->plan_insert_log_1 == NULL)
 			elog(ERROR, "Slony-I: SPI_prepare() failed");
 	}
-	else if ( (log_status==1 ||
-			   log_status==3) &&
-			  cs->plan_insert_log_2==NULL)
+	else if ((log_status == 1 ||
+			  log_status == 3) &&
+			 cs->plan_insert_log_2 == NULL)
 	{
 		sprintf(query, "INSERT INTO %s.sl_log_2 "
 				"(log_origin, log_txid, log_tableid, log_actionseq,"
@@ -1424,8 +1424,9 @@ int prepareLogPlan(Slony_I_ClusterStatus * cs,
 
 	return 0;
 }
+
 /* Provide a way to reset the per-session data structure that stores
-   the cluster status in the C functions. 
+   the cluster status in the C functions.
 
  * This is used to rectify the case where CLONE NODE updates the node
  * ID, but calls to getLocalNodeId() could continue to return the old
@@ -1434,39 +1435,40 @@ int prepareLogPlan(Slony_I_ClusterStatus * cs,
 Datum
 _Slony_I_resetSession(PG_FUNCTION_ARGS)
 {
-  Slony_I_ClusterStatus *cs;
-  
-  cs = clusterStatusList; 
-  while(cs != NULL)
-  {
-	  Slony_I_ClusterStatus *previous;
-	  if(cs->cmdtype_I)
-		  free(cs->cmdtype_I);
-	  if(cs->cmdtype_D)
-		  free(cs->cmdtype_D);
-	  if(cs->cmdtype_U)
-		  free(cs->cmdtype_D);
-	  if(cs->cmddata_buf)
-		  free(cs->cmddata_buf);
-	  free(cs->clusterident);
-	  if(cs->plan_insert_event)
-		  SPI_freeplan(cs->plan_insert_event);
-	  if(cs->plan_insert_log_1)
-		  SPI_freeplan(cs->plan_insert_log_1);
-	  if(cs->plan_insert_log_2)
-		  SPI_freeplan(cs->plan_insert_log_2);
-	  if(cs->plan_record_sequences)
-		  SPI_freeplan(cs->plan_record_sequences);
-	  if(cs->plan_get_logstatus)
-		  SPI_freeplan(cs->plan_get_logstatus);
-	  previous=cs;
-	  cs=cs->next;
-	  free(previous);
+	Slony_I_ClusterStatus *cs;
+
+	cs = clusterStatusList;
+	while (cs != NULL)
+	{
+		Slony_I_ClusterStatus *previous;
+
+		if (cs->cmdtype_I)
+			free(cs->cmdtype_I);
+		if (cs->cmdtype_D)
+			free(cs->cmdtype_D);
+		if (cs->cmdtype_U)
+			free(cs->cmdtype_D);
+		if (cs->cmddata_buf)
+			free(cs->cmddata_buf);
+		free(cs->clusterident);
+		if (cs->plan_insert_event)
+			SPI_freeplan(cs->plan_insert_event);
+		if (cs->plan_insert_log_1)
+			SPI_freeplan(cs->plan_insert_log_1);
+		if (cs->plan_insert_log_2)
+			SPI_freeplan(cs->plan_insert_log_2);
+		if (cs->plan_record_sequences)
+			SPI_freeplan(cs->plan_record_sequences);
+		if (cs->plan_get_logstatus)
+			SPI_freeplan(cs->plan_get_logstatus);
+		previous = cs;
+		cs = cs->next;
+		free(previous);
 
 
-  }
-  clusterStatusList=NULL;
-  PG_RETURN_NULL();
+	}
+	clusterStatusList = NULL;
+	PG_RETURN_NULL();
 
 }
 
@@ -1478,38 +1480,40 @@ _Slony_I_resetSession(PG_FUNCTION_ARGS)
 Datum
 _slon_decode_tgargs(PG_FUNCTION_ARGS)
 {
-	const char * arg;
-	size_t elem_size=0;
-	ArrayType * out_array;
-	int idx;
+	const char *arg;
+	size_t		elem_size = 0;
+	ArrayType  *out_array;
+	int			idx;
 	bytea	   *t = PG_GETARG_BYTEA_P(0);
 
-	int arg_size = VARSIZE(t)- VARHDRSZ;
-	const char * in_args = VARDATA(t);
-	int array_size = 0;
-	out_array=construct_empty_array(TEXTOID);
-	arg=in_args;
+	int			arg_size = VARSIZE(t) - VARHDRSZ;
+	const char *in_args = VARDATA(t);
+	int			array_size = 0;
 
-	for(idx = 0; idx < arg_size; idx++)
+	out_array = construct_empty_array(TEXTOID);
+	arg = in_args;
+
+	for (idx = 0; idx < arg_size; idx++)
 	{
-		
-		if(in_args[idx ]=='\0')
+
+		if (in_args[idx] == '\0')
 		{
-			text * one_arg = palloc(elem_size+VARHDRSZ);
-			SET_VARSIZE(one_arg,elem_size + VARHDRSZ);
-			memcpy(VARDATA(one_arg),arg,elem_size);
+			text	   *one_arg = palloc(elem_size + VARHDRSZ);
+
+			SET_VARSIZE(one_arg, elem_size + VARHDRSZ);
+			memcpy(VARDATA(one_arg), arg, elem_size);
 			out_array = array_set(out_array,
 								  1, &array_size,
 								  PointerGetDatum(one_arg),
 								  false,
 								  -1,
 								  -1,
-								  false , /*typbyval for TEXT*/
-								  'i' /*typalign for TEXT */
+								  false,		/* typbyval for TEXT */
+								  'i'	/* typalign for TEXT */
 				);
-			elem_size=0;
+			elem_size = 0;
 			array_size++;
-			arg=&in_args[idx+1];
+			arg = &in_args[idx + 1];
 		}
 		else
 		{
@@ -1520,9 +1524,9 @@ _slon_decode_tgargs(PG_FUNCTION_ARGS)
 
 	PG_RETURN_ARRAYTYPE_P(out_array);
 }
-	
-	
-	
+
+
+
 /*
  * Local Variables:
  *	tab-width: 4

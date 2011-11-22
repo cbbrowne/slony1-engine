@@ -6,7 +6,7 @@
  *	Copyright (c) 2003-2009, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *
- *	
+ *
  *-------------------------------------------------------------------------
  */
 #ifndef SLONIK_H
@@ -573,7 +573,7 @@ extern int	slonik_switch_log(SlonikStmt_switch_log * stmt);
 extern int	slonik_sync(SlonikStmt_sync * stmt);
 extern int	slonik_sleep(SlonikStmt_sleep * stmt);
 
-extern int	slon_scanint64(char *str, int64 * result);
+extern int	slon_scanint64(char *str, int64 *result);
 
 
 /*
@@ -590,24 +590,24 @@ void		db_notice_recv(void *arg, const char *msg);
 int			db_connect(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
 int			db_disconnect(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
 
-int			db_exec_command(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+int db_exec_command(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
 				SlonDString * query);
-int			db_exec_evcommand(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-				SlonDString * query);
-int			db_exec_evcommand_p(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-				SlonDString * query, int nParams, const Oid *paramTypes, 
-				const char *const *paramValues, const int *paramLengths, 
-				const int *paramFormats, int resultFormat);
-PGresult   *db_exec_select(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-				SlonDString * query);
+int db_exec_evcommand(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+				  SlonDString * query);
+int db_exec_evcommand_p(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+					SlonDString * query, int nParams, const Oid *paramTypes,
+					const char *const * paramValues, const int *paramLengths,
+					const int *paramFormats, int resultFormat);
+PGresult *db_exec_select(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+			   SlonDString * query);
 int			db_get_version(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
-int			db_check_namespace(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-				char *clustername);
-int			db_check_requirements(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-				char *clustername);
+int db_check_namespace(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+				   char *clustername);
+int db_check_requirements(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+					  char *clustername);
 int			db_get_nodeid(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
-int			db_begin_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
-						  bool suppress_locking);
+int db_begin_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo,
+			  bool suppress_locking);
 int			db_commit_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
 int			db_rollback_xact(SlonikStmt * stmt, SlonikAdmInfo * adminfo);
 
@@ -633,7 +633,8 @@ extern int	yylex(void);
 /*
  * Common option types
  */
-typedef enum {
+typedef enum
+{
 	O_ADD_ID,
 	O_ADD_SEQUENCES,
 	O_BACKUP_NODE,
@@ -676,21 +677,21 @@ typedef enum {
 /*
  * Common given option list
  */
-typedef struct option_list {
-	option_code	opt_code;
+typedef struct option_list
+{
+	option_code opt_code;
 	int			lineno;
 	int32		ival;
 	char	   *str;
 
 	struct option_list *next;
-} option_list;
+}	option_list;
 
 
 #ifdef WIN32
 #define strtoll _strtoui64
 #define snprintf _snprintf
 #endif
-
 #endif
 /*
  * Local Variables:
