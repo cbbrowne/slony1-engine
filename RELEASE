@@ -1,6 +1,19 @@
 #+OPTIONS: ^:{}
 * Slony-I Release Notes
 
+** 2.2.0
+
+- Bug #235 :: Redo SYNC GROUP SIZE logic to:
+  - Start at 1
+  - Double upon success, maxxing out based on the value of
+    sync_group_maxsize
+  - As we restart the remote worker thread upon failure, failure
+    resets group size back to 1
+  - This gets rid of complex logic that had the false conceit that we
+    had any idea as to how long one might expect a SYNC to run, and
+    could extrapolate to imagine that this notion could be used to
+    estimate how long SYNC processing might be imagined to take.
+
 ** 2.1.0 (post-beta 3)
 
 - Bug #226 :: Cleanup thread needed change to expected PQResultStatus
