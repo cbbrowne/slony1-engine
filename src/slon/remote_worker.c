@@ -253,9 +253,7 @@ typedef enum
 {
 	SYNC_INITIAL = 1,
 	SYNC_PENDING,
-	SYNC_SUCCESS,
-	SYNC_FAILURE
-
+	SYNC_SUCCESS
 } SlonSyncStatus;
 
 int			quit_sync_provider;
@@ -583,7 +581,11 @@ remoteWorkerThread_main(void *cdata)
 				if (sync_status == SYNC_SUCCESS) 
 					sg_proposed = sg_last_grouping * 2;
 				else 
-					sg_proposed /= 2;
+					sg_proposed /= 2;   /* This case, at this point, amounts to
+										 * "reset to 1", since when there is a
+										 * failure, the remote worker thread
+										 * restarts, resetting group size to
+										 * 1 */
 				if (sg_proposed < 1)
 					sg_proposed = 1;
 				if (sg_proposed > sync_group_maxsize) 
