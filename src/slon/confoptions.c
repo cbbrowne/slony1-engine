@@ -80,8 +80,8 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{
 			(const char *) "sync_group_maxsize",
-			gettext_noop("maximum number of SYNCs grouped together into one transaction"),
-			gettext_noop("maximum number of SYNCs grouped together into one transaction"),
+			gettext_noop("maximum number of SYNCs to be grouped together into one transaction"),
+			gettext_noop("if running log shipping, and collecting archives on multiple nodes it is likely desirable to set this to 1 so they are certain to have agreeable contents"),
 			SLON_C_INT
 		},
 		&sync_group_maxsize,
