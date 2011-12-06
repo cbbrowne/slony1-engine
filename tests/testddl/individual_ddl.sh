@@ -5,6 +5,6 @@ echo "
        SET ID = 1,
        FILENAME = '${testname}/ddl_update_part2.sql',
        EVENT NODE = ${tnode},
-       EXECUTE ONLY ON = ${tnode}
+       EXECUTE ONLY ON = '${tnode}'
     );
 "

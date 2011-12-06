@@ -2769,19 +2769,17 @@ FAILOVER (
       
      </varlistentry>
      <varlistentry><term><literal> EVENT NODE = ival </literal></term>
-      <listitem><para> (Mandatory unless EXECUTE ONLY ON is given) The ID 
+      <listitem><para> (Mandatory.) The ID 
 	  of the current origin of the set. If EXECUTE ONLY ON
 	  is given, EVENT NODE must specify the same node or
 	  be omitted.</para></listitem>
       
      </varlistentry>
-     <varlistentry><term><literal> EXECUTE ONLY ON = ival
-       </literal></term> <listitem><para> (Optional) The ID of the only
-	node to actually execute the script.  This option causes the
-	script to be propagated by all nodes but executed only by one.
-	The default is to execute the script on all nodes that are
-	subscribed to the set.</para></listitem>
-      
+     <varlistentry><term><literal> EXECUTE ONLY ON = sval or ival
+       </literal></term> <listitem><para> (Optional) A list of
+       comma-separated integers indicating nodes on which to actually
+       execute the script, or an integer indicating the sole node on
+       which to execute the script.</para></listitem>
      </varlistentry>
     </variablelist>
     
@@ -2805,7 +2803,8 @@ FAILOVER (
 EXECUTE SCRIPT (
    SET ID = 1,
    FILENAME = '/tmp/changes_2008-04-01.sql',
-   EVENT NODE = 1
+   EVENT NODE = 1,
+   EXECUTE ONLY ON='1,2,3'
 );
     </programlisting>
    </refsect1>
@@ -2814,19 +2813,10 @@ EXECUTE SCRIPT (
     <para> Up until the 2.0 branch, each replicated table received an
     exclusive lock, on the origin node, in order to remove the
     replication triggers; after the DDL script completes, those locks
-    will be cleared. In the 2.0 branch this is no longer the case.
-    EXECUTE SCRIPT won't obtain any locks on your application tables
-    though the script that you executing probably will. Due to bug #137
-    you should avoid concurrent writes to the tables being
-    modified by the script while the script is running.  </para>
-
-    <para> After the DDL script has run on the origin node, it will
-    then run on subscriber nodes, where replicated tables will be
-    similarly altered to remove replication triggers, therefore
-    requiring that exclusive locks be taken out on each node, in
-    turn. </para>
-
-  
+    will be cleared. As of 2.0, this is no longer the case.  EXECUTE
+    SCRIPT won't automatically request locks on your application
+    tables, though the script that you executing will implicitly take
+    out locks on tables that the queries access and/or alter.</para>
 
    </refsect1>
 
@@ -2879,6 +2869,10 @@ EXECUTE SCRIPT (
    may be used manually to correct the triggers on those
    tables.</para>
 
+   <para> In version 2.2, the SQL script is split into a series of SQL
+   queries, and each is captured in a new log table, &sllogscript;
+   with the same transaction and ordering information as is used for
+   &sllog1; and &sllog2;.  </para>
    </refsect1>
   </refentry>
 
