@@ -60,3 +60,9 @@
           apply the outstanding log entries, and so that confirmations
           are passed back to all nodes in order that the cleanup can
           be finalized.
+
+*** Bugfixes
+- Bug #250 :: Log shipper does not report application name - add in setting of GUC
+
+- Bug #235 :: SYNC GROUP sizes are now dynamically grow from 1 to a maximum size set in the config file.  The old logic based on time it took to complete the last SYNC has been removed.
+
