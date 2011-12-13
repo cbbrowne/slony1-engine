@@ -16,7 +16,7 @@ SFILES=$(wildcard *.c)
 CC = $(PTHREAD_CC)
 
 override CFLAGS += $(PTHREAD_CFLAGS) -I$(slony_top_builddir) -I$(slony_top_builddir)/$(slony_subdir)
-override LDFLAGS += $(PTHREAD_LIBS)
+override LDFLAGS += $(PTHREAD_LIBS) 
 
 PROG		= slon
 
@@ -34,6 +34,7 @@ OBJS		= \
     remote_listen.o		\
     remote_worker.o		\
     sync_thread.o		\
+    monitor_thread.o	\
     cleanup_thread.o	\
     scheduler.o		\
     dbutils.o		\
@@ -69,6 +70,7 @@ runtime_config.o:	runtime_config.c slon.h
 scheduler.o:		scheduler.c slon.h
 slon.o:				slon.c slon.h
 sync_thread.o:		sync_thread.c slon.h
+monitor_thread.o:	monitor_thread.c slon.h
 conf-file.o:		conf-file.c slon.h confoptions.h
 confoptions.o:		confoptions.c slon.h confoptions.h
 
@@ -76,8 +78,8 @@ conf-file.c:		conf-file.l
 ifdef FLEX
 	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
-    @echo "Missing flex $< $@"
-    @exit
+	@echo "Missing flex $< $@"
+	@exit
 endif
 
 clean distclean:

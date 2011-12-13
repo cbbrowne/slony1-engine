@@ -1,15 +1,15 @@
 <!--  -->
 <sect1 id="installation">
-<title>&slony1; Installation</title>
+<title>&slony1; Building & Installation</title>
 
 <indexterm><primary>installation instructions</primary></indexterm>
 
 <note> <para>For &windows; users: Unless you are planning on hacking
 the &slony1; code, it is highly recommended that you download and
 install a prebuilt binary distribution and jump straight to the
-configuration section below.  There are likely to be links and/or
-binaries at <ulink url="http://pgfoundry.org/projects/slony1/">
-pgFoundry &slony1; site </ulink>.
+configuration section below.  Prebuilt binaries are available 
+from the StackBuilder application included in the <ulink url="http://www.enterprisedb.com/downloads/postgres-postgresql-downloads"> EnterpriseDB
+PostgreSQL installer</ulink>
 
 <para> There are also RPM binaries available at that site for recent
 versions of &slony1; for recent versions of &postgres;.
@@ -210,6 +210,64 @@ is, for versions of &slony1; </para>
 
 </sect2>
 
+<sect2 id="buildingwin32"><title>Building on Win32</title>
+<para>
+Building &slony1; on Win32 with the Microsoft SDK (Visual Studio) is 
+different than building &slony1; on other platforms.  Visual Studio
+builds can be done with out involving configure or gmake.
+
+To build &slony1 you need
+</para>
+<itemizedlist>
+<listitem><para>The &slony1; source from a source distribution tar
+(The distribution tar files contain pre-built copies of the parser and 
+scanner generated files.  The Win32 makefiles do not currently support
+building these).</para></listitem>
+<listitem><para>&postgres; binaries, headers and libraries. </para></listitem>
+<listitem><para> <ulink url="http://sources.redhat.com/pthreads-win32">pthreads for win32</ulink></para></listitem>
+<listitem><para>The Microsoft SDK 6.1 or Visual Studio 2008 (other versions
+might work)</para></listitem>
+<listitem><para><ulink url="http://sourceforge.net/projects/gettext/">gettext 
+for win32</ulink></para></listitem>
+</itemizedlist>
+
+<para>
+To compile the &slony1; binaries you will need to
+<itemizedlist>
+<listitem><para>Set the environment variables PGSHARE,PG_INC,PG_LIB,
+PTHREADS_INC,PTHREADS_LIB, GETTEXT_LIB to point to the proper locations
+based on where these applications were installed.  For example</para>
+<programlisting>
+set PG_INC=c:\Postgresql\9.0\include
+set PG_LIB=c:\Postgresql\9.0\lib
+set PGSHARE=c:\\Postgresql\\9.0\\share
+set PTHREADS_INC=c:\pthreads-win32\include
+set PTHREADS_LIB=c:\pthreads-win32\lib
+set GETTEXT_LIB=c:\gettext\lib
+</programlisting>
+<para>
+Note that the backslash characters must be escaped for PGSHARE as in the
+above example</para>
+</listitem>
+
+<para>
+From the Visual Studio or Microsoft Windows SDK command prompt run
+<programlisting>
+cd src\backend
+nmake /f win32.mak slony1_funcs.dll
+cd ..\slon
+nmake /f win32.mak slon.exe
+cd ..\slonik
+nmake /f win32.mak slonik.exe
+</programlisting>
+</para>
+<para>
+src\backend\slony1_funcs.dll and any of the .sql files in 
+src\backend need to be installed in your postgresql $share directory.
+</para>
+
+</sect2>
+
 <sect2 id="buildingdocs"> <title> Building Documentation: Admin Guide </title>
 
 <indexterm><primary> building &slony1; documentation </primary></indexterm>
@@ -242,7 +300,7 @@ packages. Slony Global Development Team provides official RPMs and
 SRPMs for many versions or Red Hat and Fedora .</para>
 
 <para>The RPMs are available at <ulink
-url="http://yum.pgsqlrpms.org"> &postgres RPM Repository
+url="http://yum.postgresql.org"> &postgres RPM Repository
 </ulink>. Please read the howto provided in the website for configuring
 yum to use that repository. Please note that the RPMs will look for RPM
 installation of &postgres;, so if you install &postgres; from source,
@@ -308,10 +366,6 @@ to see the following URLs: </para>
 <listitem><para> <ulink
 url="http://developer.pgadmin.org/~hiroshi/Slony-I/"> Slony-I Windows
 installer sample </ulink> </para> </listitem>
-
-<listitem><para> <ulink url=
-"http://people.planetpostgresql.org/xzilla/index.php?/archives/200-Alpha-testing-Slony-on-win32-Crib-Notes.html">
-xzilla's Alpha testing Slony on win32 Crib Notes </ulink> </para> </listitem>
 
 </itemizedlist>
 

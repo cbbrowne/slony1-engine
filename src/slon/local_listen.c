@@ -16,12 +16,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
 #include <sys/types.h>
+#ifndef WIN32
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
 
 #include "slon.h"
 
@@ -57,6 +60,8 @@ localListenThread_main(/* @unused@ */ void *dummy)
 	if ((conn = slon_connectdb(rtcfg_conninfo, "local_listen")) == NULL)
 		slon_retry();
 	dbconn = conn->dbconn;
+
+	monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, "thread main loop", 0, "n/a");
 
 	/*
 	 * Initialize local data
@@ -237,6 +242,9 @@ localListenThread_main(/* @unused@ */ void *dummy)
 					 rtcfg_nodeid, PQgetvalue(res, tupno, 0),
 					 ev_type);
 
+			monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, ev_type, 0, ev_type);
+
+
 			if (strcmp(ev_type, "SYNC") == 0)
 			{
 				/*
@@ -314,11 +322,9 @@ localListenThread_main(/* @unused@ */ void *dummy)
 				 * CLONE_NODE
 				 */
 				int			no_id;
-				int			no_provider;
 				char	   *no_comment;
 
 				no_id = (int)strtol(PQgetvalue(res, tupno, 6), NULL, 10);
-				no_provider = (int)strtol(PQgetvalue(res, tupno, 7), NULL, 10);
 				no_comment = PQgetvalue(res, tupno, 8);
 
 				rtcfg_storeNode(no_id, no_comment);
@@ -422,10 +428,8 @@ localListenThread_main(/* @unused@ */ void *dummy)
 				/*
 				 * MERGE_SET
 				 */
-				int			set_id;
 				int			add_id;
 
-				set_id = (int)strtol(PQgetvalue(res, tupno, 6), NULL, 10);
 				add_id = (int)strtol(PQgetvalue(res, tupno, 7), NULL, 10);
 
 				rtcfg_dropSet(add_id);
@@ -724,6 +728,7 @@ localListenThread_main(/* @unused@ */ void *dummy)
 		/*
 		 * Wait for notify or for timeout
 		 */
+		monitor_state("local_listen", rtcfg_nodeid, conn->conn_pid, "thread main loop", 0, "n/a");
 		if (sched_wait_time(conn, SCHED_WAIT_SOCK_READ, poll_sleep) != SCHED_STATUS_OK)
 			break;
 	}

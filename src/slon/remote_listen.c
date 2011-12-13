@@ -16,12 +16,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
 #include <sys/types.h>
+#ifndef WIN32
+#include <sys/time.h>
+#include <unistd.h>
+#endif
 
 #include "slon.h"
 
@@ -224,6 +226,7 @@ remoteListenThread_main(void *cdata)
 				continue;
 			}
 			dbconn = conn->dbconn;
+			monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 
 			/*
 			 * Listen on the connection for events and confirmations and
@@ -289,6 +292,52 @@ remoteListenThread_main(void *cdata)
 					break;
 
 				continue;
+			}
+			if(PQserverVersion(dbconn) >= 90100) 
+			{
+				slon_mkquery(&query1,"SET SESSION CHARACTERISTICS AS TRANSACTION read only deferrable");
+				res = PQexec(dbconn, dstring_data(&query1));
+				if (PQresultStatus(res) != PGRES_COMMAND_OK)
+				{
+					slon_log(SLON_ERROR,
+							 "remoteListenThread_%d: \"%s\" - %s",
+							 node->no_id,
+							 dstring_data(&query1), PQresultErrorMessage(res));
+					PQclear(res);
+					slon_disconnectdb(conn);
+					free(conn_conninfo);
+					conn = NULL;
+					conn_conninfo = NULL;
+					rc = sched_msleep(node, pa_connretry * 1000);
+					if (rc != SCHED_STATUS_OK && rc != SCHED_STATUS_CANCEL)
+						break;
+					
+					continue;
+				}						
+			
+			}
+			if(PQserverVersion(dbconn) >= 90100)
+			{
+				slon_mkquery(&query1,"SET SESSION CHARACTERISTICS AS TRANSACTION read only isolation level serializable deferrable");
+				res = PQexec(dbconn, dstring_data(&query1));
+				if (PQresultStatus(res) != PGRES_COMMAND_OK)
+				{
+					slon_log(SLON_ERROR,
+							 "remoteListenThread_%d: \"%s\" - %s",
+							 node->no_id,
+							 dstring_data(&query1), PQresultErrorMessage(res));
+					PQclear(res);
+					slon_disconnectdb(conn);
+					free(conn_conninfo);
+					conn = NULL;
+					conn_conninfo = NULL;
+					rc = sched_msleep(node, pa_connretry * 1000);
+					if (rc != SCHED_STATUS_OK && rc != SCHED_STATUS_CANCEL)
+						break;
+
+					continue;
+				}
+
 			}
 			slon_log(SLON_DEBUG1,
 					 "remoteListenThread_%d: connected to '%s'\n",
@@ -518,6 +567,7 @@ remoteListen_forward_confirm(SlonNode * node, SlonConn * conn)
 	int			tupno;
 
 	dstring_init(&query);
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "forwarding confirmations", 0, "n/a");
 
 	/*
 	 * Select the max(con_seqno) grouped by con_origin and con_received from
@@ -560,6 +610,7 @@ remoteListen_forward_confirm(SlonNode * node, SlonConn * conn)
 
 	PQclear(res);
 	dstring_free(&query);
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 
 	return 0;
 }
@@ -599,6 +650,7 @@ remoteListen_receive_events(SlonNode * node, SlonConn * conn,
 	 * <remote_node> and ev_seqno > <last_seqno>) per remote node we're listen
 	 * for here.
 	 */
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "receiving events", 0, "n/a");
 	(void) slon_mkquery(&query,
 				 "select ev_origin, ev_seqno, ev_timestamp, "
 				 "       ev_snapshot, "
@@ -757,5 +809,6 @@ remoteListen_receive_events(SlonNode * node, SlonConn * conn,
 			}
 	}
 	PQclear(res);
+	monitor_state("remote listener", node->no_id, conn->conn_pid, "thread main loop", 0, "n/a");
 	return 0;
 }

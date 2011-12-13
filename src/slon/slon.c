@@ -16,15 +16,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
 #ifndef WIN32
 #include <sys/time.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #endif
 #include <sys/types.h>
-#include <sys/wait.h>
+
 
 
 #ifdef WIN32
@@ -34,9 +35,10 @@
 #endif
 
 #include "libpq-fe.h"
-#include "c.h"
 
 #include "slon.h"
+
+
 #include "confoptions.h"
 
 
@@ -57,6 +59,7 @@ int			sched_wakeuppipe[2];
 pthread_mutex_t slon_wait_listen_lock;
 pthread_cond_t slon_wait_listen_cond;
 int            slon_listen_started=0;
+bool	monitor_threads;
 
 /* ----------
  * Local data
@@ -66,6 +69,7 @@ static void slon_exit(int code);
 static pthread_t local_event_thread;
 static pthread_t local_cleanup_thread;
 static pthread_t local_sync_thread;
+static pthread_t local_monitor_thread;
 
 static pthread_t main_thread;
 static char *const *main_argv;
@@ -779,6 +783,17 @@ SlonMain(void)
     }
 
     /*
+     * Create the local monitor thread that will process monitoring requests
+     */
+	if (monitor_threads) {
+		if (pthread_create(&local_monitor_thread, NULL, monitorThread_main, NULL) < 0)
+		{
+			slon_log(SLON_FATAL, "main: cannot create monitorThread - %s\n",
+					 strerror(errno));
+			slon_retry();
+		}
+	}
+    /*
      * Wait until the scheduler has shut down all remote connections
      */
     slon_log(SLON_INFO, "main: running scheduler mainloop\n");
@@ -810,6 +825,10 @@ SlonMain(void)
 
     if (pthread_join(local_sync_thread, NULL) < 0)
         slon_log(SLON_ERROR, "main: cannot join syncThread - %s\n",
+                 strerror(errno));
+
+    if (pthread_join(local_monitor_thread, NULL) < 0)
+        slon_log(SLON_ERROR, "main: cannot join monitorThread - %s\n",
                  strerror(errno));
 
     slon_log(SLON_CONFIG, "main: done\n");
@@ -1069,11 +1088,13 @@ slon_exit(int code)
 static sighandler_t install_signal_handler(int signo,  sighandler_t handler)
 {
 
-#ifndef CYGWIN
-    struct sigaction act;
-    act.sa_handler = handler;
-    (void) sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_NODEFER;
+  
+#ifndef WIN32
+	struct sigaction act;
+	act.sa_handler = handler;
+	(void) sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_NODEFER;
+
 
 
     if(sigaction(signo, &act, NULL) < 0)

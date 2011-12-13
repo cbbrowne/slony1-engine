@@ -15,12 +15,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
 #include <sys/types.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#include <sys/time.h>
+#endif
 
 #include "slon.h"
 
@@ -59,6 +62,7 @@ syncThread_main(void *dummy)
 	if ((conn = slon_connectdb(rtcfg_conninfo, "local_sync")) == NULL)
 		slon_retry();
 	dbconn = conn->dbconn;
+	monitor_state("local_sync", 0, conn->conn_pid, "thread main loop", 0, "n/a");
 
 	/*
 	 * We don't initialize the last known action sequence to the actual value.
@@ -75,8 +79,9 @@ syncThread_main(void *dummy)
 	slon_mkquery(&query1,
 				 "start transaction;"
 				 "set transaction isolation level serializable;"
+				 "lock table %s.sl_event_lock;"
 				 "select last_value from %s.sl_action_seq;",
-				 rtcfg_namespace);
+				 rtcfg_namespace, rtcfg_namespace);
 
 	/*
 	 * Build the query that calls createEvent() for the SYNC
@@ -119,6 +124,7 @@ syncThread_main(void *dummy)
 			 * Action sequence has changed, generate a SYNC event and read the
 			 * resulting currval of the event sequence.
 			 */
+			monitor_state("local_sync", 0, conn->conn_pid, "GenSync", 0, "n/a");
 			strcpy(last_actseq_buf, PQgetvalue(res, 0, 0));
 
 			PQclear(res);
@@ -174,6 +180,7 @@ syncThread_main(void *dummy)
 			}
 			PQclear(res);
 		}
+		monitor_state("local_sync", 0, conn->conn_pid, "thread main loop", 0, "n/a");
 	}
 
 	dstring_free(&query1);

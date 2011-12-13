@@ -12,23 +12,31 @@
 
 #ifndef SLON_H_INCLUDED
 #define SLON_H_INCLUDED
-
+#ifdef MSVC 
+#include "config_msvc.h"
+#else
 #include "config.h"
+#endif
+#include "types.h"
 #include "libpq-fe.h"
-#include "postgres_fe.h"
 #include "misc.h"
 #include "conf-file.h"
 #include "confoptions.h"
+#include <pg_config.h>
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <sys/time.h>
+#endif
+
 
 #define SLON_MEMDEBUG	1
-
 #ifndef false
 #define   false 0
 #endif
 #ifndef true
-#define   true (~false)
+#define   true 1
 #endif
-
 
 #undef	SLON_CHECK_CMDTUPLES
 
@@ -75,8 +83,25 @@ typedef struct SlonNode_s SlonNode;
 typedef struct SlonListen_s SlonListen;
 typedef struct SlonSet_s SlonSet;
 typedef struct SlonConn_s SlonConn;
+typedef struct SlonState_s SlonState;
 
 typedef struct SlonWorkMsg_s SlonWorkMsg;
+
+/* ----------
+ * SlonState
+ * ----------
+ */
+struct SlonState_s
+{
+		char *actor;
+		pid_t pid;
+		int node;
+		pid_t conn_pid;
+		char *activity;
+		time_t start_time;
+		int64 event;
+		char *event_type;
+};
 
 /* ----------
  * SlonNode
@@ -164,6 +189,7 @@ struct SlonConn_s
     int			condition;		/* what are we waiting for? */
     struct timeval timeout;		/* timeofday for timeout */
     int	pg_version;		/* PostgreSQL version */
+	int conn_pid;       /* PID of connection */
 
     SlonConn   *prev;
     SlonConn   *next;
@@ -498,6 +524,21 @@ extern int	sync_interval_timeout;
 extern void *syncThread_main(void *dummy);
 
 /* ----------
+ * Functions in monitor_thread.c
+ * ----------
+ */
+extern void *monitorThread_main(void *dummy);
+extern void monitor_state (const char *actor, int node, pid_t conn_pid, const char *activity, int64 event, const char *event_type);
+
+/* ----------
+ * Globals in monitor_thread.c
+ * ----------
+ */
+extern int	monitor_interval;
+extern bool	monitor_threads;
+
+
+/* ----------
  * Functions in local_listen.c
  * ----------
  */
@@ -566,8 +607,8 @@ extern void slon_free_dummyconn(SlonConn * conn);
 extern int	db_getLocalNodeId(PGconn *conn);
 extern int	db_checkSchemaVersion(PGconn *conn);
 
-extern int	slon_mkquery(SlonDString * ds, char *fmt,...);
-extern int	slon_appendquery(SlonDString * ds, char *fmt,...);
+extern void	slon_mkquery(SlonDString * ds, char *fmt,...);
+extern void	slon_appendquery(SlonDString * ds, char *fmt,...);
 extern char *sql_on_connection;
 
 /* ----------
@@ -585,6 +626,11 @@ extern int	slon_log_level;
 #define piperead(a,b,c)		read(a,b,c)
 #define pipewrite(a,b,c)	write(a,b,c)
 #endif
+
+#if defined(WIN32)
+#define snprintf pg_snprintf
+#endif
+
 
 #endif   /* SLON_H_INCLUDED */
 
