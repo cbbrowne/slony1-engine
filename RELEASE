@@ -3,7 +3,7 @@
 ** 2.2.0 (beta 1)
 *** Significant New Features
 
-    - Switch to use COPY protocol for handling sl_log_* data
+** 2.2.0
 
      Since the schema of tables ~sl_log_1~ and ~sl_log_2~ are changing
      substantially, capturing somewhat different information, there is
@@ -56,3 +56,5 @@
     - Bug #250 :: Log shipper does not report application name - add in setting of GUC
 
     - Bug #235 :: SYNC GROUP sizes are now dynamically grow from 1 to a maximum size set in the config file.  The old logic based on time it took to complete the last SYNC has been removed.
+
+    - Bug #240 :: Improve notes on VACUUM
