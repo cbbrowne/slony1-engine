@@ -109,8 +109,8 @@ function mknodes () {
 
 
 if [[ "x${TEXT}" -eq "xtrue" ]]; then
-    echo "Generating output according to node [${MYNODE}]"
-
+    echo "Drawing Slony state according to node [${MYNODE}]"
+    date
     echo "Nodes in cluster"
     RQ "
  select n.no_id as node, no_comment as description, 
