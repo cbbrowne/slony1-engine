@@ -134,6 +134,7 @@ typedef struct apply_cache_entry
 	char		key[16];
 
 	void	   *plan;
+	bool		forward;
 	struct apply_cache_entry *prev;
 	struct apply_cache_entry *next;
 	struct apply_cache_entry *self;
@@ -764,6 +765,9 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 {
 	static TransactionId currentXid = InvalidTransactionId;
 	static void	*script_insert_plan = NULL;
+	static void *table_forward_plan = NULL;
+	static char *query = NULL;
+	static int	query_alloc = 0;
 
 	TransactionId newXid = GetTopTransactionId();
 	TriggerData *tg;
@@ -774,8 +778,6 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	bool		isnull;
 	Relation	target_rel;
 
-	static char *query = NULL;
-	static int	query_alloc = 0;
 	char		*query_pos;
 	Datum		dat;
 	char		cmdtype;
@@ -1410,6 +1412,9 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		int32	localNodeId;
+		Datum	query_args[2];
+
 		/*
 		 * Query plan not found in plan cache, need to SPI_prepare() it.
 		 */
@@ -1462,6 +1467,48 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 				elog(ERROR, "Slony-I: cached queries hash entry not found "
 						"on evict");
 		}
+
+		/*
+		 * We also need to determine if this table belongs to a
+		 * set, that we are a forwarder of.
+		 */
+		if (table_forward_plan == NULL)
+		{
+			char	query[1024];
+			Oid		argtypes[2];
+
+			sprintf(query,
+					"select sub_forward from "
+					" %s.sl_subscribe, %s.sl_table "
+					" where tab_id = $1 and tab_set = sub_set "
+					" and sub_receiver = $2;",
+					slon_quote_identifier(NameStr(*cluster_name)),
+					slon_quote_identifier(NameStr(*cluster_name)));
+			
+			argtypes[0] = INT4OID;
+			argtypes[1] = INT4OID;
+
+			table_forward_plan = SPI_saveplan(
+					SPI_prepare(query, 2, argtypes));
+			if (table_forward_plan == NULL)
+				elog(ERROR, "SPI_prepare() for query '%s' faile", query);
+		}
+
+		localNodeId = getClusterStatus(cluster_name, PLAN_NONE)->localNodeId;
+		query_args[0] = SPI_getbinval(new_row, tupdesc, 
+			SPI_fnumber(tupdesc, "log_tableid"), &isnull);
+		query_args[1] = Int32GetDatum(localNodeId);
+
+		if (SPI_execp(table_forward_plan, query_args, NULL, 0) < 0)
+			elog(ERROR, "SPI_execp() failed for table forward lookup");
+
+		if (SPI_processed != 1)
+			elog(ERROR, "forwarding lookup for table %d failed",
+					DatumGetInt32(query_args[1]));
+
+		cacheEnt->forward = DatumGetBool(
+				SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc,
+					SPI_fnumber(SPI_tuptable->tupdesc, "sub_forward"), &isnull));
 	}
 
 	/*
@@ -1473,8 +1520,12 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 		elog(ERROR, "Slony-I: SPI_execp() for query '%s' failed - rc=%d",
 				query, spi_rc);
 
+
 	SPI_finish();
-	return PointerGetDatum(tg->tg_trigtuple);
+	if (cacheEnt->forward)
+		return PointerGetDatum(tg->tg_trigtuple);
+	else
+		return PointerGetDatum(NULL);
 }
 
 
