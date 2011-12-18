@@ -763,6 +763,7 @@ Datum
 _Slony_I_logApply(PG_FUNCTION_ARGS)
 {
 	static TransactionId currentXid = InvalidTransactionId;
+	static void	*script_insert_plan = NULL;
 
 	TransactionId newXid = GetTopTransactionId();
 	TriggerData *tg;
@@ -860,22 +861,136 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Get all the relevant data from the log row.
+	 * Get the cmdtype first.
 	 */
 	new_row = tg->tg_trigtuple;
 	tupdesc = tg->tg_relation->rd_att;
-
-	nspname = SPI_getvalue(new_row, tupdesc, 
-			SPI_fnumber(tupdesc, "log_tablenspname"));
-
-	relname = SPI_getvalue(new_row, tupdesc,
-			SPI_fnumber(tupdesc, "log_tablerelname"));
 
 	dat = SPI_getbinval(new_row, tupdesc, 
 			SPI_fnumber(tupdesc, "log_cmdtype"), &isnull);
 	if (isnull)
 		elog(ERROR, "Slony-I: log_cmdtype is NULL");
 	cmdtype = DatumGetChar(dat);
+
+	/*
+	 * Rows coming from sl_log_script are handled different from
+	 * regular data log rows since they don't have all the columns.
+	 */
+	if (cmdtype == 'S')
+	{
+		char	   *ddl_script;
+		int32		localNodeId;
+		bool		localNodeFound = true;
+		Datum		script_insert_args[4];
+
+		localNodeId = getClusterStatus(cluster_name, PLAN_NONE)->localNodeId;
+
+		dat = SPI_getbinval(new_row, tupdesc, 
+				SPI_fnumber(tupdesc, "log_cmdargs"), &isnull);
+		if (isnull)
+			elog(ERROR, "Slony-I: log_cmdargs is NULL");
+
+		/*
+		 * Turn the log_cmdargs into a plain array of Text Datums.
+		 */
+		deconstruct_array(DatumGetArrayTypeP(dat), 
+				TEXTOID, -1, false, 'i', 
+				&cmdargs, &cmdargsnulls, &cmdargsn);
+		
+		/*
+		 * The first element is the DDL statement itself.
+		 */
+		ddl_script = DatumGetCString(DirectFunctionCall1(
+						textout, cmdargs[0]));
+		
+		/*
+		 * If there is an optional node ID list, check that we are in it.
+		 */
+		if (cmdargsn > 1) {
+			localNodeFound = false;
+			for (i = 1; i < cmdargsn; i++)
+			{
+				int32	nodeId = DatumGetInt32(
+									DirectFunctionCall1(int4in,
+									DirectFunctionCall1(textout, cmdargs[i])));
+				if (nodeId == localNodeId)
+				{
+					localNodeFound = true;
+					break;
+				}
+			}
+		}
+
+		/*
+		 * Execute the DDL statement if the node list is empty or our
+		 * local node ID appears in it.
+		 */
+		if (localNodeFound)
+		{
+			if (SPI_exec(ddl_script, 0) < 0)
+			{
+				elog(ERROR, "SPI_exec() failed for DDL statement '%s'",
+					ddl_script);
+			}
+
+			/*
+			 * Set the currentXid to invalid to flush the apply
+			 * query cache.
+			 */
+			currentXid = InvalidTransactionId;
+		}
+
+		if (script_insert_plan == NULL)
+		{
+			char query[1024];
+			Oid  argtypes[4];
+
+			sprintf(query, "insert into %s.sl_log_script "
+					"(log_origin, log_txid, log_actionseq, log_cmdargs) "
+					"values ($1, $2, $3, $4);",
+					slon_quote_identifier(NameStr(*cluster_name)));
+
+			argtypes[0] = INT4OID;
+			argtypes[1] = INT8OID;
+			argtypes[2] = INT8OID;
+			argtypes[3] = TEXTARRAYOID;
+
+			script_insert_plan = SPI_saveplan(
+					SPI_prepare(query, 4, argtypes));
+			if (script_insert_plan == NULL)
+				elog(ERROR, "SPI_prepare() failed for query '%s'", query);
+		}
+
+		/*
+		 * Build the parameters for the insert into sl_log_script
+		 * and execute the query.
+		 */
+		script_insert_args[0] = SPI_getbinval(new_row, tupdesc, 
+				SPI_fnumber(tupdesc, "log_origin"), &isnull);
+		script_insert_args[1] = SPI_getbinval(new_row, tupdesc, 
+				SPI_fnumber(tupdesc, "log_txid"), &isnull);
+		script_insert_args[2] = SPI_getbinval(new_row, tupdesc, 
+				SPI_fnumber(tupdesc, "log_actionseq"), &isnull);
+		script_insert_args[3] = SPI_getbinval(new_row, tupdesc, 
+				SPI_fnumber(tupdesc, "log_cmdargs"), &isnull);
+		if (SPI_execp(script_insert_plan, script_insert_args, NULL, 0) < 0)
+			elog(ERROR, "Execution of sl_log_script insert plan failed");
+
+		/*
+		 * Return NULL to suppress the insert into the original sl_log_N.
+		 */
+		SPI_finish();
+		return PointerGetDatum(NULL);
+	}
+
+	/*
+	 * Normal data log row. Get all the relevant data from the log row.
+	 */
+	nspname = SPI_getvalue(new_row, tupdesc, 
+			SPI_fnumber(tupdesc, "log_tablenspname"));
+
+	relname = SPI_getvalue(new_row, tupdesc,
+			SPI_fnumber(tupdesc, "log_tablerelname"));
 
 	dat = SPI_getbinval(new_row, tupdesc, 
 			SPI_fnumber(tupdesc, "log_cmdupdncols"), &isnull);

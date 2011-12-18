@@ -3342,29 +3342,49 @@ create or replace function @NAMESPACE@.ddlCapture (p_statement text, p_nodes tex
 returns integer
 as $$
 declare
-		c_node integer;
-		c_found_origin boolean;
-		c_only text;
+	c_local_node	integer;
+	c_found_origin	boolean;
+	c_node			text;
+	c_cmdargs		text[];
 begin
-    c_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
+	c_local_node := @NAMESPACE@.getLocalNodeId('_@CLUSTERNAME@');
+
+	c_cmdargs = array_append('{}'::text[], p_statement);
 	if p_nodes is not null then
-	   c_found_origin := 'f';
-	   -- p_nodes list needs to consist of a list of nodes that exist, and that include the current node ID
-	   for c_only in select node from pg_catalog.regexp_split_to_table(p_nodes, ',') as node loop
-	   	   if not exists (select 1 from @NAMESPACE@.sl_node where no_id = (c_only::integer)) then
-		   	  raise exception 'ddlcapture(%,%) - node % does not exist!', p_statement, p_nodes, c_only;
+		c_found_origin := 'f';
+		-- p_nodes list needs to consist of a list of nodes that exist
+		-- and that include the current node ID
+		for c_node in select trim(node) from
+				pg_catalog.regexp_split_to_table(p_nodes, ',') as node loop
+			if not exists 
+					(select 1 from @NAMESPACE@.sl_node 
+					where no_id = (c_node::integer)) then
+				raise exception 'ddlcapture(%,%) - node % does not exist!', 
+					p_statement, p_nodes, c_node;
 		   end if;
-		   if c_node = (c_only::integer) then
+
+		   if c_local_node = (c_node::integer) then
 		   	  c_found_origin := 't';
 		   end if;
+
+		   c_cmdargs = array_append(c_cmdargs, c_node);
 	   end loop;
-	   if not c_found_origin then
-		   	  raise exception 'ddlcapture(%,%) - origin node % not included in ONLY ON list!', p_statement, p_nodes, c_node;
+
+		if not c_found_origin then
+			raise exception 
+				'ddlcapture(%,%) - origin node % not included in ONLY ON list!',
+				p_statement, p_nodes, c_local_node;
        end if;
     end if;
+
 	execute p_statement;
-    insert into @NAMESPACE@.sl_log_script(log_origin, log_txid, log_actionseq, log_query, log_only_on)
-    values (c_node, pg_catalog.txid_current(), nextval('@NAMESPACE@.sl_action_seq'), p_statement, p_nodes);
+
+	insert into @NAMESPACE@.sl_log_script
+			(log_origin, log_txid, log_actionseq, log_cmdargs)
+		values 
+			(c_local_node, pg_catalog.txid_current(), 
+			nextval('@NAMESPACE@.sl_action_seq'), c_cmdargs);
+
 	return currval('@NAMESPACE@.sl_action_seq');
 end;
 $$ language plpgsql;

@@ -531,6 +531,7 @@ remoteWorkerThread_main(void *cdata)
 			 */
 
 			sync_group[0] = event;
+			sync_group_size = 1;
 			if (true)
 			{
 				int initial_proposed = sg_proposed;
@@ -577,7 +578,7 @@ remoteWorkerThread_main(void *cdata)
 
 				pthread_mutex_lock(&(node->message_lock));
 				sg_last_grouping = 1;   /* reset sizes */
-				sync_group_size = 0;
+				sync_group_size = 1;
 				while (sync_group_size < sg_proposed && sync_group_size < MAXGROUPSIZE && node->message_head != NULL)
 				{
 					if (node->message_head->msg_type != WMSG_EVENT)
@@ -632,8 +633,7 @@ remoteWorkerThread_main(void *cdata)
 
 			/*
 			 * replace query1 with the forwarding of all the grouped sync
-			 * events and a commit. Also free all the WMSG structures except
-			 * the last one (it's freed further down).
+			 * events and a commit.
 			 */
 			dstring_reset(&query1);
 			sg_last_grouping = 0;
@@ -3822,9 +3822,11 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 				 */
 				if (sl_log_no == 3) {
 					slon_appendquery(provider_query,
-									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
-									 " from %s.sl_log_script "
-									 " where log_origin = %d ",
+									 "select log_origin, log_txid, "
+									 "NULL::integer, log_actionseq, "
+									 "NULL, NULL, 'S', NULL, log_cmdargs "
+									 "from %s.sl_log_script "
+									 "where log_origin = %d ",
 									 rtcfg_namespace, node->no_id);
 				} else { /* sl_log_1 and sl_log_2 */
 					slon_appendquery(provider_query,
@@ -3895,10 +3897,12 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 
 				if (sl_log_no == 3) {
 					slon_appendquery(provider_query,
-									 "union all "
-									 " select log_origin, log_txid, NULL::integer, log_actionseq, log_only_on, log_query, 'S', NULL, NULL "
-									 " from %s.sl_log_script "
-									 " where log_origin = %d ",
+									"union all "
+									 "select log_origin, log_txid, "
+									 "NULL::integer, log_actionseq, "
+									 "NULL, NULL, 'S', NULL, log_cmdargs "
+									 "from %s.sl_log_script "
+									 "where log_origin = %d ",
 									 rtcfg_namespace, node->no_id);
 				} else {  /* sl_log_1 and sl_log_2 */
 					slon_appendquery(provider_query,
@@ -3910,7 +3914,7 @@ sync_event(SlonNode *node, SlonConn *local_conn,
 									 "from %s.sl_log_%d "
 									 "where log_origin = %d "
 									 "and log_tableid in (",
-								rtcfg_namespace, sl_log_no,
+									 rtcfg_namespace, sl_log_no,
 									 node->no_id);
 					for (tupno2 = 0; tupno2 < ntuples2; tupno2++)
 					{
