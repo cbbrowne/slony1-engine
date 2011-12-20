@@ -4513,16 +4513,6 @@ sync_helper(void *cdata,PGconn * local_conn)
 				PQfreemem(buffer);
 			break;
 		}
-		if (PQtransactionStatus(local_conn) != PQTRANS_INTRANS)
-		{
-			slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: transaction "
-					"aborted while writing to sl_log\n",
-					 node->no_id,provider->no_id);
-			errors++;			
-			if(buffer)
-				PQfreemem(buffer);
-			break;
-		}
 
 		if(archive_dir)
 			archive_append_data(node,buffer,rc);
@@ -4556,7 +4546,7 @@ sync_helper(void *cdata,PGconn * local_conn)
 	}
 
 	res = PQgetResult(dbconn);
-	if ( PQresultStatus(res) != PGRES_COPY_OUT )
+	if ( PQresultStatus(res) < 0 )
 	{
 		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error at end of COPY OUT: %s",
 				 node->no_id, provider->no_id,
@@ -4566,8 +4556,9 @@ sync_helper(void *cdata,PGconn * local_conn)
 	PQclear(res);
 
 	res = PQgetResult(local_conn);
-	if ( PQresultStatus(res) != PGRES_COPY_IN )
+	if ( PQresultStatus(res) < 0 )
 	{
+slon_log(SLON_ERROR, "status=%d - expected=%d\n", PQresultStatus(res), PGRES_COPY_IN);
 		
 		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error at end of COPY IN: %s",
 				 node->no_id, provider->no_id,
