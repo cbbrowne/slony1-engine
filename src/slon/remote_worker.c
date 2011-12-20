@@ -4558,8 +4558,6 @@ sync_helper(void *cdata,PGconn * local_conn)
 	res = PQgetResult(local_conn);
 	if ( PQresultStatus(res) < 0 )
 	{
-slon_log(SLON_ERROR, "status=%d - expected=%d\n", PQresultStatus(res), PGRES_COPY_IN);
-		
 		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error at end of COPY IN: %s",
 				 node->no_id, provider->no_id,
 				 PQresultErrorMessage(res));	
