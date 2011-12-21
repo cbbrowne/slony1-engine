@@ -4505,7 +4505,7 @@ sync_helper(void *cdata,PGconn * local_conn)
 		if (rc2 < 0 )
 		{
 			slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error writing" \
-					 " to sl_log:%s\n", 
+					 " to sl_log: %s\n", 
 					 node->no_id,provider->no_id,
 					 PQerrorMessage(local_conn));
 			errors++;			
@@ -4513,6 +4513,7 @@ sync_helper(void *cdata,PGconn * local_conn)
 				PQfreemem(buffer);
 			break;
 		}
+
 		if(archive_dir)
 			archive_append_data(node,buffer,rc);
 		if(buffer)
@@ -4520,6 +4521,15 @@ sync_helper(void *cdata,PGconn * local_conn)
 		
 	}/*errors*/
 	rc2 = PQputCopyEnd(local_conn, NULL);
+	if (rc2 < 0)
+	{
+		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error ending copy"
+				 " to sl_log:%s\n", 
+				 node->no_id,provider->no_id,
+				 PQerrorMessage(local_conn));
+		errors++;			
+	}
+
 	if(archive_dir)
 	{
 		archive_append_str(node,"\\.");
@@ -4534,6 +4544,40 @@ sync_helper(void *cdata,PGconn * local_conn)
 		PQclear(res2);
 		res2 = NULL;
 	}
+
+	res = PQgetResult(dbconn);
+	if ( PQresultStatus(res) < 0 )
+	{
+		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error at end of COPY OUT: %s",
+				 node->no_id, provider->no_id,
+				 PQresultErrorMessage(res));	
+		errors++;
+	}
+	PQclear(res);
+
+	res = PQgetResult(local_conn);
+	if ( PQresultStatus(res) < 0 )
+	{
+		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: error at end of COPY IN: %s",
+				 node->no_id, provider->no_id,
+				 PQresultErrorMessage(res));	
+		errors++;
+	}
+	PQclear(res);
+	res = NULL;
+
+	if (PQtransactionStatus(local_conn) != PQTRANS_INTRANS)
+	{
+		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: SYNC is aborted, errors=%d",
+				 node->no_id, provider->no_id, errors);
+		errors++;
+	}
+
+	if (errors)
+		slon_log(SLON_ERROR,
+			 "remoteWorkerThread_%d_%d: failed SYNC's log selection query was '%s'\n",
+			 node->no_id, provider->no_id,
+			 dstring_data(&(provider->helper_query)));
 	
 	dstring_init(&query);
 	(void) slon_mkquery(&query, "rollback transaction; "

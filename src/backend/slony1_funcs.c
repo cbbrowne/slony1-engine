@@ -98,6 +98,7 @@ extern DLLIMPORT Node *newNodeMacroHolder;
 #define PLAN_NONE			0
 #define PLAN_INSERT_EVENT	(1 << 1)
 #define PLAN_INSERT_LOG_STATUS (1 << 2)
+#define PLAN_APPLY_QUERIES	(1 << 3)
 
 
 /* ----
@@ -118,8 +119,10 @@ typedef struct slony_I_cluster_status
 	void	   *plan_insert_event;
 	void	   *plan_insert_log_1;
 	void	   *plan_insert_log_2;
+	void	   *plan_insert_log_script;
 	void	   *plan_record_sequences;
 	void	   *plan_get_logstatus;
+	void	   *plan_table_info;
 
 	text	   *cmdtype_I;
 	text	   *cmdtype_U;
@@ -763,13 +766,11 @@ _Slony_I_denyAccess(PG_FUNCTION_ARGS)
 Datum
 _Slony_I_logApply(PG_FUNCTION_ARGS)
 {
-	static TransactionId currentXid = InvalidTransactionId;
-	static void	*script_insert_plan = NULL;
-	static void *table_forward_plan = NULL;
 	static char *query = NULL;
 	static int	query_alloc = 0;
 
 	TransactionId newXid = GetTopTransactionId();
+	Slony_I_ClusterStatus *cs;
 	TriggerData *tg;
 	HeapTuple	new_row;
 	TupleDesc	tupdesc;
@@ -829,15 +830,17 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 		elog(ERROR, "Slony-I: SPI_connect() failed in logApply()");
 
 	/*
-	 * Get all the trigger arguments
+	 * Get or create the cluster status information and make sure it has the
+	 * SPI plans that we need here.
 	 */
 	cluster_name = DatumGetName(DirectFunctionCall1(namein,
 								CStringGetDatum(tg->tg_trigger->tgargs[0])));
+	cs = getClusterStatus(cluster_name, PLAN_APPLY_QUERIES);
 
 	/*
 	 * Do the following only once per transaction.
 	 */
-	if (!TransactionIdEquals(currentXid, newXid))
+	if (!TransactionIdEquals(cs->currentXid, newXid))
 	{
 		HASHCTL		hctl;
 
@@ -859,7 +862,7 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 		applyCacheHash = hash_create("Slony-I apply cache",
 					50, &hctl, HASH_ELEM);
 
-		currentXid = newXid;
+		cs->currentXid = newXid;
 	}
 
 	/*
@@ -881,11 +884,8 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	if (cmdtype == 'S')
 	{
 		char	   *ddl_script;
-		int32		localNodeId;
 		bool		localNodeFound = true;
 		Datum		script_insert_args[4];
-
-		localNodeId = getClusterStatus(cluster_name, PLAN_NONE)->localNodeId;
 
 		dat = SPI_getbinval(new_row, tupdesc, 
 				SPI_fnumber(tupdesc, "log_cmdargs"), &isnull);
@@ -915,7 +915,7 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 				int32	nodeId = DatumGetInt32(
 									DirectFunctionCall1(int4in,
 									DirectFunctionCall1(textout, cmdargs[i])));
-				if (nodeId == localNodeId)
+				if (nodeId == cs->localNodeId)
 				{
 					localNodeFound = true;
 					break;
@@ -939,28 +939,7 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 			 * Set the currentXid to invalid to flush the apply
 			 * query cache.
 			 */
-			currentXid = InvalidTransactionId;
-		}
-
-		if (script_insert_plan == NULL)
-		{
-			char query[1024];
-			Oid  argtypes[4];
-
-			sprintf(query, "insert into %s.sl_log_script "
-					"(log_origin, log_txid, log_actionseq, log_cmdargs) "
-					"values ($1, $2, $3, $4);",
-					slon_quote_identifier(NameStr(*cluster_name)));
-
-			argtypes[0] = INT4OID;
-			argtypes[1] = INT8OID;
-			argtypes[2] = INT8OID;
-			argtypes[3] = TEXTARRAYOID;
-
-			script_insert_plan = SPI_saveplan(
-					SPI_prepare(query, 4, argtypes));
-			if (script_insert_plan == NULL)
-				elog(ERROR, "SPI_prepare() failed for query '%s'", query);
+			cs->currentXid = InvalidTransactionId;
 		}
 
 		/*
@@ -975,7 +954,7 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 				SPI_fnumber(tupdesc, "log_actionseq"), &isnull);
 		script_insert_args[3] = SPI_getbinval(new_row, tupdesc, 
 				SPI_fnumber(tupdesc, "log_cmdargs"), &isnull);
-		if (SPI_execp(script_insert_plan, script_insert_args, NULL, 0) < 0)
+		if (SPI_execp(cs->plan_insert_log_script, script_insert_args, NULL, 0) < 0)
 			elog(ERROR, "Execution of sl_log_script insert plan failed");
 
 		/*
@@ -1412,7 +1391,6 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		int32	localNodeId;
 		Datum	query_args[2];
 
 		/*
@@ -1472,34 +1450,11 @@ _Slony_I_logApply(PG_FUNCTION_ARGS)
 		 * We also need to determine if this table belongs to a
 		 * set, that we are a forwarder of.
 		 */
-		if (table_forward_plan == NULL)
-		{
-			char	query[1024];
-			Oid		argtypes[2];
-
-			sprintf(query,
-					"select sub_forward from "
-					" %s.sl_subscribe, %s.sl_table "
-					" where tab_id = $1 and tab_set = sub_set "
-					" and sub_receiver = $2;",
-					slon_quote_identifier(NameStr(*cluster_name)),
-					slon_quote_identifier(NameStr(*cluster_name)));
-			
-			argtypes[0] = INT4OID;
-			argtypes[1] = INT4OID;
-
-			table_forward_plan = SPI_saveplan(
-					SPI_prepare(query, 2, argtypes));
-			if (table_forward_plan == NULL)
-				elog(ERROR, "SPI_prepare() for query '%s' faile", query);
-		}
-
-		localNodeId = getClusterStatus(cluster_name, PLAN_NONE)->localNodeId;
 		query_args[0] = SPI_getbinval(new_row, tupdesc, 
 			SPI_fnumber(tupdesc, "log_tableid"), &isnull);
-		query_args[1] = Int32GetDatum(localNodeId);
+		query_args[1] = Int32GetDatum(cs->localNodeId);
 
-		if (SPI_execp(table_forward_plan, query_args, NULL, 0) < 0)
+		if (SPI_execp(cs->plan_table_info, query_args, NULL, 0) < 0)
 			elog(ERROR, "SPI_execp() failed for table forward lookup");
 
 		if (SPI_processed != 1)
@@ -1959,8 +1914,57 @@ getClusterStatus(Name cluster_name, int need_plan_mask)
 		sprintf(query, "SELECT last_value::int4 FROM %s.sl_log_status",
 				cs->clusterident);
 		cs->plan_get_logstatus = SPI_saveplan(SPI_prepare(query, 0, NULL));
+		if (cs->plan_get_logstatus == NULL)
+			elog(ERROR, "Slony-I: SPI_prepare() failed");
 
 		cs->have_plan |= PLAN_INSERT_LOG_STATUS;
+	}
+
+	/*
+	 * Prepare and save the PLAN_APPLY_QUERIES
+	 */
+	if ((need_plan_mask & PLAN_APPLY_QUERIES) != 0 &&
+		(cs->have_plan & PLAN_APPLY_QUERIES) == 0)
+	{
+		/* @-nullderef@ */
+
+		/*
+		 * The plan to insert into sl_log_script.
+		 */
+		sprintf(query, "insert into %s.sl_log_script "
+				"(log_origin, log_txid, log_actionseq, log_cmdargs) "
+				"values ($1, $2, $3, $4);",
+				slon_quote_identifier(NameStr(*cluster_name)));
+		plan_types[0] = INT4OID;
+		plan_types[1] = INT8OID;
+		plan_types[2] = INT8OID;
+		plan_types[3] = TEXTARRAYOID;
+
+		cs->plan_insert_log_script = SPI_saveplan(
+				SPI_prepare(query, 4, plan_types));
+		if (cs->plan_insert_log_script == NULL)
+			elog(ERROR, "Slony-I: SPI_prepare() failed");
+
+		/*
+		 * The plan to lookup table forwarding info
+		 */
+		sprintf(query,
+				"select sub_forward from "
+				" %s.sl_subscribe, %s.sl_table "
+				" where tab_id = $1 and tab_set = sub_set "
+				" and sub_receiver = $2;",
+				slon_quote_identifier(NameStr(*cluster_name)),
+				slon_quote_identifier(NameStr(*cluster_name)));
+		
+		plan_types[0] = INT4OID;
+		plan_types[1] = INT4OID;
+
+		cs->plan_table_info = SPI_saveplan(
+				SPI_prepare(query, 2, plan_types));
+		if (cs->plan_table_info == NULL)
+			elog(ERROR, "Slony-I: SPI_prepare() failed");
+
+		cs->have_plan |= PLAN_APPLY_QUERIES;
 	}
 
 	return cs;
