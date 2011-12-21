@@ -1,17 +1,18 @@
 #!/bin/bash
 # analyze-slony-cluster
-# Script to analyze cluster based on slonik preamble
+# Script to analyze cluster based on specified node
 
 TEXT=""
 function help () {
     echo "analyze-slony-cluster [options]"
     echo "
-  --text                         - indicates generating text output
-  --preamble=something.slonik    - file containing ADMIN CONNINFO data
-  --help                         - Request help
-  --output-directory=/somewhere  - Indicates destination for graphics/HTML output - ASCOUTDIR
-  --workdatabase=dbname          - Indicates database to use for temporary work.  MUST NOT ALREADY EXIST!"
+  --text                  - Do not generate any graphics or HTML
+  --help                  - Request help
+  --cluster=clustername   - Optional specification of cluster to be used
+  --output-directory=/tmp/somewhere  Indicates destination for graphics/HTML output"
     echo "
+Additionally, uses libpq environment variables
+(PGHOST/PGPORT/PGDATABASE/...) to indicate the database to check
 
 WARNINTERVAL used to indicate intervals of event confirmation delay that indicate WARNING
 DANGERINTERVAL used to indicate intervals of event confirmation delay that indicate DANGER
@@ -23,14 +24,11 @@ for arg in $*; do
 	--text)
 	    TEXT="true"
 	    ;;
-	--workdatabase=*)
-	    WORKDB=`echo $arg | sed 's/^--workdatabase=//'`
-	    ;;
-	--preamble=*)
-	    PREAMBLE=`echo $arg | sed 's/^--preamble=//'`
+	--cluster=*)
+	    PGCLUSTER=`echo $arg | sed 's/^--cluster=//'`
 	    ;;
 	--output-directory=*)
-	    ASCOUTDIR=`echo $arg | sed 's/^--output-directory=//'`
+	    GENDIR=`echo $arg | sed 's/^--output-directory=//'`
 	    ;;
 	--help)
 	    help
@@ -45,38 +43,13 @@ for arg in $*; do
     esac
 done
 
-# Read cluster from preamble file
-echo "Drawing configuration from preamble: [${PREAMBLE}]"
-CNL=`egrep -i "^ *cluster +name *= *.*;" ${PREAMBLE} | head -1`
-PGCLUSTER=`echo "${CNL}" | cut -d = -f 2 | cut -d ";" -f 1 | sed 's/ //g';`
-echo "Cluster: [${PGCLUSTER}]"
-
-NODEDATA=`egrep -i "^ *node +[0-9]+ +admin +conninfo *= *'.*' *;" ${PREAMBLE}`
-NODELIST=`echo "${NODEDATA}" | sed 's/^ //g' | sed 's/node//ig' | sed 's/^ //g' | cut -d " " -f 1 | sort -n | uniq`
-declare -A conninfo
-for node in `echo ${NODELIST}`; do
-    GREPSTRING="node *${node}.*admin +conninfo"
-    CILINE=`echo "${NODEDATA}" | egrep -i "${GREPSTRING} | tail -1"` 
-    cinfo=`echo "${CILINE}" | cut -d "'" -f 2`
-    conninfo[$node]=$cinfo
-done
-
-echo "Conninfo data:
--------------------------"
-printf "%8s %s\n" "Node" "Connection Info"
-printf "%8s %s\n" "--------" "---------------------------------------------------------------"
-for node in `echo ${NODELIST}`; do
-    printf "%8d %s\n" $node "${conninfo[$node]}"
-done
-
-exit
-
 # Indirectly controlled by environment variables:
-#  ASCOUTDIR    - indicates directory
+#  PGCLUSTER - indicates cluster
+#  GENDIR    - indicates directory
 
 PGCLUSTER=${PGCLUSTER:-"slony_regress1"}
 CS=\"_${PGCLUSTER}\"
-ASCOUTDIR=${ASCOUTDIR:-"/tmp/slony-cluster-analysis"}
+GENDIR=${GENDIR:-"/tmp/slony-cluster-analysis"}
 WARNINTERVAL=${WARNINTERVAL:-"30 seconds"}
 DANGERINTERVAL=${DANGERINTERVAL:-"5 minutes"}
 
@@ -84,14 +57,14 @@ echo "# analyze-cluster.sh running"
 if [[ "x${TEXT}" -eq "xtrue" ]]; then
     echo "# Text output only, to STDOUT"
 else
-    echo "Generating graphical output in [${ASCOUTDIR}]"
-    if [[ -d ${ASCOUTDIR} ]]; then
-	echo "Trimming out old output from ${ASCOUTDIR}"
+    echo "Generating graphical output in [${GENDIR}]"
+    if [[ -d ${GENDIR} ]]; then
+	echo "Trimming out old output from ${GENDIR}"
 	for suffix in dot png html; do
-	    rm -f ${ASCOUTDIR}/*.${suffix}
+	    rm -f ${GENDIR}/*.${suffix}
 	done
     else
-	mkdir ${ASCOUTDIR}
+	mkdir ${GENDIR}
     fi
 fi
 
@@ -180,7 +153,7 @@ if [[ "x${TEXT}" -eq "xtrue" ]]; then
      RQ "select ev_origin as \"Origin Node\" , ev_type as \"Event Type\", count(*) as \"Count\", max(ev_seqno) as \"Max Event #\", max(ev_timestamp) as \"Latest Occurrence\", now() - max(ev_timestamp) as \"Aging\" from ${CS}.sl_event  group by 1, 2  order by 1,2;"
 
 else
-    PF=${ASCOUTDIR}/paths-overview.dot
+    PF=${GENDIR}/paths-overview.dot
     echo "digraph pathoverview {" > ${PF}
     mklabel "Slon CONNINFO PATH view" >> ${PF}
     mknodes "${PF}"
@@ -196,7 +169,7 @@ else
     dot -O -Tpng ${PF}
 
 
-    LISTEN=${ASCOUTDIR}/listen-overview.dot
+    LISTEN=${GENDIR}/listen-overview.dot
     echo "digraph listenoverview {" > ${LISTEN}
     mklabel "Listen Path view" >> ${LISTEN}
     
@@ -212,7 +185,7 @@ else
     echo "}" >> ${LISTEN}
     dot -O -Tpng ${LISTEN}
 
-    SOV=${ASCOUTDIR}/subscription-overview.dot
+    SOV=${GENDIR}/subscription-overview.dot
     echo "digraph subscriptionview {" > ${SOV}
     mklabel "Subscription view" >> ${SOV}
 
