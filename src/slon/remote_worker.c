@@ -4566,6 +4566,13 @@ sync_helper(void *cdata,PGconn * local_conn)
 	PQclear(res);
 	res = NULL;
 
+	if (PQtransactionStatus(local_conn) != PQTRANS_INTRANS)
+	{
+		slon_log(SLON_ERROR, "remoteWorkerThread_%d_%d: SYNC is aborted, errors=%d",
+				 node->no_id, provider->no_id, errors);
+		errors++;
+	}
+
 	if (errors)
 		slon_log(SLON_ERROR,
 			 "remoteWorkerThread_%d_%d: failed SYNC's log selection query was '%s'\n",
