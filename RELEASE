@@ -29,17 +29,17 @@
           all application users during the upgrade process.
           ~pg_hba.conf~ is useful for this.  The process would
           involve:
-	   - Altering ~pg_hba.conf~ to contain entries denying access to
-         all other than the ~slony~ user
+	   - Altering ~pg_hba.conf~ to contain entries denying access
+             to all other than the ~slony~ user
 	   - Submitting ~SIGHUP~ signal to the Postgres backend so new
-         connections are rejected
-	   - Verifying, via query to ~pg_stat_activity~, that there are no
-          users other than the ~slony~ user connected
+             connections are rejected
+	   - Verifying, via query to ~pg_stat_activity~, that there
+             are no users other than the ~slony~ user connected
 
      - Script to drain log tables ~sl_log_1~ and ~sl_log_2~ :: It runs
        the following logic against each node:
 	   - Calls the function ~cleanupEvent()~ to clean out any log
-         entries that are safe to delete
+             entries that are safe to delete
 	   - Verify that log tables ~sl_log_1~ and ~sl_log_2~ are empty
 	   
 	  Once this script has run against all nodes, reporting that
