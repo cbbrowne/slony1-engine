@@ -7,12 +7,10 @@ function help () {
     echo "analyze-slony-cluster [options]"
     echo "
   --text                         - indicates generating text output
-  --preamble=something.slonik    - file containing ADMIN CONNINFO data
+  --preamble=something.slonik    - file containing cluster and ADMIN CONNINFO data
   --help                         - Request help
-  --output-directory=/somewhere  - Indicates destination for graphics/HTML output - ASCOUTDIR
-  --workdatabase=dbname          - Indicates database to use for temporary work.  MUST NOT ALREADY EXIST!"
-    echo "
-
+  --output-directory=/somewhere  - Indicates destination for temporary/graphics/HTML output
+  --work-database=dbname         - Database name for database to use for temporary work.  MUST NOT ALREADY EXIST!
 WARNINTERVAL used to indicate intervals of event confirmation delay that indicate WARNING
 DANGERINTERVAL used to indicate intervals of event confirmation delay that indicate DANGER
 "
@@ -32,6 +30,9 @@ for arg in $*; do
 	--output-directory=*)
 	    ASCOUTDIR=`echo $arg | sed 's/^--output-directory=//'`
 	    ;;
+	--work-database=*)
+	    WORKDB=`echo $arg | sed 's/^--work-database=//'`
+	    ;;
 	--help)
 	    help
 	    exit
@@ -45,10 +46,38 @@ for arg in $*; do
     esac
 done
 
+WARNINTERVAL=${WARNINTERVAL:-"30 seconds"}
+DANGERINTERVAL=${DANGERINTERVAL:-"5 minutes"}
+
+if [[ "x${ASCOUTDIR}" == "x" ]]; then
+    echo "Require --output-directory!"
+    help
+    exit
+elif [[ -d ${ASCOUTDIR} ]]; then
+    echo "--output-directory=${ASCOUTDIR} must not already exist!"
+    exit
+else
+    mkdir -p ${ASCOUTDIR}
+fi
+
+if [[ "x${WORKDB}" == "x" ]]; then
+    echo "Require --work-database!"
+    help
+    exit
+else
+    createdb ${WORKDB}
+fi
+
 # Read cluster from preamble file
 echo "Drawing configuration from preamble: [${PREAMBLE}]"
+if [[ "x${PREAMBLE}" == "x" ]]; then
+    echo "Require slonik preamble file to get cluster and ADMIN CONNINFO data"
+    help
+    exit
+fi
 CNL=`egrep -i "^ *cluster +name *= *.*;" ${PREAMBLE} | head -1`
 PGCLUSTER=`echo "${CNL}" | cut -d = -f 2 | cut -d ";" -f 1 | sed 's/ //g';`
+CS="\"_${PGCLUSTER}\""
 echo "Cluster: [${PGCLUSTER}]"
 
 NODEDATA=`egrep -i "^ *node +[0-9]+ +admin +conninfo *= *'.*' *;" ${PREAMBLE}`
@@ -61,40 +90,14 @@ for node in `echo ${NODELIST}`; do
     conninfo[$node]=$cinfo
 done
 
-echo "Conninfo data:
--------------------------"
-printf "%8s %s\n" "Node" "Connection Info"
-printf "%8s %s\n" "--------" "---------------------------------------------------------------"
+psql -d $WORKDB -qt -c "create table public.generated_on as select now();"
+#### Set up WORKDB table with conninfo
+psql -d $WORKDB -qt -c "create table public.conninfo (node integer primary key, conninfo text);"
+
 for node in `echo ${NODELIST}`; do
-    printf "%8d %s\n" $node "${conninfo[$node]}"
+    psql -d $WORKDB -qt -c "insert into public.conninfo(node,conninfo) values ($node, '${conninfo[$node]}');"
 done
-
-exit
-
-# Indirectly controlled by environment variables:
-#  ASCOUTDIR    - indicates directory
-
-PGCLUSTER=${PGCLUSTER:-"slony_regress1"}
-CS=\"_${PGCLUSTER}\"
-ASCOUTDIR=${ASCOUTDIR:-"/tmp/slony-cluster-analysis"}
-WARNINTERVAL=${WARNINTERVAL:-"30 seconds"}
-DANGERINTERVAL=${DANGERINTERVAL:-"5 minutes"}
-
-echo "# analyze-cluster.sh running"
-if [[ "x${TEXT}" -eq "xtrue" ]]; then
-    echo "# Text output only, to STDOUT"
-else
-    echo "Generating graphical output in [${ASCOUTDIR}]"
-    if [[ -d ${ASCOUTDIR} ]]; then
-	echo "Trimming out old output from ${ASCOUTDIR}"
-	for suffix in dot png html; do
-	    rm -f ${ASCOUTDIR}/*.${suffix}
-	done
-    else
-	mkdir ${ASCOUTDIR}
-    fi
-fi
-
+psql -d $WORKDB -q -c "select * from public.conninfo order by node;"
 
 function RUNQUERY () {
     local QUERY=$1
@@ -113,10 +116,62 @@ function argn () {
     echo $res
 }
 
+psql -d $WORKDB -qt -c "
+create table public.nodes_basic (public_id integer primary key, believed_id integer, generated_on timestamptz);
+create table public.sl_node (per_node integer, no_id integer, no_active boolean, no_comment text);
+create table public.sl_subscribe (per_node integer, sub_set integer, sub_provider integer, sub_receiver integer, sub_forward boolean, sub_active boolean);
+CREATE TABLE public.sl_components (per_node integer, co_actor text NOT NULL,     co_pid integer NOT NULL, co_node integer NOT NULL,    co_connection_pid integer NOT NULL, co_activity text, co_starttime    timestamp with time zone NOT NULL, co_event bigint, co_eventtype    text );
+create table public.sl_path (per_node integer, pa_server integer, pa_client integer, pa_conninfo text, pa_connretry integer);
+create table public.sl_table (per_node integer, tab_id integer, tab_reloid oid, tab_relname name, tab_nspname name, tab_set integer, tab_idxname name, tab_altered boolean, tab_comment text);
+create table public.sl_sequence (per_node integer, seq_id integer, seq_reloid oid, seq_relname name, seq_nspname name, seq_set integer, seq_comment text);"
+
+ 
+
+for node in `echo ${NODELIST}`; do
+    conninfo=${conninfo[$node]}
+    nodedata=${ASCOUTDIR}/node-${node}.sql
+    # Basic node information:
+    #  - present time - NOW()
+    #  - node ID - ${CS}.getlocalnodeid('_${PGCLUSTER}');
+    echo "copy public.nodes_basic (public_id, believed_id, generated_on) from STDIN;" > $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, ${CS}.getlocalnodeid('_${PGCLUSTER}'), now()) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy public.sl_node (per_node, no_id, no_active, no_comment) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, no_id, no_active, no_comment from ${CS}.sl_node) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy public.sl_subscribe (per_node, sub_set, sub_provider, sub_receiver, sub_forward, sub_active) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, sub_set, sub_provider, sub_receiver, sub_forward, sub_active from ${CS}.sl_subscribe) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy public.sl_components (per_node, co_actor, co_pid, co_node, co_connection_pid, co_activity, co_starttime, co_event, co_eventtype) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, co_actor, co_pid, co_node, co_connection_pid, co_activity, co_starttime, co_event, co_eventtype from ${CS}.sl_components) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+    
+    echo "copy public.sl_path (per_node, pa_server, pa_client, pa_conninfo, pa_connretry) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, pa_server, pa_client, pa_conninfo, pa_connretry from ${CS}.sl_path) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy sl_table (per_node, tab_id, tab_reloid, tab_relname, tab_nspname, tab_set, tab_idxname, tab_altered, tab_comment) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, tab_id, tab_reloid, tab_relname, tab_nspname, tab_set, tab_idxname, tab_altered, tab_comment from ${CS}.sl_table) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy sl_sequence (per_node, seq_id, seq_reloid, seq_relname, seq_nspname, seq_set, seq_comment) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, seq_id, seq_reloid, seq_relname, seq_nspname, seq_set, seq_comment from ${CS}.sl_sequence) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    psql -d $WORKDB -f $nodedata
+done
+
+exit;
+
+
 NODES=`RUNQUERY "select no_id from ${CS}.sl_node;"`
 # Find local node ID
 MYNODE=`RUNQUERY "select ${CS}.getlocalnodeid('_${PGCLUSTER}');"`
 NOW=`date`
+
 function mklabel () {
     local purpose=$1
     echo "label=\"${purpose} - generated per node ${MYNODE} on ${NOW}\";"
@@ -133,7 +188,6 @@ function mknodes () {
         fi
     done
 }
-
 
 if [[ "x${TEXT}" -eq "xtrue" ]]; then
     echo "Drawing Slony state according to node [${MYNODE}]"
