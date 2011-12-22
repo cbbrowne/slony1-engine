@@ -116,6 +116,7 @@ function argn () {
     echo $res
 }
 
+# Set up schema
 psql -d $WORKDB -qt -c "
 create table public.nodes_basic (public_id integer primary key, believed_id integer, generated_on timestamptz);
 create table public.sl_node (per_node integer, no_id integer, no_active boolean, no_comment text);
@@ -123,9 +124,10 @@ create table public.sl_subscribe (per_node integer, sub_set integer, sub_provide
 CREATE TABLE public.sl_components (per_node integer, co_actor text NOT NULL,     co_pid integer NOT NULL, co_node integer NOT NULL,    co_connection_pid integer NOT NULL, co_activity text, co_starttime    timestamp with time zone NOT NULL, co_event bigint, co_eventtype    text );
 create table public.sl_path (per_node integer, pa_server integer, pa_client integer, pa_conninfo text, pa_connretry integer);
 create table public.sl_table (per_node integer, tab_id integer, tab_reloid oid, tab_relname name, tab_nspname name, tab_set integer, tab_idxname name, tab_altered boolean, tab_comment text);
-create table public.sl_sequence (per_node integer, seq_id integer, seq_reloid oid, seq_relname name, seq_nspname name, seq_set integer, seq_comment text);"
-
- 
+create table public.sl_sequence (per_node integer, seq_id integer, seq_reloid oid, seq_relname name, seq_nspname name, seq_set integer, seq_comment text);
+create table public.sl_event (per_node integer, ev_origin integer, min_seqno bigint, max_seqno bigint, min_timestamp timestamptz, max_timestamp timestamptz, ev_type text, count integer);
+create table public.sl_confirm (per_node integer, con_origin integer, con_received integer, min_seqno bigint, max_seqno bigint, min_timestamp timestamptz, max_timestamp timestamptz, count integer);
+"
 
 for node in `echo ${NODELIST}`; do
     conninfo=${conninfo[$node]}
@@ -133,8 +135,12 @@ for node in `echo ${NODELIST}`; do
     # Basic node information:
     #  - present time - NOW()
     #  - node ID - ${CS}.getlocalnodeid('_${PGCLUSTER}');
+
     echo "copy public.nodes_basic (public_id, believed_id, generated_on) from STDIN;" > $nodedata
     psql "${conninfo}" -qt -c "copy (select ${node}, ${CS}.getlocalnodeid('_${PGCLUSTER}'), now()) to STDOUT;" >> $nodedata
+    # Note that this captures:
+    # a) What node the node believes itself to be; during CLONE NODE, this might be confused
+    # b) What time the node's database believes it to be.  If times differ substantially, then maybe NTP needs to get run...
     echo "\\." >> $nodedata
 
     echo "copy public.sl_node (per_node, no_id, no_active, no_comment) from STDIN;" >> $nodedata
@@ -161,16 +167,21 @@ for node in `echo ${NODELIST}`; do
     psql "${conninfo}" -qt -c "copy (select ${node}, seq_id, seq_reloid, seq_relname, seq_nspname, seq_set, seq_comment from ${CS}.sl_sequence) to STDOUT;" >> $nodedata
     echo "\\." >> $nodedata
 
+    echo "copy sl_confirm (per_node, con_origin, con_received, min_seqno, max_seqno, min_timestamp, max_timestamp, count) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node} as per_node, con_origin, con_received, min(con_seqno), max(con_seqno), min(con_timestamp), max(con_timestamp), count(*) from ${CS}.sl_confirm group by per_node, con_origin, con_received) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy sl_event (per_node, ev_origin, min_seqno, max_seqno, min_timestamp, max_timestamp, ev_type, count) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node} as per_node, ev_origin, min(ev_seqno), max(ev_seqno), min(ev_timestamp), max(ev_timestamp), ev_type, count(*) from ${CS}.sl_event group by per_node, ev_origin, ev_type) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
     psql -d $WORKDB -f $nodedata
 done
 
+
+
+
 exit;
-
-
-NODES=`RUNQUERY "select no_id from ${CS}.sl_node;"`
-# Find local node ID
-MYNODE=`RUNQUERY "select ${CS}.getlocalnodeid('_${PGCLUSTER}');"`
-NOW=`date`
 
 function mklabel () {
     local purpose=$1
