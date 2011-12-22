@@ -1,10 +1,10 @@
 #!/bin/bash
-# analyze-slony-cluster
+# analyze-slony-node
 # Script to analyze cluster based on specified node
 
 TEXT=""
 function help () {
-    echo "analyze-slony-cluster [options]"
+    echo "analyze-slony-node [options]"
     echo "
   --text                  - Do not generate any graphics or HTML
   --help                  - Request help
