@@ -118,6 +118,8 @@ function argn () {
 
 # Set up schema
 psql -d $WORKDB -qt -c "
+create table public.pgclass (per_node integer, relname text, relpages integer, reltuples real);
+create table public.pgactivity (per_node integer, datname text, procpid integer, usename text, query_start timestamptz, current_query text);
 create table public.nodes_basic (public_id integer primary key, believed_id integer, generated_on timestamptz);
 create table public.sl_node (per_node integer, no_id integer, no_active boolean, no_comment text);
 create table public.sl_subscribe (per_node integer, sub_set integer, sub_provider integer, sub_receiver integer, sub_forward boolean, sub_active boolean);
@@ -132,11 +134,17 @@ create table public.sl_confirm (per_node integer, con_origin integer, con_receiv
 for node in `echo ${NODELIST}`; do
     conninfo=${conninfo[$node]}
     nodedata=${ASCOUTDIR}/node-${node}.sql
-    # Basic node information:
-    #  - present time - NOW()
-    #  - node ID - ${CS}.getlocalnodeid('_${PGCLUSTER}');
+    echo "" > $nodedata
 
-    echo "copy public.nodes_basic (public_id, believed_id, generated_on) from STDIN;" > $nodedata
+    echo "copy public.pgactivity (per_node,datname,procpid,usename,query_start,current_query) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, datname,procpid,usename,query_start,current_query from pg_catalog.pg_stat_activity ) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy public.pgclass(per_node,relname,relpages,reltuples) from STDIN;" >> $nodedata
+    psql "${conninfo}" -qt -c "copy (select ${node}, relname,relpages,reltuples from pg_catalog.pg_class where relnamespace in (select oid from pg_catalog.pg_namespace where nspname='pg_catalog') and relname in ('pg_listener', 'sl_log_1', 'sl_log_2', 'sl_seqlog', 'sl_event', 'sl_confirm')) to STDOUT;" >> $nodedata
+    echo "\\." >> $nodedata
+
+    echo "copy public.nodes_basic (public_id, believed_id, generated_on) from STDIN;" >> $nodedata
     psql "${conninfo}" -qt -c "copy (select ${node}, ${CS}.getlocalnodeid('_${PGCLUSTER}'), now()) to STDOUT;" >> $nodedata
     # Note that this captures:
     # a) What node the node believes itself to be; during CLONE NODE, this might be confused
