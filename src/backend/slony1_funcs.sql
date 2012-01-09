@@ -3911,9 +3911,9 @@ Internal actions for subscribing receiver sub_receiver to subscription
 set sub_set.';
 drop function IF EXISTS @NAMESPACE@.unsubscribeSet(int4,int4,boolean);
 -- ----------------------------------------------------------------------
--- FUNCTION unsubscribeSet (sub_set, sub_receiver,force)
+-- FUNCTION unsubscribeSet (sub_set, sub_receiver, sub_force)
 -- ----------------------------------------------------------------------
-create or replace function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4,p_force boolean)
+create or replace function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4, p_force boolean)
 returns bigint
 as $$
 declare
@@ -3931,7 +3931,7 @@ begin
 	-- ----
 	-- Check that this does not break any chains
 	-- ----
-	if p_force=false and exists (select true from @NAMESPACE@.sl_subscribe
+	if p_force <> true and exists (select true from @NAMESPACE@.sl_subscribe
 			 where sub_set = p_sub_set
 				and sub_provider = p_sub_receiver)
 	then
