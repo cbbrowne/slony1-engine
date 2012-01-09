@@ -3994,15 +3994,18 @@ begin
 			p_sub_set::text, p_sub_receiver::text);
 end;
 $$ language plpgsql;
-comment on function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4,boolean) is
-'unsubscribeSet (sub_set, sub_receiver) 
+comment on function @NAMESPACE@.unsubscribeSet (p_sub_set int4, p_sub_receiver int4, p_force boolean) is
+'unsubscribeSet (sub_set, sub_receiver, sub_force) 
 
 Unsubscribe node sub_receiver from subscription set sub_set.  This is
 invoked on the receiver node.  It verifies that this does not break
 any chains (e.g. - where sub_receiver is a provider for another node),
 then restores tables, drops Slony-specific keys, drops table entries
 for the set, drops the subscription, and generates an UNSUBSCRIBE_SET
-node to publish that the node is being dropped.';
+node to publish that the node is being dropped.
+
+sub_force = true for the FAILOVER case where we have to break the
+chains anyways.';
 
 -- ----------------------------------------------------------------------
 -- FUNCTION unsubscribeSet_int (sub_set, sub_receiver)
