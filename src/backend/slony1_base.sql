@@ -447,19 +447,18 @@ create view @NAMESPACE@.sl_seqlastvalue as
 		
 
 create view @NAMESPACE@.sl_failover_targets as
-select  set_id,
-	set_origin as set_origin,
-	sub1.sub_receiver as backup_id
-
+select  set_id as fail_set,
+	set_origin as fail_origin,
+	sub1.sub_receiver as fail_backup
 FROM
 	@NAMESPACE@.sl_subscribe sub1
 	,@NAMESPACE@.sl_set set1
 	where
  	sub1.sub_set=set_id
 	and sub1.sub_forward=true
-	--exclude candidates where the set_origin
-	--has a path a node but the failover
-	--candidate has no path to that node
+	-- exclude candidates where the set_origin
+	-- has a path from a node but the failover
+	-- candidate has no path to that node
 	and sub1.sub_receiver not in
 	    (select p1.pa_client from
 	    @NAMESPACE@.sl_path p1 
@@ -498,9 +497,12 @@ FROM
 	    where subs3.sub_receiver is null
 	    );
 
-		      
-	
+comment on view @NAMESPACE@.sl_failover_targets is 
+'Legitimate failover targets';
 
+comment on column @NAMESPACE@.sl_failover_targets.fail_set is 'ID of replication set';
+comment on column @NAMESPACE@.sl_failover_targets.fail_origin is 'ID of present origin of replication set';
+comment on column @NAMESPACE@.sl_failover_targets.fail_backup is 'ID of potential backup node for replication set';
 	    
 
 -- **********************************************************************

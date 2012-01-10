@@ -2756,10 +2756,10 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 		 * nodes except for the failed nodes.
 		 */
 		slon_mkquery(&query,
-					 "select distinct backup_id from \"_%s\".sl_failover_targets"
-					 "    where backup_id not in ( %s ) "
-					 "    and set_origin=%d"
-					 "    order by backup_id; ",
+					 "select distinct fail_backup from \"_%s\".sl_failover_targets"
+					 "    where fail_backup not in ( %s ) "
+					 "    and fail_origin=%d"
+					 "    order by fail_backup; ",
 					 stmt->hdr.script->clustername,
 					 dstring_data(&failed_node_list),node_entry->no_id);
 		res1 = db_exec_select((SlonikStmt *) stmt, adminfo1, &query);
