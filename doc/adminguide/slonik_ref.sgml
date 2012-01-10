@@ -2716,7 +2716,7 @@ FAILOVER(
     linkend="stmtmoveset"> instead, as that does
     <emphasis>not</emphasis> abandon the failed node.
     </para>
-	<para>If a second failure occours in the middle of a FAILOVER
+	<para>If a second failure occurs in the middle of a FAILOVER
           operation then recovery might be complicated. </para>
 	  
 	  
@@ -2733,7 +2733,7 @@ FAILOVER(
    <refsect1> <title> Version Information </title>
     <para> This command was introduced in &slony1; 1.0 </para>
     <para> In version 2.0, the default <envar>BACKUP NODE</envar> value of 1 was removed, so it is mandatory to provide a value for this parameter</para>
-    <para> In version 2.2 support was added for passing multiple nodes to 
+    <para> In version 2.2, support was added for passing multiple nodes to 
 	  a single failover command</para>
    </refsect1>
   </refentry>
