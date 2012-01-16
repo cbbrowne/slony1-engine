@@ -441,9 +441,9 @@ script_check_stmts(SlonikScript * script, SlonikStmt * hdr)
 					if(stmt->no_id_list == NULL ||
 					   stmt->no_id_list[0] == -1) 
 					{
-						printf("%s:%d: Error: A node id must be provided",
-							    hdr->stmt_filename, hdr->stmt_lno);
-						errors++;
+							printf("%s:%d: Error: DROP NODE must provide at least one node ID",
+								   hdr->stmt_filename, hdr->stmt_lno);
+							errors++;
 					}
 					else 
 					{
@@ -452,11 +452,11 @@ script_check_stmts(SlonikScript * script, SlonikStmt * hdr)
 						{
 							if(stmt->no_id_list[cnt]==stmt->ev_origin)
 							{
-								printf("%s:%d: Error: "
-									   "Node ID (%d) and event node cannot be identical\n",
-									   hdr->stmt_filename, hdr->stmt_lno,
-									   stmt->no_id_list[cnt]);
-								errors++;
+									printf("%s:%d: Error: "
+										   "Cannot submit event to a node that is being dropped\n",
+										   hdr->stmt_filename, hdr->stmt_lno,
+										   stmt->no_id_list[cnt]);
+									errors++;
 							}
 						}
 						
@@ -483,14 +483,14 @@ script_check_stmts(SlonikScript * script, SlonikStmt * hdr)
 					{
 						if (node->backup_node < 0)
 						{
-							printf("%s:%d: Error: require BACKUP NODE\n", 
+							printf("%s:%d: Error: FAILOVER requires BACKUP NODE\n", 
 								   hdr->stmt_filename, hdr->stmt_lno);
 							errors++;
 						}
 						if (node->backup_node == node->no_id)
 						{
 							printf("%s:%d: Error: "
-								   "Node ID and backup node cannot be identical\n",
+								   "Failed Node ID and backup node cannot be identical\n",
 								   hdr->stmt_filename, hdr->stmt_lno);
 							errors++;
 						}
@@ -2683,13 +2683,12 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 	 *  
 	 * 1. Get a list of failover candidates for each failed node.
 	 * 2. validate that we have conninfo to all of them
-	 * 3. blank there paths to the failed nodes
+	 * 3. blank out communications paths to the failed nodes
 	 * 4. Wait for slons to restart
 	 * 5. for each failed node get the highest xid for each candidate
 	 * 6. execute FAILOVER on the highest canidate
 	 * 7. MOVE SET to the backup node.
 	 */
-	
 
 	dstring_init(&failed_node_list);
 	for(node_entry=stmt->nodes; node_entry != NULL;
@@ -2705,7 +2704,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 
 	
 	/**
-	 * peform some memory allocations
+	 * perform some memory allocations
 	 */
 	dstring_init(&query);
 	failnodebuf = (char**) malloc ( sizeof(char*) * num_origins);
@@ -2723,8 +2722,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 
    
 	/**
-	 * get the list of failover candidates for each of the
-	 * failed nodes.
+	 * get the list of failover candidates for each failed node.
 	 */
 	cur_origin_idx=0;
 	for(node_entry=stmt->nodes; node_entry != NULL;
@@ -2753,7 +2751,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 
 		/*
 		 * On the backup node select a list of all failover candidate
-		 * nodes except for the failed nodes.
+		 * nodes, excluding failed nodes.
 		 */
 		slon_mkquery(&query,
 					 "select distinct fail_backup from \"_%s\".sl_failover_targets"
@@ -2780,7 +2778,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 		}
 		
 		/*
-		 * Get a list of all sets that are subscribed more than once 
+		 * Get a list of all sets that have multiple nodes subscribing
 		 * directly from the origin
 		 */
 		slon_mkquery(&query,
@@ -2835,7 +2833,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 													 nodeinfo[i].no_id);
 			if (nodeinfo[i].adminfo == NULL)
 			{
-				printf("%s:%d error no conninfo for candidate for %d\n",
+				printf("%s:%d error no conninfo for slon for candidate for %d\n",
 					   stmt->hdr.stmt_filename, stmt->hdr.stmt_lno
 					   ,nodeinfo[i].no_id);
 				PQclear(res1);
@@ -2906,8 +2904,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 	}
 
 	/*
-	 * Wait until all slon replication engines that were running have
-	 * restarted.
+	 * Wait until all slon daemons that were running have restarted.
 	 */
 	cur_origin_idx=0;
 	for(node_entry=stmt->nodes; node_entry != NULL; 
@@ -2923,7 +2920,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 	}
 	
 	/**
-	 * promote the most ahead node to be the new (temporary) origin
+	 * promote the most ahead node to temporarily be the new origin
 	 * for each of the failed nodes.
 	 */
 	cur_origin_idx=0;
@@ -2942,7 +2939,8 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 
 
 	/**
-	 * MOVE SET to move the sets to the desired origin.
+	 * MOVE SET to move the origin of the sets from the temporary
+	 * origin determined in the previous step to the desired origin.
 	 */
 	cur_origin_idx=0;
 	for(node_entry=stmt->nodes; node_entry != NULL;
@@ -3030,9 +3028,8 @@ cleanup:
 }
 
 /**
- * A helper function used during the failover process.
- * This function will check to see which nodes need to have there
- * slons restarted.
+ * A helper function used during the failover process.  This function
+ * will check to see which nodes need to have their slon restarted.
  */
 static int
 fail_node_restart(SlonikStmt_failed_node * stmt,
@@ -3220,7 +3217,7 @@ int fail_node_promote(SlonikStmt_failed_node * stmt,
 		}
 		
 		/**
-		 * now failedNod3e on the temp backup node.
+		 * now failedNode on the temp backup node.
 		 */
 		slon_mkquery(&query,
 					 "lock table \"_%s\".sl_event_lock, \"_%s\".sl_config_lock;"
@@ -3242,7 +3239,7 @@ int fail_node_promote(SlonikStmt_failed_node * stmt,
 			goto cleanup;
 		}
 		/*
-		 * commit all open transactions despite of all possible errors
+		 * commit all open transactions despite potential errors
 		 */
 		for (i = 0; i < node_entry->num_nodes; i++)
 		{
