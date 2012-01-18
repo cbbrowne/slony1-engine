@@ -317,6 +317,43 @@ Query: $old_comp_query
   }
   print "\n";
 
+  my $failover_targets_query = qq{
+    select fail_set, fail_origin, fail_backup from "_$cluster".sl_failover_targets 
+    order by fail_set, fail_backup;
+  };
+  print "\n------------------------------------------------------------------------------\n";
+  printf "\nListing of permissible failover targets per %d\n", $node;
+  printf "%10s %10s %25s\n", "set", "origin", "failover target node";
+  print "==================================================================================================================================================\n";
+  $res = $dbh->prepare($failover_targets_query);
+  $res->execute();
+  while (my @row = $res->fetchrow_array) {
+      my ($set, $origin, $backup) = @row;
+      printf "%10d %10d %25d\n", $set, $origin, $backup;
+  }
+  
+  my $unfailable_sets = qq{
+     select set_id from "_$cluster".sl_set where not exists
+         (select 1 from "_$cluster".sl_failover_targets where fail_set = set_id);
+  };
+  print "\n------------------------------------------------------------------------------\n";
+  printf "\nListing of nodes with no failover targets per node %d\n", $node;
+  printf "%10s\n", "set";
+  print "==================================================================================================================================================\n";
+  $res = $dbh->prepare($unfailable_sets);
+  $res->execute();
+  while (my @row = $res->fetchrow_array) {
+      my ($set) = @row;
+      printf "%10d\n", $set;
+      add_problem($origin, "no failover target for set $set",
+		  qq{No failover target found in sl_failover_target for set $set
+
+Perhaps not enough direct subscriptions have been configured for this set?
+
+Query: $query
+});
+      
+  }
 }
 
 sub show_usage {
