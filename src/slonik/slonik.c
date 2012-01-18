@@ -2684,7 +2684,7 @@ slonik_failed_node(SlonikStmt_failed_node * stmt)
 	 * 1. Get a list of failover candidates for each failed node.
 	 * 2. validate that we have conninfo to all of them
 	 * 3. blank out communications paths to the failed nodes
-	 * 4. Wait for slons to restart
+	 * 4. Wait for slons to restart, so we know they are aware of the communications path change
 	 * 5. for each failed node get the highest xid for each candidate
 	 * 6. execute FAILOVER on the highest canidate
 	 * 7. MOVE SET to the backup node.
