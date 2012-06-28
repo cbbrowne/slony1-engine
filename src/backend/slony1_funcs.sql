@@ -441,7 +441,7 @@ create or replace function @NAMESPACE@.slonyVersionPatchlevel()
 returns int4
 as $$
 begin
-	return 7;
+	return 8;
 end;
 $$ language plpgsql;
 comment on function @NAMESPACE@.slonyVersionPatchlevel () is 
@@ -1436,9 +1436,9 @@ begin
 				where set_id = p_set_id;
 	end if;
 
-	update @NAMESPACE@.sl_node
-		   set no_active=false WHERE 
-		   no_id=p_failed_node;
+	-- update @NAMESPACE@.sl_node
+	-- 	   set no_active=false WHERE 
+	-- 	   no_id=p_failed_node;
 
 	-- Rewrite sl_listen table
 	perform @NAMESPACE@.RebuildListenEntries();
