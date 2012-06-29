@@ -65,10 +65,11 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 	int			vac_count = 0;
 	int			vac_enable = SLON_VACUUM_FREQUENCY;
 	char	   *vacuum_action;
-	bool        p_mem_eq_db;
+	bool		p_mem_eq_db;
 	SlonNode   *node;
-	int         node_id;
-	int         tupno, ntuples;
+	int			node_id;
+	int			tupno,
+				ntuples;
 
 	slon_log(SLON_CONFIG, "cleanupThread: thread starts\n");
 
@@ -243,100 +244,116 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 					 "cleanupThread: %8.3f seconds for vacuuming\n",
 					 TIMEVAL_DIFF(&tv_start, &tv_end));
 
-			/* Health check: Verify that in-memory structures match with node
-			 * database */
+			/*
+			 * Health check: Verify that in-memory structures match with node
+			 * database
+			 */
 
 			/* 1.  check that sl_node agrees with node list */
 			p_mem_eq_db = true;
 			dstring_init(&query_health);
 
 			/* Walk thru node list on disk, simply looking for existence */
-			slon_mkquery(&query_health, 
+			slon_mkquery(&query_health,
 						 "select no_id from %s.sl_node;",
 						 rtcfg_namespace);
 			res = PQexec(dbconn, dstring_data(&query_health));
-			if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+			if (PQresultStatus(res) != PGRES_TUPLES_OK)
+			{
 				slon_log(SLON_ERROR,
 						 "cleanupThread: \"%s\" - %s",
-						 dstring_data(&query_health), PQresultErrorMessage(res));
+					 dstring_data(&query_health), PQresultErrorMessage(res));
 			}
-			for (tupno = 0; tupno < ntuples; tupno++) 
+			for (tupno = 0; tupno < ntuples; tupno++)
 			{
 				node_id = atoi(PQgetvalue(res, tupno, 0));
-				if (rtcfg_findNode(node_id) == NULL) {
+				if (rtcfg_findNode(node_id) == NULL)
+				{
 					slon_log(SLON_WARN, "cleanupThread: node %d in sl_node not found in in-memory node list\n",
 							 node_id);
 					p_mem_eq_db = false;
 				}
 			}
 			PQclear(res);
-			
+
 			/* Walk thru node list in memory... */
-			for (node = rtcfg_node_list_head; node ; node = node->next) {
+			for (node = rtcfg_node_list_head; node; node = node->next)
+			{
 				node_id = node->no_id;
-				slon_mkquery(&query_health, 
-							 "select no_comment from %s.sl_node where no_id = %d;",
+				slon_mkquery(&query_health,
+					   "select no_comment from %s.sl_node where no_id = %d;",
 							 rtcfg_namespace, node_id);
 				res = PQexec(dbconn, dstring_data(&query_health));
-				if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+				if (PQresultStatus(res) != PGRES_TUPLES_OK)
+				{
 					slon_log(SLON_ERROR,
 							 "cleanupThread: \"%s\" - %s",
-							 dstring_data(&query_health), PQresultErrorMessage(res));
+					 dstring_data(&query_health), PQresultErrorMessage(res));
 				}
-				if (PQntuples(res) != 1) {
+				if (PQntuples(res) != 1)
+				{
 					slon_log(SLON_WARN, "cleanupThread: in-memory node %d not found in sl_node\n",
 							 node_id);
 					p_mem_eq_db = false;
-				} else {
-					if (strcmp(node->no_comment, PQgetvalue(res, 0, 0))) {
+				}
+				else
+				{
+					if (strcmp(node->no_comment, PQgetvalue(res, 0, 0)))
+					{
 						slon_log(SLON_WARN, "cleanupThread: in-memory node %d comment [%s] does not match sl_node comment [%s]\n",
 								 node->no_comment, PQgetvalue(res, 0, 0));
 						p_mem_eq_db = false;
 					}
 				}
 				PQclear(res);
-				dstring_reset(&query_health);							 
+				dstring_reset(&query_health);
 			}
 			dstring_reset(&query_health);
 
-/*   Induce logging if you like by setting p_mem_eq_db to "false" */
+/*	 Induce logging if you like by setting p_mem_eq_db to "false" */
 			/* p_mem_eq_db = false; */
 
-			if (p_mem_eq_db) {
+			if (p_mem_eq_db)
+			{
 				/* All's OK with the node list */
-			} else {
+			}
+			else
+			{
 				slon_log(SLON_WARN, "cleanupThread: differences between in-memory node list and sl_node\n");
 				slon_log(SLON_WARN, "cleanupThread: dumping sl_node:\n");
-				slon_mkquery(&query_health, 
+				slon_mkquery(&query_health,
 							 "select no_id, no_active, no_comment, pa_conninfo, pa_connretry from %s.sl_node, %s.sl_path where pa_server = no_id and pa_client = %d;",
 							 rtcfg_namespace, rtcfg_namespace, rtcfg_namespace, rtcfg_nodeid);
 				res = PQexec(dbconn, dstring_data(&query_health));
-				if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+				if (PQresultStatus(res) != PGRES_TUPLES_OK)
+				{
 					slon_log(SLON_ERROR,
 							 "cleanupThread: \"%s\" - %s",
-							 dstring_data(&query_health), PQresultErrorMessage(res));
+					 dstring_data(&query_health), PQresultErrorMessage(res));
 				}
 				ntuples = PQntuples(res);
-				for (tupno = 0; tupno < ntuples; tupno++) 
+				for (tupno = 0; tupno < ntuples; tupno++)
 				{
 					slon_log(SLON_WARN,
 							 "cleanupThread: sl_node:[%s] active:[%s] comment:[%s] conninfo:[%s] retry interval:[%s]\n",
-							 PQgetvalue(res, tupno, 0), 
-							 PQgetvalue(res, tupno, 1), 
+							 PQgetvalue(res, tupno, 0),
+							 PQgetvalue(res, tupno, 1),
 							 PQgetvalue(res, tupno, 2),
 							 PQgetvalue(res, tupno, 3),
 							 PQgetvalue(res, tupno, 4));
 				}
 				PQclear(res);
-				for (node = rtcfg_node_list_head; node; node = node->next) {
-					if (node != NULL) {
-						slon_log(SLON_WARN, 
+				for (node = rtcfg_node_list_head; node; node = node->next)
+				{
+					if (node != NULL)
+					{
+						slon_log(SLON_WARN,
 								 "cleanupThread: in-memory node:[%d] active state:[%d] conn retry interval:[%d] last event received:[%lld] "
-								 " comment:[%s] conninfo:[%s] last snapshot:[%s]\n",
+						  " comment:[%s] conninfo:[%s] last snapshot:[%s]\n",
 								 node->no_id, node->no_active, node->pa_connretry, node->last_event,
-								 (node->no_comment==NULL)?"":node->no_comment, 
-								 (node->pa_conninfo == NULL)?"":node->pa_conninfo, 
-								 (node->last_snapshot == NULL)?"":node->last_snapshot);
+						  (node->no_comment == NULL) ? "" : node->no_comment,
+						(node->pa_conninfo == NULL) ? "" : node->pa_conninfo,
+								 (node->last_snapshot == NULL) ? "" : node->last_snapshot);
 					}
 				}
 			}
@@ -366,46 +383,54 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 				int			sub_provider = (int) strtol(PQgetvalue(res, tupno, 1), NULL, 10);
 				char	   *sub_forward = PQgetvalue(res, tupno, 2);
 				char	   *sub_active = PQgetvalue(res, tupno, 3);
-				bool       found = false;
-				SlonSet *set;
+				bool		found = false;
+				SlonSet    *set;
 
 				/* Now, compare to rtcfg_set_list_head structure */
-				for (set = rtcfg_set_list_head; set; set = set->next) 
+				for (set = rtcfg_set_list_head; set; set = set->next)
 				{
 					if (set->set_id == sub_set)
 					{
 						found = true;
 						/* Compare entry to tuple */
-						if (set->sub_provider != sub_provider) {
+						if (set->sub_provider != sub_provider)
+						{
 							slon_log(SLON_WARN, "cleanupThread: diff for provider for subscription %d - sl_log:[%d] memory:[%d]\n",
-									 sub_set, sub_provider, set->sub_provider);
+								   sub_set, sub_provider, set->sub_provider);
 							p_mem_eq_db = false;
 						}
-						if (strcmp(sub_forward, (set->sub_forward)? "t" : "f")) { 
+						if (strcmp(sub_forward, (set->sub_forward) ? "t" : "f"))
+						{
 							slon_log(SLON_WARN, "cleanupThread: diff for forwarding for subscription %d - sl_log:[%s] memory:[%s]\n",
 									 sub_set, sub_forward, set->sub_forward);
 							p_mem_eq_db = false;
 						}
-						if (strcmp(sub_forward, (set->sub_active)? "t" : "f")) { 
+						if (strcmp(sub_forward, (set->sub_active) ? "t" : "f"))
+						{
 							slon_log(SLON_WARN, "cleanupThread: diff for active for subscription %d - sl_log:[%s] memory:[%s]\n",
 									 sub_set, sub_active, set->sub_active);
 							p_mem_eq_db = false;
 						}
 					}
 				}
-				if (found == false) {
-							slon_log(SLON_WARN, "cleanupThread: memory node for provider for subscription %d not found\n",
-									 sub_set);
-							p_mem_eq_db = false;
+				if (found == false)
+				{
+					slon_log(SLON_WARN, "cleanupThread: memory node for provider for subscription %d not found\n",
+							 sub_set);
+					p_mem_eq_db = false;
 				}
 			}
 
 			/* Induce dump of data */
-/* 			p_mem_eq_db = false; */
-			if (p_mem_eq_db == false) {
-				SlonSet *set;
-				/* Note no need to requery the database, as we already have a
-				 * result set with exactly the data that we want in 'res' */
+/*			p_mem_eq_db = false; */
+			if (p_mem_eq_db == false)
+			{
+				SlonSet    *set;
+
+				/*
+				 * Note no need to requery the database, as we already have a
+				 * result set with exactly the data that we want in 'res'
+				 */
 				for (tupno = 0, ntuples = PQntuples(res); tupno < ntuples; tupno++)
 				{
 					int			sub_set = (int) strtol(PQgetvalue(res, tupno, 0), NULL, 10);
@@ -418,11 +443,11 @@ cleanupThread_main( /* @unused@ */ void *dummy)
 					slon_log(SLON_WARN, "cleanupThread: sl_subscribe set:[%d] provider:[%d] origin:[%d] forward?:[%s] active?:[%s] comment:[%s]\n",
 							 sub_set, sub_provider, set_origin, sub_forward, sub_active, set_comment);
 				}
-				for (set = rtcfg_set_list_head; set; set = set->next) 
+				for (set = rtcfg_set_list_head; set; set = set->next)
 				{
 					slon_log(SLON_WARN, "cleanupThread: in-memory set id:[%d] origin:[%d] provider:[%d] forwarder?:[%d] active?:[%d] comment:[%s]\n",
 							 set->set_id, set->set_origin, set->sub_provider,
-							 set->sub_forward, set->sub_active, ((set->set_comment) !=NULL)?(set->set_comment):"n/a");
+							 set->sub_forward, set->sub_active, ((set->set_comment) != NULL) ? (set->set_comment) : "n/a");
 				}
 			}
 			PQclear(res);
