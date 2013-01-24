@@ -38,20 +38,6 @@ int			keep_alive_interval;
 static int	slon_appendquery_int(SlonDString * dsp, char *fmt, va_list ap);
 static int	db_get_version(PGconn *conn);
 
-#if (PG_VERSION_MAJOR < 8)
-/* ----
- * This mutex is used to wrap around PQconnectdb. There's a problem that
- * occurs when your libpq is compiled with libkrb (kerberos) which is not
- * threadsafe.	It is especially odd because I'm not using kerberos.
- *
- * This is fixed in libpq in 8.0, but for now (and for older versions we'll just
- * use this mutex.
- * ----
- */
-static pthread_mutex_t slon_connect_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-
 /* ----------
  * slon_connectdb
  * ----------
@@ -68,13 +54,7 @@ slon_connectdb(char *conninfo, char *symname)
 	/*
 	 * Create the native database connection
 	 */
-#if (PG_VERSION_MAJOR < 8)
-	pthread_mutex_lock(&slon_connect_lock);
 	dbconn = PQconnectdb(conninfo);
-	pthread_mutex_unlock(&slon_connect_lock);
-#else
-	dbconn = PQconnectdb(conninfo);
-#endif
 	if (dbconn == NULL)
 	{
 		slon_log(SLON_ERROR,
