@@ -4475,6 +4475,8 @@ begin
 		perform @NAMESPACE@.logswitch_start();
 	end if;
 
+	perform @NAMESPACE@.trimOldLoggedEvents(10);
+
 	return 0;
 end;
 $$ language plpgsql;
@@ -5058,6 +5060,9 @@ BEGIN
 			lock table @NAMESPACE@.sl_log_2 in access exclusive mode nowait;
 		exception when lock_not_available then
 			raise notice 'Slony-I: could not lock sl_log_2 - sl_log_2 not truncated';
+			perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'unable to lock sl_log_2 to truncate it', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_2');
 			return -1;
 		end;
 
@@ -5079,10 +5084,16 @@ BEGIN
 			-- Found a row ... log switch is still in progress.
 			-- ----
 			raise notice 'Slony-I: log switch to sl_log_1 still in progress - sl_log_2 not truncated';
+			perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'logswitch still in progress - found rows', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_2');
 			return -1;
 		end if;
 
 		raise notice 'Slony-I: log switch to sl_log_1 complete - truncate sl_log_2';
+		perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'logswitch - truncate sl_log_2', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_2');
 		truncate @NAMESPACE@.sl_log_2;
 		if exists (select * from "pg_catalog".pg_class c, "pg_catalog".pg_namespace n, "pg_catalog".pg_attribute a where c.relname = 'sl_log_2' and n.oid = c.relnamespace and a.attrelid = c.oid and a.attname = 'oid') then
 	                execute 'alter table @NAMESPACE@.sl_log_2 set without oids;';
@@ -5112,6 +5123,9 @@ BEGIN
 			lock table @NAMESPACE@.sl_log_1 in access exclusive mode nowait;
 		exception when lock_not_available then
 			raise notice 'Slony-I: could not lock sl_log_1 - sl_log_1 not truncated';
+			perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'unable to lock sl_log_1 to truncate it', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_1');
 			return -1;
 		end;
 
@@ -5133,10 +5147,16 @@ BEGIN
 			-- Found a row ... log switch is still in progress.
 			-- ----
 			raise notice 'Slony-I: log switch to sl_log_2 still in progress - sl_log_1 not truncated';
+			perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'logswitch still in progress - found rows', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_1');
 			return -1;
 		end if;
 
 		raise notice 'Slony-I: log switch to sl_log_2 complete - truncate sl_log_1';
+		perform @NAMESPACE@.logEvent('logswitch_finish()', NULL::integer, NULL::integer, 
+					pg_catalog.pg_backend_pid(), 'logswitch - truncate sl_log_1', 
+					now(), NULL::bigint, 'logswitch_finish() to truncate sl_log_1');
 		truncate @NAMESPACE@.sl_log_1;
 		if exists (select * from "pg_catalog".pg_class c, "pg_catalog".pg_namespace n, "pg_catalog".pg_attribute a where c.relname = 'sl_log_1' and n.oid = c.relnamespace and a.attrelid = c.oid and a.attname = 'oid') then
 	                execute 'alter table @NAMESPACE@.sl_log_1 set without oids;';
@@ -6115,6 +6135,7 @@ begin
               where co_actor = i_actor 
 	      	    and co_starttime < i_starttime;
 	end if;
+	perform @NAMESPACE@.logEvent(i_actor, i_pid, i_node, i_conn_pid, i_activity, i_starttime, i_event, i_eventtype);
 	return 1;
 end $$
 language plpgsql;
@@ -6224,3 +6245,44 @@ begin
 	return v_seq_id;
 end
 $$ language plpgsql;
+
+create or replace function @NAMESPACE@.logEvent(p_actor text, p_pid integer, p_node integer, p_connpid integer, p_activity text, p_starttime timestamptz, p_event bigint, p_eventtype text) returns integer as $$
+begin
+	insert into @NAMESPACE@.sl_eventlog (ev_actor, ev_pid, ev_node, ev_connection_pid, ev_activity, ev_starttime, ev_event, ev_eventtype)
+          values (p_actor, p_pid, p_node, p_connpid, p_activity, coalesce(p_starttime, now()), p_event, p_eventtype);
+	return 1;
+end
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.logEvent(p_actor text, p_pid integer, p_node integer, p_connpid integer, p_activity text, p_starttime timestamptz, p_event bigint, p_eventtype text) is
+'Add a log entry indicating activity of local slon.  If NULL time passed in, use NOW()';
+
+create or replace function @NAMESPACE@.trimOldLoggedEvents (p_keep_events integer) returns integer as $$
+declare
+	c_trimmed_events integer;
+	prec record;
+	c_oldest_to_keep integer;
+begin
+	c_trimmed_events := 0;
+	for prec in select ev_actor, ev_eventtype, count(*) from @NAMESPACE@.sl_eventlog
+	        group by ev_actor, ev_eventtype
+			having count(*) > p_keep_events
+	loop
+		select ev_id into c_oldest_to_keep from @NAMESPACE@.sl_eventlog
+		   where ev_actor = prec.ev_actor and
+		   	 ev_eventtype = prec.ev_eventtype
+		   order by ev_id desc offset p_keep_events limit 1;
+
+		delete from @NAMESPACE@.sl_eventlog
+		   where ev_actor = prec.ev_actor and
+		   	 ev_eventtype = prec.ev_eventtype and
+			 ev_id < c_oldest_to_keep;
+			 
+		c_trimmed_events := c_trimmed_events + (prec.count - p_keep_events);
+	end loop;
+	return c_trimmed_events;
+end;
+$$ language plpgsql;
+
+comment on function @NAMESPACE@.trimOldLoggedEvents (p_keep_events integer) is
+'On a per-actor/eventtype basis, delete all but the last p_keep_events';

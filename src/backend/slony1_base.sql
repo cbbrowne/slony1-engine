@@ -722,6 +722,33 @@ comment on column @NAMESPACE@.sl_components.co_starttime is 'when did my activit
 comment on column @NAMESPACE@.sl_components.co_eventtype is 'what kind of event am I processing?  (commonly n/a for event loop main threads)';
 comment on column @NAMESPACE@.sl_components.co_event is 'which event have I started processing?';
 
+-- ----------------------------------------------------------------------
+-- TABLE sl_eventlog
+-- ----------------------------------------------------------------------
+create table @NAMESPACE@.sl_eventlog (
+       ev_id serial primary key,
+       ev_actor text not null,
+	   ev_pid integer,
+       ev_node integer,
+       ev_connection_pid integer,
+       ev_activity text,
+       ev_starttime timestamptz not null default now(),
+	   ev_event bigint,
+       ev_eventtype text not null
+) without oids;
+create index time_by_eventtype on @NAMESPACE@.sl_eventlog (ev_eventtype, ev_starttime, ev_id);
+
+comment on table @NAMESPACE@.sl_eventlog is 'Log of recent events against local node';
+comment on column @NAMESPACE@.sl_eventlog.ev_id is 'Unique event ID';
+comment on column @NAMESPACE@.sl_eventlog.ev_actor is 'Which component is reporting the event';
+comment on column @NAMESPACE@.sl_eventlog.ev_pid is 'process/thread PID on slon node';
+comment on column @NAMESPACE@.sl_eventlog.ev_node is 'node being serviced';
+comment on column @NAMESPACE@.sl_eventlog.ev_connection_pid is 'PID of DB connection being used on DB server';
+comment on column @NAMESPACE@.sl_eventlog.ev_activity is 'activity of the event';
+comment on column @NAMESPACE@.sl_eventlog.ev_starttime is 'start time of event';
+comment on column @NAMESPACE@.sl_eventlog.ev_event is 'event ID';
+comment on column @NAMESPACE@.sl_eventlog.ev_eventtype is 'kind of event';
+
 
 -- ----------------------------------------------------------------------
 -- Last but not least grant USAGE to the replication schema objects.
