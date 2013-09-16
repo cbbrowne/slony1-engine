@@ -21,6 +21,9 @@ GENERATED_XML = schemadoc.xml
 ALLSGML = $(wildcard $(srcdir)/*.sgml) $(GENERATED_SGML) $(GENERATED_XML)
 DISTFILES = $(ALLSGML) $(GENERATED_SGML)
 
+# Sometimes we don't want this one.
+ALMOSTALLSGML := $(filter-out %bookindex.sgml,$(ALLSGML))
+
 ifdef DOCBOOKSTYLE
 CATALOG = -c $(DOCBOOKSTYLE)/catalog
 endif
@@ -93,6 +96,13 @@ HTML.index: html
 
 .PHONY: html
 
+DBTOEPUB ?= dbtoepub
+
+ifndef XSLTPROC
+XSLTPROC = xsltproc
+endif
+
+
 ifndef JADE
 html:
 	@echo "You must have jade installed to build the documentation." && exit;
@@ -104,6 +114,54 @@ ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
 endif
+
+##
+## XSLT processing
+##
+
+# For obscure reasons, gmake 3.81 complains about circular dependencies
+# if we try to do "make all" in a VPATH build without the explicit
+# $(srcdir) on the postgres.sgml dependency in this rule.  gmake bug?
+slonydocs.xml: slony.sgml $(ALMOSTALLSGML)
+	$(OSX) -D. -x lower $< >slonydocs.xmltmp
+	$(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
+	           -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
+	  <slonydocs.xmltmp > $@
+	rm slonydocs.xmltmp
+# ' hello Emacs
+
+xslthtml: xslthtml-stamp
+
+xslthtml-stamp: stylesheet.xsl slonydocs.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^
+	cp $(srcdir)/stylesheet.css html/
+	touch $@
+
+htmlhelp: stylesheet-hh.xsl slonydocs.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $^
+
+%-A4.fo.tmp: stylesheet-fo.xsl %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type A4 -o $@ $^
+
+%-US.fo.tmp: stylesheet-fo.xsl %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
+
+FOP = fop
+XMLLINT = xmllint
+
+# reformat FO output so that locations of errors are easier to find
+%.fo: %.fo.tmp
+	$(XMLLINT) --format --output $@ $^
+
+.SECONDARY: postgres-A4.fo postgres-US.fo
+
+%-fop.pdf: %.fo
+	$(FOP) -fo $< -pdf $@
+
+epub: slonydocs.epub
+slonydocs.epub: slonydocs.xml
+	$(DBTOEPUB) $<
+
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
