@@ -35,6 +35,45 @@
     override any conflicting settings in the configuration file.
   </para>
 
+  <para>
+    The configuration for each &lslon; node is captured, at startup
+    time, in the database managed by that node, in the table
+   <envar>sl_slonconf</envar>
+  </para>
+     <programlisting>
+slonyregress1@localhost->  select * from _slony_regress1.sl_slonconf ;
+      conf_option       |                         conf_value                          |          conf_set_on          
+------------------------+-------------------------------------------------------------+-------------------------------
+ vac_frequency          | 2                                                           | 2014-07-17 20:19:44.211525+00
+ log_level              | 2                                                           | 2014-07-17 20:19:44.245934+00
+ sync_interval          | 2010                                                        | 2014-07-17 20:19:44.278037+00
+ sync_interval_timeout  | 15000                                                       | 2014-07-17 20:19:44.302933+00
+ sync_group_maxsize     | 8                                                           | 2014-07-17 20:19:44.311087+00
+ syslog                 | 1                                                           | 2014-07-17 20:19:44.319416+00
+ quit_sync_provider     | 0                                                           | 2014-07-17 20:19:44.327747+00
+ remote_listen_timeout  | 300                                                         | 2014-07-17 20:19:44.336019+00
+ monitor_interval       | 500                                                         | 2014-07-17 20:19:44.344321+00
+ explain_interval       | 0                                                           | 2014-07-17 20:19:44.352669+00
+ tcp_keepalive_idle     | 0                                                           | 2014-07-17 20:19:44.360978+00
+ tcp_keepalive_interval | 0                                                           | 2014-07-17 20:19:44.369328+00
+ tcp_keepalive_count    | 0                                                           | 2014-07-17 20:19:44.377626+00
+ apply_cache_size       | 100                                                         | 2014-07-17 20:19:44.385953+00
+ log_pid                | false                                                       | 2014-07-17 20:19:44.394265+00
+ log_timestamp          | true                                                        | 2014-07-17 20:19:44.402635+00
+ tcp_keepalive          | true                                                        | 2014-07-17 20:19:44.410893+00
+ monitor_threads        | true                                                        | 2014-07-17 20:19:44.419312+00
+ real_placeholder       | %f                                                          | 2014-07-17 20:19:44.427593+00
+ cluster_name           | slony_regress1                                              | 2014-07-17 20:19:44.436023+00
+ conn_info              | dbname=slonyregress1 host=localhost user=postgres port=7099 | 2014-07-17 20:19:44.444324+00
+ pid_file               | /tmp/slony-regress.CRL0WZ/slon-pid.1                        | 2014-07-17 20:19:44.452594+00
+ log_timestamp_format   | %Y-%m-%d %H:%M:%S %Z                                        | 2014-07-17 20:19:44.485852+00
+ sql_on_connection      | SET log_min_duration_statement to '1000';                   | 2014-07-17 20:19:44.494176+00
+ lag_interval           | 2 seconds                                                   | 2014-07-17 20:19:44.510926+00
+ syslog_facility        | LOCAL0                                                      | 2014-07-17 20:19:44.519212+00
+ syslog_ident           | slon-slony_regress1-1                                       | 2014-07-17 20:19:44.527504+00
+ cleanup_interval       | 30 seconds                                                  | 2014-07-17 20:19:44.535794+00
+(28 rows)
+     </programlisting>
 
 
 <sect1 id="slon-config-logging">

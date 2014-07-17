@@ -85,6 +85,11 @@ tables and sequences.</para></glossdef></glossentry>
 <glossentry><glossterm>&sltable;</glossterm>
 <glossdef><para>Contains the list of tables being replicated.</para></glossdef></glossentry>
 
+<glossentry><glossterm><xref linkend="table.sl-slonconf"> </glossterm>
+<glossdef><para>Contains configuration parameters for the &lslon;
+managing the local node</para></glossdef></glossentry>
+
+
 </glosslist>
 
 <sect2 id="testslonystate"> <title> test_slony_state</title>
