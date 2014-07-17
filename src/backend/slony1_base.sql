@@ -756,6 +756,17 @@ INITCOND=''
 );
 
 
+create table @NAMESPACE@.sl_slonconf (
+    conf_option text primary key,
+    conf_value text,
+    conf_set_on timestamptz not null default now()
+);
+
+comment on table @NAMESPACE@.sl_slonconf is 'Contains slon configuration for slon managing local node';
+comment on column @NAMESPACE@.sl_slonconf.conf_option is 'Configuration option name';
+comment on column @NAMESPACE@.sl_slonconf.conf_value is 'Configuration value (coerced to TEXT)';
+comment on column @NAMESPACE@.sl_slonconf.conf_set_on is 'Date when configuration captured (this may be expected to be the time the slon started)';
+
 -- ----------------------------------------------------------------------
 -- Last but not least grant USAGE to the replication schema objects.
 -- ----------------------------------------------------------------------

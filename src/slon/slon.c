@@ -418,11 +418,6 @@ SlonMain(void)
 
 
 	/*
-	 * Dump out current configuration - all elements of the various arrays...
-	 */
-	dump_configuration();
-
-	/*
 	 * Connect to the local database to read the initial configuration
 	 */
 	startup_conn = PQconnectdb(rtcfg_conninfo);
@@ -433,6 +428,12 @@ SlonMain(void)
 		slon_retry();
 		exit(-1);
 	}
+
+	/*
+	 * Dump out current configuration - all elements of the various arrays...
+	 */
+	dump_configuration(startup_conn);
+
 	if (PQstatus(startup_conn) != CONNECTION_OK)
 	{
 		slon_log(SLON_FATAL, "main: Cannot connect to local database - %s - sleep 10s\n",

@@ -5649,9 +5649,16 @@ create table @NAMESPACE@.sl_components (
   	   execute v_query;
 	end if;
 
-	
-
-
+	if not exists (select 1 from information_schema.tables where table_schema = '_@CLUSTERNAME@' and table_name = 'sl_slonconf') then
+	   v_query := '
+create table @NAMESPACE@.sl_slonconf (
+    conf_option text primary key,
+    conf_value text,
+    conf_set_on timestamptz not null default now()
+);
+';
+  	   execute v_query;
+	end if;
 
 	if not exists (select 1 from information_schema.tables t where table_schema = '_@CLUSTERNAME@' and table_name = 'sl_event_lock') then
 	   v_query := 'create table @NAMESPACE@.sl_event_lock (dummy integer);';
@@ -6627,3 +6634,17 @@ LANGUAGE plpgsql;
 comment on function @NAMESPACE@.agg_text_sum(text,text) is 
 'An accumulator function used by the slony string_agg function to
 aggregate rows into a string';
+
+create or replace function @NAMESPACE@.store_configuration(i_key text, i_value text) returns integer as
+$BODY$
+begin
+		delete from @NAMESPACE@.sl_slonconf where conf_option = i_key;
+		insert into @NAMESPACE@.sl_slonconf (conf_option, conf_value) 
+		  values (i_key, i_value);
+		return 1;
+end
+$BODY$
+language plpgsql;
+
+comment on function @NAMESPACE@.store_configuration(i_key text, i_value text)
+is 'Store configure in sl_slonconf, deleting data if already there';

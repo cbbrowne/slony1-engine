@@ -2,6 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <signal.h>
 #include "slon.h"
 #include "types.h"
 
@@ -21,7 +22,7 @@ void	   *get_config_option(const char *name);
 
 static double real_placeholder;
 
-void		dump_configuration(void);
+void		dump_configuration(PGconn *conn);
 void		build_conf_variables(void);
 
 
@@ -416,32 +417,82 @@ static struct config_string ConfigureNamesString[] =
 };
 
 void
-dump_configuration(void)
+dump_configuration (PGconn *conn)
 {
 	int			i;
+	SlonDString query;
+	PGresult *res;
+
+	dstring_init(&query);
+
+		slon_mkquery(&query, "delete from %s.sl_slonconf;",
+					 rtcfg_namespace);
+		res = PQexec(conn, dstring_data(&query));
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			slon_log(SLON_ERROR, "dump_configuration - unable to empty sl_slonconf - %s\n",
+					 PQresultErrorMessage(res));
+		}
+		PQclear(res);
+
 
 	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
 	{
 		slon_log(SLON_CONFIG, "main: Integer option %s = %d\n",
 			ConfigureNamesInt[i].gen.name, *(ConfigureNamesInt[i].variable));
+		slon_mkquery(&query, "select %s.store_configuration ('%s', '%d');",
+					 rtcfg_namespace, ConfigureNamesInt[i].gen.name, *(ConfigureNamesInt[i].variable));
+		res = PQexec(conn, dstring_data(&query));
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			slon_log(SLON_ERROR, "dump_configuration - unable to write sl_slonconf entry for ('%s', '%d') - %s\n",
+					 ConfigureNamesInt[i].gen.name, *(ConfigureNamesInt[i].variable), PQresultErrorMessage(res));
+		}
+		PQclear(res);
 	}
 	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
 		slon_log(SLON_CONFIG, "main: Boolean option %s = %d\n",
 		  ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable));
+		slon_mkquery(&query, "select %s.store_configuration ('%s', '%d');",
+					 rtcfg_namespace, ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable));
+		res = PQexec(conn, dstring_data(&query));
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			slon_log(SLON_ERROR, "dump_configuration - unable to write sl_slonconf entry for ('%s', '%d') - %s\n",
+					 ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable), PQresultErrorMessage(res));
+		}
+		PQclear(res);
 	}
 	for (i = 0; ConfigureNamesReal[i].gen.name; i++)
 	{
 		slon_log(SLON_CONFIG, "main: Real option %s = %f\n",
 		  ConfigureNamesReal[i].gen.name, *(ConfigureNamesReal[i].variable));
+		slon_mkquery(&query, "select %s.store_configuration ('%s', '%f');",
+					 rtcfg_namespace, ConfigureNamesReal[i].gen.name, *(ConfigureNamesReal[i].variable));
+		res = PQexec(conn, dstring_data(&query));
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			slon_log(SLON_ERROR, "dump_configuration - unable to write sl_slonconf entry for ('%s', '%f') - %s\n",
+					 ConfigureNamesReal[i].gen.name, *(ConfigureNamesReal[i].variable), PQresultErrorMessage(res));
+		}
+		PQclear(res);
 	}
 	for (i = 0; ConfigureNamesString[i].gen.name; i++)
 	{
 		slon_log(SLON_CONFIG, "main: String option %s = %s\n",
 				 ConfigureNamesString[i].gen.name, ((*ConfigureNamesString[i].variable) == NULL) ? "[NULL]" : *(ConfigureNamesString[i].variable));
+		slon_mkquery(&query, "select %s.store_configuration ('%s', '%s');",
+					 rtcfg_namespace, ConfigureNamesString[i].gen.name, *(ConfigureNamesString[i].variable));
+		res = PQexec(conn, dstring_data(&query));
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			slon_log(SLON_ERROR, "dump_configuration - unable to write sl_slonconf entry for ('%s', '%s') - %s\n",
+					 ConfigureNamesString[i].gen.name, *(ConfigureNamesString[i].variable), PQresultErrorMessage(res));
+		}
+		PQclear(res);
 	}
-
-
+	dstring_free(&query);
 }
 
 

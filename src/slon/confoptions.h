@@ -7,7 +7,7 @@ void		InitializeConfOptions(void);
 bool		set_config_option(const char *name, const char *value);
 void	   *get_config_option(const char *name);
 
-void		dump_configuration(void);
+void		dump_configuration(PGconn *conn);
 
 extern char *rtcfg_cluster_name;
 extern char *rtcfg_conninfo;
