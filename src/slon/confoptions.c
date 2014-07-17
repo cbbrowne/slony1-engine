@@ -454,8 +454,8 @@ dump_configuration(PGconn *conn)
 	{
 		slon_log(SLON_CONFIG, "main: Boolean option %s = %d\n",
 		  ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable));
-		slon_mkquery(&query, "select %s.store_configuration ('%s', '%d');",
-					 rtcfg_namespace, ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable));
+		slon_mkquery(&query, "select %s.store_configuration ('%s', '%s');",
+					 rtcfg_namespace, ConfigureNamesBool[i].gen.name, *(ConfigureNamesBool[i].variable) ? "true" : "false");
 		res = PQexec(conn, dstring_data(&query));
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -480,10 +480,17 @@ dump_configuration(PGconn *conn)
 	}
 	for (i = 0; ConfigureNamesString[i].gen.name; i++)
 	{
+		char	   *quotedvalue;
+
 		slon_log(SLON_CONFIG, "main: String option %s = %s\n",
 				 ConfigureNamesString[i].gen.name, ((*ConfigureNamesString[i].variable) == NULL) ? "[NULL]" : *(ConfigureNamesString[i].variable));
-		slon_mkquery(&query, "select %s.store_configuration ('%s', '%s');",
-					 rtcfg_namespace, ConfigureNamesString[i].gen.name, *(ConfigureNamesString[i].variable));
+		if (*(ConfigureNamesString[i].variable))
+		{
+			quotedvalue = PQescapeLiteral(conn, *(ConfigureNamesString[i].variable), strlen(*(ConfigureNamesString[i].variable)));
+			slon_mkquery(&query, "select %s.store_configuration ('%s', %s);",
+			 rtcfg_namespace, ConfigureNamesString[i].gen.name, quotedvalue);
+			PQfreemem(quotedvalue);
+		}
 		res = PQexec(conn, dstring_data(&query));
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
