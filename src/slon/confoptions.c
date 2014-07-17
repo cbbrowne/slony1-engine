@@ -417,23 +417,23 @@ static struct config_string ConfigureNamesString[] =
 };
 
 void
-dump_configuration (PGconn *conn)
+dump_configuration(PGconn *conn)
 {
 	int			i;
 	SlonDString query;
-	PGresult *res;
+	PGresult   *res;
 
 	dstring_init(&query);
 
-		slon_mkquery(&query, "delete from %s.sl_slonconf;",
-					 rtcfg_namespace);
-		res = PQexec(conn, dstring_data(&query));
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			slon_log(SLON_ERROR, "dump_configuration - unable to empty sl_slonconf - %s\n",
-					 PQresultErrorMessage(res));
-		}
-		PQclear(res);
+	slon_mkquery(&query, "delete from %s.sl_slonconf;",
+				 rtcfg_namespace);
+	res = PQexec(conn, dstring_data(&query));
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		slon_log(SLON_ERROR, "dump_configuration - unable to empty sl_slonconf - %s\n",
+				 PQresultErrorMessage(res));
+	}
+	PQclear(res);
 
 
 	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
