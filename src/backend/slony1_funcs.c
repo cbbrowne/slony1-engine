@@ -475,16 +475,18 @@ versionFunc(logTrigger) (PG_FUNCTION_ARGS)
 	 */
 	olddatestyle = GetConfigOptionByName("DateStyle", NULL);
 	if (!strstr(olddatestyle, "ISO"))
+	{
 #ifdef SETCONFIGOPTION_6
 		set_config_option("DateStyle", "ISO", PGC_USERSET, PGC_S_SESSION,
 						  true, true);
 #elif SETCONFIGOPTION_7
-	set_config_option("DateStyle", "ISO", PGC_USERSET, PGC_S_SESSION,
-					  true, true, 0);
+		set_config_option("DateStyle", "ISO", PGC_USERSET, PGC_S_SESSION,
+						  true, true, 0);
 #elif SETCONFIGOPTION_8
-	set_config_option("DateStyle", "ISO", PGC_USERSET, PGC_S_SESSION,
-					  true, true, 0, 0);
+		set_config_option("DateStyle", "ISO", PGC_USERSET, PGC_S_SESSION,
+						  true, true, 0, 0);
 #endif
+	}
 
 
 	/*
@@ -753,16 +755,18 @@ versionFunc(logTrigger) (PG_FUNCTION_ARGS)
 	 * Restore the datestyle
 	 */
 	if (!strstr(olddatestyle, "ISO"))
+	{
 #ifdef SETCONFIGOPTION_6
 		set_config_option("DateStyle", olddatestyle,
 						  PGC_USERSET, PGC_S_SESSION, true, true);
 #elsif SETCONFIGOPTION_7
-	set_config_option("DateStyle", olddatestyle,
-					  PGC_USERSET, PGC_S_SESSION, true, true, 0);
+		set_config_option("DateStyle", olddatestyle,
+						  PGC_USERSET, PGC_S_SESSION, true, true, 0);
 #elsif SETCONFIGOPTION_8
-	set_config_option("DateStyle", olddatestyle,
-					  PGC_USERSET, PGC_S_SESSION, true, true, 0, 0);
+		set_config_option("DateStyle", olddatestyle,
+						  PGC_USERSET, PGC_S_SESSION, true, true, 0, 0);
 #endif
+	}
 
 	/*
 	 * Construct the parameter array and insert the log row.
