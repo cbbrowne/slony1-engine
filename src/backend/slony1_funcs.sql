@@ -6655,10 +6655,13 @@ begin
         create index sl_log_script_brin_action on @NAMESPACE@.sl_log_script using BRIN (log_actionseq);
         create index sl_event_seqno on @NAMESPACE@.sl_event using BRIN (ev_seqno);
         create index sl_confirm_seqno on @NAMESPACE@.sl_confirm using BRIN (con_seqno);
-     exception when others
-        raise notice 'Could not add BRIN indices on Slony tables';
+     exception when others then
+        raise notice 'Failed to add BRIN indices on Slony tables';
      end;
+   else
+        raise notice 'Already have BRIN indices on Slony tables';
    end if;   
+   return 1;
 end
 $BODY$ language plpgsql;
 
