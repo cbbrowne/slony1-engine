@@ -2,7 +2,8 @@
 * Slony-I 2.3 Release Notes
 
 ** Significant Changes
-   
+   - Use BRIN indices on some internal Slony tables
+     - It is not yet known if this will be useful; we add this on the possibility of it being helpful to performance
 ** Bugs fixed in the course of the release
 
 	These are expected to represent bugs that were previously present,

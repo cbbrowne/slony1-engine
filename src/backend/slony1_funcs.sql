@@ -6639,3 +6639,27 @@ LANGUAGE plpgsql;
 comment on function @NAMESPACE@.agg_text_sum(text,text) is 
 'An accumulator function used by the slony string_agg function to
 aggregate rows into a string';
+
+create or replace function @NAMESPACE@.add_brin_indices () returns integer as
+$BODY$
+begin
+   if not exists (select 1 from pg_catalog.pg_indexes
+      where schemaname='@NAMESPACE@' and tablename in ('sl_log_1', 'sl_log_2', 'sl_log_script', 'sl_event', 'sl_confirm')
+            and indexdef like 'USING brin') then
+     begin
+        create index sl_log_1_brin_txid on @NAMESPACE@.sl_log_1 using BRIN (log_txid);
+        create index sl_log_2_brin_txid on @NAMESPACE@.sl_log_2 using BRIN (log_txid);
+        create index sl_log_script_brin_txid on @NAMESPACE@.sl_log_script using BRIN (log_txid);
+        create index sl_log_1_brin_action on @NAMESPACE@.sl_log_1 using BRIN (log_actionseq);
+        create index sl_log_2_brin_action on @NAMESPACE@.sl_log_2 using BRIN (log_actionseq);
+        create index sl_log_script_brin_action on @NAMESPACE@.sl_log_script using BRIN (log_actionseq);
+        create index sl_event_seqno on @NAMESPACE@.sl_event using BRIN (ev_seqno);
+        create index sl_confirm_seqno on @NAMESPACE@.sl_confirm using BRIN (con_seqno);
+     exception when others
+        raise notice 'Could not add BRIN indices on Slony tables';
+     end;
+   end if;   
+end
+$BODY$ language plpgsql;
+
+select @NAMESPACE@.add_brin_indices ();
