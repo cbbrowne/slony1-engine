@@ -1887,14 +1887,14 @@ SET ADD TABLE (
     
     <para>
      Change the set a table belongs to. The current set and the new
-     set must origin on the same node and subscribed by the same
-     nodes.  <caution><para> Due to the way subscribing to new sets
-       works make absolutely sure that the subscription of all nodes to
-       the sets is completely processed before moving tables. Moving a
-       table too early to a new set causes the subscriber to try and add
-       the table already during the subscription process, which fails
-       with a duplicate key error and breaks
-       replication.</para></caution>
+     set must originate on the same node and have identical
+     subscriptions across the nodes nodes.  <caution><para> Due to the
+     way subscribing to new sets works, make absolutely sure that the
+     subscription of all nodes to the sets is completely processed
+     before moving tables.  Moving a table too early to a new set
+     causes the subscriber to try and add the table already during the
+     subscription process, which fails with a duplicate key error and
+     thus breaks replication.</para></caution>
      
      <variablelist>
       <varlistentry><term><literal> ORIGIN = ival </literal></term>
