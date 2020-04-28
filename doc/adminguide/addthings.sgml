@@ -357,6 +357,75 @@ activities on these tables can result in a deadlock.
 </para>
 
 </sect2>
+<sect2> <title> Shifting Objects To Another Set </title>
+
+<para> You may discover that you want to shift objects to another set
+  in order to have them be replicated separately.  This would happen
+  if those objects need to originate on another node, or if you wanted
+  them replicated to a different set of nodes than is the case for the
+  rest of the set. </para>
+
+<para> This kind of change will require taking several steps: </para>
+<itemizedlist>
+  <listitem><para> Set up a new replication set if a suitable set does not already exist. </para>
+    <para> This set will need to have <emphasis>identical</emphasis>
+      subscriptions to the set that tables are coming from. </para>
+    <para> Thus, the following &slonik; commands are likely to be
+    needed to set up the set: </para>
+    <itemizedlist>
+      <listitem><para> <link linkend="stmtcreateset"> CREATE SET </link> to create the new set </para> </listitem>
+      <listitem><para> <link linkend="stmtsetaddtable"> SET ADD
+	    TABLE </link> is <emphasis>probably</emphasis> needed to
+	    add a table to the set so that subscription of the set
+	    works.  This can be a "trash" table to be dropped out
+	    later, and it's possible that this step isn't actually
+	    necessary.  At one point we had a bug where a set with no
+	    tables but only a sequences would cause, um,
+	    consternation. </para> </listitem>
+      <listitem><para> <link linkend="stmtsubscribeset"> SUBSCRIBE
+	    SET </link> needs to be submitted as many times as needed
+	    in order to establish an <emphasis>identical</emphasis>
+	    subscription network to the one existing for the set that
+	    the tables/sequences will be copied
+	    from. </para> </listitem>
+      <listitem><para> <link linkend="stmtsetmovetable"> SET MOVE
+	    TABLE </link> needs to be submitted for each table to be shifted
+	  to the new replication set. </para> </listitem>
+      <listitem><para> <link linkend="stmtsetmovesequence"> SET MOVE
+	    SEQUENCE </link> needs to be submitted for each sequence to be shifted
+	  to the new replication set. </para> </listitem>
+    </itemizedlist>
+    <para> Once these steps are complete, the tables that were split
+      off are now in their own replication set, along with the possible
+      "trash" table, which the administrator might want to drop out
+      using <link linkend="stmtsetdroptable"> SET DROP TABLE </link>
+  </listitem>
+  <listitem><para> Presumably, at this point, there should be some
+      reshaping of replication subscriptions.  The reason to have made
+      this split in the first place will lead to further change such
+      as the following: </para>
+    <itemizedlist>
+      <listitem><para> If the new set should have its origin node
+	  changed, then it may be appropriate to
+	  submit <link linkend="stmtlockset"> LOCK SET </link> and
+	  then <link linkend="stmtmoveset"> MOVE
+	    SET </link> </para> </listitem>
+      <listitem><para> Perhaps the new set needs to have additional
+	  subscribers, pointing to running <link linkend=
+	  "stmtsubscribeset">SUBSCRIBE SET</link> to add more
+	  subscriptions. </para> </listitem>
+      <listitem><para> Perhaps the set needs some <link linkend=
+	  "stmtsubscribeset">SUBSCRIBE SET</link> requests in order to
+	  change the layout of the set. </para> </listitem>
+      <listitem><para> Perhaps some subscribers are no longer relevant
+	  for the new set, and hence may be removed via <link linkend=
+	  "stmtunsubscribeset">UNSUBSCRIBE
+	  SET</link> </para> </listitem>
+    </itemizedlist>
+  </listitem>
+</itemizedlist>
+
+</sect2>
 
 <!-- Keep this comment at the end of the file
 Local variables:
